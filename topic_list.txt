@@ -1,0 +1,31 @@
+ID	subtopic	topic	Template
+C304	What transmits the virus	Transmitting the virus	X transmits / transfers COVID-19
+C306	Destroying the virus	Curing/Preventing/Destroying the Virus	X destroys COVID-19
+C307	Preventing the virus	Curing/Preventing/Destroying the Virus	X prevents COVID-19
+C308	Curing the virus	Curing/Preventing/Destroying the Virus	X cures COVID-19
+C311	Characterizations of coronavirus	Characterizations of the Virus	SARS-CoV-2 is X
+C312	Immunity to the virus	Characterizations of the Virus	Immunity against COVID-19 is X
+C313	Virus is losing its potency	Characterizations of the Virus	The potency of SARS-CoV-2 is X
+C314	Mask Regulations	Non-Pharmaceutical Interventions (NPIs): Masks	Wearing masks is required in location/GPE/facility-x
+C315	Mask Recommendations	Non-Pharmaceutical Interventions (NPIs): Masks	Wearing masks is recommended in location/GPE/facility-x
+C317	Mask Necessity	Non-Pharmaceutical Interventions (NPIs): Masks	Wearing masks is necessary in location/GPE/facility-x
+C318	Mask Harmfulness	Non-Pharmaceutical Interventions (NPIs): Masks	Wearing masks has X negative effect
+C319	Animals associated with the origin of the virus	Origin of the Virus	Animal-X is associated/involved with the origin of COVID-19
+C322	Who created the virus	Origin of the Virus: Virus Creation	X created SARS-CoV-2
+C323	Who funded the creation of the virus	Origin of the Virus: Virus Creation	X funded SARS-CoV-2 development
+C324	Where the virus originated	Origin of the Virus	SARS-CoV-2 originated in place-X
+C325	Where the virus was engineered/created	Origin of the Virus: Virus Creation	SARS-CoV-2 was created in location/GPE/org/facility-X
+C326	Where the virus first occurred	Origin of the Virus	The first case of COVID-19 occurred in location-X 
+C327	When the outbreak originated	Origin of the Virus	The first case of COVID-19 occurred on date-X 
+C328	When the virus was created	Origin of the Virus: Virus Creation	SARS-CoV-2 was created on date-X
+C329	Who/what was the target of the virus	Origin of the Virus	X was the target of the virus
+C331	Population restrictions related to the virus	Government actions related to the virus	Government-X enacted population restrictions related to COVID-19
+C332	Contact tracing related to the virus	Government actions related to the virus	Government-X enacted contact tracing related to COVID-19
+C333	Patient Containment actions related to the virus	Government actions related to the virus	Government-X enacted contact tracing related to COVID-19
+C335	Government Cover-Ups about Cures	Government actions related to the virus	Government-X enacted patient containment actions related to COVID-19
+C343	Effective treatments for COVID-19	Treatment effectiveness	X is an effective treatment for COVID-19
+C344	Treatments that shorten the length of COVID-19 infection	Treatment effectiveness	Treatment-X shortens the length of COVID-19 infection
+C346	Treatments that prevent or reduce the chance of death from COVID-19 infection	Treatment effectiveness	Treatment-X prevents death or reduces the chance of death from COVID-19 infection
+C348	Treatments approved for Emergency Use Authorization	Treatment availability	Treatment-X received emergency use approval
+C349	Safe treatements for COVID-19	Treatment safety	Treatment-X is a safe treatment for COVID-19
+C350	Generally safe medications that are unsafe for COVID-19 patients	Treatment safety	Generally safe medication X is unsafe for COVID-19 patients
