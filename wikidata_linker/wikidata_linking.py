@@ -10,7 +10,7 @@ import torch
 
 
 STEMMER = SnowballStemmer("english")
-PRETRAINED_MODEL = Path("wikidata_linker") / "sent_model" / "pretrained_model"
+PRETRAINED_MODEL = Path("wikidata_linker") / "sent_model"
 STEM_MAP_PATH = Path("wikidata_linker") / "stem_mapping.json"
 KGTK_CACHE = Path("wikidata_linker") / "kgtk_cache"
 with open(STEM_MAP_PATH) as f:
@@ -188,7 +188,8 @@ def filter_duplicate_candidates(candidates: List[Mapping[str, Any]]) -> List[Map
     label_description_set = set()
     unique_candidates = []
     for candidate in candidates:
-        label_description_tuple = (candidate["label"][0], candidate["description"][0])
+        if candidate["description"]:
+            label_description_tuple = (candidate["label"][0], candidate["description"][0])
         if label_description_tuple not in label_description_set:
             unique_candidates.append(candidate)
             label_description_set.add(label_description_tuple)
@@ -238,7 +239,12 @@ def disambiguate_kgtk(context, query, no_ss_model=False, no_expansion=False, k=3
         for q in expanded_query:
             cache_file = make_cache_path(KGTK_CACHE, q)
             kgtk_json += get_request_kgtk(q, cache_file)
-    unique_candidates = filter_duplicate_candidates(kgtk_json)
+    try:
+        unique_candidates = filter_duplicate_candidates(kgtk_json)
+    except Exception as e:
+        print(e)
+        import pdb
+        pdb.set_trace()
     options = []
     if no_ss_model:
         top3 = wikidata_topk(None, context, unique_candidates, k, thresh=thresh)
