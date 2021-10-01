@@ -47,6 +47,7 @@ flake8==3.9.2
 fsspec==2021.7.0
 ftfy==6.0.3
 future==0.18.2
+git+git://github.com/ablodge/amr-utils@be5534d#egg=amr-utils
 gitdb==4.0.7
 GitPython==3.1.18
 google-api-core==1.31.1
@@ -118,6 +119,7 @@ pathtools==0.1.2
 pathy==0.6.0
 patternfork-nosql==3.6
 pdfminer.six==20201018
+penman==1.2.1
 pexpect==4.8.0
 pickleshare==0.7.5
 Pillow==8.3.1

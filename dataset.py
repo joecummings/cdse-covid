@@ -1,6 +1,11 @@
 from pathlib import Path
 from spacy.tokens import Doc
-from typing import Sequence, Dict
+from typing import Sequence, Dict, List
+
+from amr_utils.amr_readers import AMR_Reader
+from amr_utils.amr import AMR
+
+AMR_READER = AMR_Reader()
 
 
 class AIDADataset:
@@ -31,14 +36,16 @@ class AIDADataset:
                 all_docs.append(parsed_english)
         return all_docs
 
-    def _batch_convert_to_spacy_with_amr(
-            self, corpus: Path, amrs: Path
-    ) -> Dict[Doc, Path]:
-        docs_to_amrs: Dict[Doc, Path] = {}
-        for _file in corpus.glob("*.txt"):
-            with open(_file, "r") as handle:
-                doc_text = handle.read()
-                parsed_english = self.nlp(doc_text)
-                amr_file = Path(f"{amrs}/{_file.stem}.amr")
-                docs_to_amrs[parsed_english] = amr_file
+    def _batch_convert_amr_to_spacy(self, amr_files: Path) -> Dict[Doc, List[AMR]]:
+        docs_to_amrs = {}
+        for _file in amr_files.glob("*.amr"):
+            amrs = AMR_READER.load(_file, remove_wiki=True)
+            sentences = [
+                " ".join(graph.tokens)[:-7]
+                for graph in amrs
+            ]
+            doc_text = " ".join(sentences)
+            print(doc_text)  # debugging
+            parsed_english = self.nlp(doc_text)
+            docs_to_amrs[parsed_english] = amrs
         return docs_to_amrs

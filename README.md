@@ -2,23 +2,18 @@
 
 ## Installation
 
+### CDSE
+
 1. Clone repo
 2. Create virtual environment
 3. Run `bash setup.sh`
 
-## Usage
+### Transition AMR Parser
 
-`python -m claim_detection.models --input TXT_FILES --patterns claim_detection/topics.json --out OUT_FILE`
-
-## Including AMR graphs
-
-In order to use AMR graphs to enhance the results, you will need to run
-an action-pointer model from IBM's Transition AMR Parser on the input files.
-
-1. Clone the repository and `cd` into it.
+1. Clone the repository (with HTTPS, not SSH) at https://github.com/IBM/transition-amr-parser .
 2. Create a new conda environment for the parser (there are several
    conflicting packages between this and the claims detection).
-3. Activate the new conda env and run `python -m pip install -e .`
+3. Activate the new conda env, and in the parser root dir, and run `python -m pip install -e .`
 4. Run `bash tests/correclty_installed.sh` to confirm that the installation succeeded.
 5. For a basic test, run `bash tests/minimal_test.sh`
 6. You will also need the install the alignment tools with these steps:
@@ -47,12 +42,19 @@ an action-pointer model from IBM's Transition AMR Parser on the input files.
    8. Within the jamr root, run `./setup`
    9. Still in jamr, run `. scripts/config.sh`
    10. Follow the `# Kevin aligner` steps in `install_alignment_tools.sh`
-7. Either train your own model or obtain the data from someone on the project.
-8. Run the following:
-   ```
-   python -m amr_parsing.parse_files \
-       TRANSITION_AMR_PARSER_PATH TXT_FILES AMR_OUTPUT_DIR
-   ```
-9. To run the claims detection with the AMR output, run `claim_detection.models`
-   along with the argument `--amrs AMR_OUTPUT_DIR`
+7. Either train your own model (see instructions in the parser README)
+   or obtain the data from someone on the project.
 
+## Usage
+
+1. Create the AMR files
+   ```
+   conda activate <transition-amr-parser-env>
+   python -m amr_parsing.parse_files \
+       --amr_parser TRANSITION_AMR_PARSER_PATH --input TXT_FILES --out AMR_FILES
+   ```
+2. Claim detection:
+   ```
+   conda activate <cdse-covid-env>
+   python -m claim_detection.models --input AMR_FILES --patterns claim_detection/topics.json --out OUT_FILE
+   ```

@@ -67,7 +67,7 @@ class ClaimDetector:
         }
 
     @abc.abstractmethod
-    def find_matches(self, corpus: List[Path], amrs: Optional[Path]):
+    def find_matches(self, corpus: List[Path]):
         pass
 
     @abc.abstractmethod
@@ -132,26 +132,18 @@ class RegexClaimDetector(ClaimDetector, Matcher):
         claimer_list = [graph_nodes[c_node] for c_node in claimer_node_list]
         return ", ".join(claimer_list)
 
-    def find_matches(self, corpus: Path, amrs: Optional[Path]) -> Mapping[str, str]:
-        docs_to_amrs = {}
-        if amrs:
-            docs_to_amrs = AIDADataset(
-                nlp=NLP, templates_file=TEMPLATE_FILE
-            )._batch_convert_to_spacy_with_amr(corpus, amrs)
-            all_docs = docs_to_amrs.keys()
-        else:
-            all_docs = AIDADataset(
-                nlp=NLP, templates_file=TEMPLATE_FILE
-            )._batch_convert_to_spacy(corpus)
+    def find_matches(self, corpus: Path) -> Mapping[str, str]:
+        docs_to_amrs = AIDADataset(
+            nlp=NLP, templates_file=TEMPLATE_FILE
+        )._batch_convert_amr_to_spacy(corpus)
+        all_docs = docs_to_amrs.keys()
 
         all_matches = []
         for doc in all_docs:
             matches = self.__call__(doc)
-            doc_amrs = None
             sentences_to_amrs = {}
-            doc_amr_file = docs_to_amrs.get(doc)
-            if doc_amr_file:
-                doc_amrs = AMR_READER.load(doc_amr_file, remove_wiki=True)
+            doc_amrs = docs_to_amrs.get(doc)
+            if doc_amrs:
                 sentences_to_amrs = {
                     " ".join(amr_graph.tokens): amr_graph
                     for amr_graph in doc_amrs
@@ -266,13 +258,7 @@ def get_argument_node(node, edges) -> Set[str]:
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--input", help="Input docs", type=Path)
-    parser.add_argument(
-        "--amrs",
-        help="Path to the output from the Transition AMR parser",
-        type=Path,
-        default=None
-    )
+    parser.add_argument("--input", help="Input AMR docs", type=Path)
     parser.add_argument(
         "--patterns", help="Patterns for Regex", type=Path, default=None
     )
@@ -285,7 +271,7 @@ def main():
 
     matcher = RegexClaimDetector()
     matcher.add_patterns(patterns)
-    matches = matcher.find_matches(args.input, args.amrs)
+    matches = matcher.find_matches(args.input)
     matcher.save(args.out, matches)
 
 
