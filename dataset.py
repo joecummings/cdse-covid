@@ -1,6 +1,6 @@
 from pathlib import Path
 from spacy.tokens import Doc
-from typing import Sequence
+from typing import Sequence, Dict
 
 
 class AIDADataset:
@@ -30,3 +30,15 @@ class AIDADataset:
                 parsed_english = self.nlp(doc_text)
                 all_docs.append(parsed_english)
         return all_docs
+
+    def _batch_convert_to_spacy_with_amr(
+            self, corpus: Path, amrs: Path
+    ) -> Dict[Doc, Path]:
+        docs_to_amrs: Dict[Doc, Path] = {}
+        for _file in corpus.glob("*.txt"):
+            with open(_file, "r") as handle:
+                doc_text = handle.read()
+                parsed_english = self.nlp(doc_text)
+                amr_file = Path(f"{amrs}/{_file.stem}.amr")
+                docs_to_amrs[parsed_english] = amr_file
+        return docs_to_amrs

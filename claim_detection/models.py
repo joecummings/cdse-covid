@@ -4,12 +4,15 @@ import csv
 import json
 import logging
 from pathlib import Path
-from typing import Any, List, Mapping, Optional, Sequence
+from typing import Any, List, Mapping, Optional, Sequence, Dict, Set
 
 from allennlp_models.pretrained import load_predictor
+from amr_utils.amr_readers import AMR_Reader
+from amr_utils.amr import AMR
+from amr_utils.propbank_frames import propbank_frames_dictionary
 from sentence_transformers import SentenceTransformer, util
 from spacy.matcher import Matcher
-from spacy.tokens import Doc, Span
+from spacy.tokens import Span
 import spacy
 
 from wikidata_linker.wikidata_linking import disambiguate_kgtk
@@ -28,10 +31,23 @@ CORONA_NAME_VARIATIONS = [
     "covid-19",
     "covid 19",
 ]
+
+CLAIMER_ROLES = {
+    "admitter",
+    "arguer",
+    "asserter",
+    "claimer",
+    "sayer",
+    "speaker",
+}
+
 # ss_model = SentenceTransformer("paraphrase-MiniLM-L6-v2")
 
 NLP = spacy.load("en_core_web_sm")
 SRLModel = load_predictor("structured-prediction-srl")
+TOKENIZER = NLP.tokenizer
+
+AMR_READER = AMR_Reader()
 
 RegexPattern = Sequence[Mapping[str, Any]]
 
@@ -51,7 +67,7 @@ class ClaimDetector:
         }
 
     @abc.abstractmethod
-    def find_matches(self, corpus: List[Path]):
+    def find_matches(self, corpus: List[Path], amrs: Optional[Path]):
         pass
 
     @abc.abstractmethod
@@ -104,18 +120,42 @@ class RegexClaimDetector(ClaimDetector, Matcher):
             logging.warning("More than one main verb in instance: %s", span_text)
         return clean_srl_output(roles, NLP)
 
-    def _identify_claimer(self, span):
+    def _identify_claimer(self, span: Span, amr: Optional[AMR]) -> str:
         """Identify the claimer of the span."""
-        raise NotImplementedError()
+        if not amr:
+            return ""
+        # Find the claim node by finding the first node that has a
+        # "claimer" arugment role (not ideal but w/e)
+        graph_nodes = amr.nodes
+        claim_node = get_claim_node(graph_nodes)
+        claimer_node_list = get_argument_node(claim_node, amr.edges)
+        claimer_list = [graph_nodes[c_node] for c_node in claimer_node_list]
+        return ", ".join(claimer_list)
 
-    def find_matches(self, corpus: Path) -> Mapping[str, str]:
-        all_docs = AIDADataset(
-            nlp=NLP, templates_file=TEMPLATE_FILE
-        )._batch_convert_to_spacy(corpus)
+    def find_matches(self, corpus: Path, amrs: Optional[Path]) -> Mapping[str, str]:
+        docs_to_amrs = {}
+        if amrs:
+            docs_to_amrs = AIDADataset(
+                nlp=NLP, templates_file=TEMPLATE_FILE
+            )._batch_convert_to_spacy_with_amr(corpus, amrs)
+            all_docs = docs_to_amrs.keys()
+        else:
+            all_docs = AIDADataset(
+                nlp=NLP, templates_file=TEMPLATE_FILE
+            )._batch_convert_to_spacy(corpus)
 
         all_matches = []
         for doc in all_docs:
             matches = self.__call__(doc)
+            doc_amrs = None
+            sentences_to_amrs = {}
+            doc_amr_file = docs_to_amrs.get(doc)
+            if doc_amr_file:
+                doc_amrs = AMR_READER.load(doc_amr_file, remove_wiki=True)
+                sentences_to_amrs = {
+                    " ".join(amr_graph.tokens): amr_graph
+                    for amr_graph in doc_amrs
+                }
             for (match_id, start, end) in matches:
                 rule_id: str = doc.vocab.strings[match_id]
                 span = doc[start:end]
@@ -139,7 +179,15 @@ class RegexClaimDetector(ClaimDetector, Matcher):
                         target_role = role
 
                 # Identify Claimer
-                claimer = ""
+                if doc_amrs:
+                    claim_amr = get_amr_for_claim(span.text, sentences_to_amrs)
+                    claimer = self._identify_claimer(span, claim_amr)
+                else:
+                    print(
+                        "No corresponding AMR graph found;"
+                        " no claimer will be identified."
+                    )
+                    claimer = ""
 
                 # Link & Format QNodes
                 links = self._find_links(span.sent, match_roles.values())
@@ -172,9 +220,59 @@ class RegexClaimDetector(ClaimDetector, Matcher):
                 writer.writerow(match.values())
 
 
+def get_amr_for_claim(span: str, sents_to_amrs: Dict[str, AMR]) -> Optional[AMR]:
+    for sentence, amr in sents_to_amrs.items():
+        if span in sentence:
+            return amr
+    return None
+
+
+# def get_claim_head(claim_text: str, amr: AMR) -> str:
+#     """Get the head node of the claim"""
+#     graph_nodes = amr.nodes
+#     claim_tokens = claim_text.split(" ")
+#     for token in claim_tokens:
+#         for node, label in graph_nodes.items():
+#             # We're hoping that at least one token matches its lemma
+#             if token == label:
+
+
+def get_claim_node(graph_nodes) -> Optional[str]:
+    """We'll want a better method eventually"""
+    for node, label in graph_nodes.items():
+        if label in propbank_frames_dictionary:
+            for claim_role in CLAIMER_ROLES:
+                if claim_role in propbank_frames_dictionary[label].lower():
+                    return node
+    return None
+
+
+def get_parent_node(node, edges) -> Optional[str]:
+    """Fetch the parent node of a child"""
+    for pred_node, _, arg_node in edges:
+        if arg_node == node:
+            return pred_node
+    return None
+
+
+def get_argument_node(node, edges) -> Set[str]:
+    """Get all argument (claimer) nodes of the claim node"""
+    claimers = set()
+    for pred_node, arg_role, arg_node in edges:
+        if pred_node == node and arg_role == ":ARG0":
+            claimers.add(arg_node)
+    return claimers
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--input", help="Input docs", type=Path)
+    parser.add_argument(
+        "--amrs",
+        help="Path to the output from the Transition AMR parser",
+        type=Path,
+        default=None
+    )
     parser.add_argument(
         "--patterns", help="Patterns for Regex", type=Path, default=None
     )
@@ -187,7 +285,7 @@ def main():
 
     matcher = RegexClaimDetector()
     matcher.add_patterns(patterns)
-    matches = matcher.find_matches(args.input)
+    matches = matcher.find_matches(args.input, args.amrs)
     matcher.save(args.out, matches)
 
 
