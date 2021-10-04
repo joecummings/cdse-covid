@@ -41,7 +41,7 @@ class AIDADataset:
         for _file in amr_files.glob("*.amr"):
             amrs = AMR_READER.load(_file, remove_wiki=True)
             sentences = [
-                " ".join(graph.tokens)[:-7]
+                graph.metadata["snt"]
                 for graph in amrs
             ]
             doc_text = " ".join(sentences)

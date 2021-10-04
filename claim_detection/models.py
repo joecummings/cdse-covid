@@ -10,6 +10,7 @@ from allennlp_models.pretrained import load_predictor
 from amr_utils.amr_readers import AMR_Reader
 from amr_utils.amr import AMR
 from amr_utils.propbank_frames import propbank_frames_dictionary
+from nltk.stem import WordNetLemmatizer
 from sentence_transformers import SentenceTransformer, util
 from spacy.matcher import Matcher
 from spacy.tokens import Span
@@ -48,6 +49,7 @@ SRLModel = load_predictor("structured-prediction-srl")
 TOKENIZER = NLP.tokenizer
 
 AMR_READER = AMR_Reader()
+LEMMATIZER = WordNetLemmatizer()
 
 RegexPattern = Sequence[Mapping[str, Any]]
 
@@ -124,10 +126,11 @@ class RegexClaimDetector(ClaimDetector, Matcher):
         """Identify the claimer of the span."""
         if not amr:
             return ""
-        # Find the claim node by finding the first node that has a
-        # "claimer" arugment role (not ideal but w/e)
+        # Find the claim node by using one of two rules:
+        # 1) Search for the Statement node of the claim by working up the graph
+        # 2) If (1) fails, find the first Statement node in the graph
         graph_nodes = amr.nodes
-        claim_node = get_claim_node(graph_nodes)
+        claim_node = get_claim_node(span.text, amr)
         claimer_node_list = get_argument_node(claim_node, amr.edges)
         claimer_list = [graph_nodes[c_node] for c_node in claimer_node_list]
         return ", ".join(claimer_list)
@@ -219,39 +222,56 @@ def get_amr_for_claim(span: str, sents_to_amrs: Dict[str, AMR]) -> Optional[AMR]
     return None
 
 
-# def get_claim_head(claim_text: str, amr: AMR) -> str:
-#     """Get the head node of the claim"""
-#     graph_nodes = amr.nodes
-#     claim_tokens = claim_text.split(" ")
-#     for token in claim_tokens:
-#         for node, label in graph_nodes.items():
-#             # We're hoping that at least one token matches its lemma
-#             if token == label:
+def get_claim_node(claim_text: str, amr: AMR) -> Optional[str]:
+    """Get the head node of the claim"""
+    graph_nodes = amr.nodes
+    claim_tokens = claim_text.split(" ")
+    for token in claim_tokens:
+        for node, label in graph_nodes.items():
+            # We're hoping that at least one nominal/verbial lemma is found
+            if (
+                    LEMMATIZER.lemmatize(token, pos="n") == label or
+                    LEMMATIZER.lemmatize(token, pos="v") == label
+            ):
+                return get_claim_node_from_token(node, graph_nodes, amr.edges)
+    return search_for_claim_node(graph_nodes)
 
 
-def get_claim_node(graph_nodes) -> Optional[str]:
-    """We'll want a better method eventually"""
-    for node, label in graph_nodes.items():
-        if label in propbank_frames_dictionary:
-            for claim_role in CLAIMER_ROLES:
-                if claim_role in propbank_frames_dictionary[label].lower():
-                    return node
-    return None
+def is_claim_frame(node_label: str) -> bool:
+    if node_label in propbank_frames_dictionary:
+        for claimer_role in CLAIMER_ROLES:
+            if claimer_role in propbank_frames_dictionary[node_label].lower():
+                return True
+    return False
 
 
-def get_parent_node(node, edges) -> Optional[str]:
-    """Fetch the parent node of a child"""
-    for pred_node, _, arg_node in edges:
+def get_claim_node_from_token(node, node_dict, edges) -> Optional[str]:
+    """Fetch the claim node by traveling up from a child node"""
+    for parent_node, _, arg_node in edges:
         if arg_node == node:
-            return pred_node
+            # Check if the parent is a claim node
+            parent_label = node_dict[parent_node]
+            if is_claim_frame(parent_label):
+                return parent_node
+            else:
+                return get_claim_node_from_token(parent_node, node_dict, edges)
+    return search_for_claim_node(node_dict)
+
+
+def search_for_claim_node(graph_nodes) -> Optional[str]:
+    """Rule #2: try finding the statement by reading through all of the nodes"""
+    for node, label in graph_nodes.items():
+        if is_claim_frame(label):
+            return node
     return None
 
 
-def get_argument_node(node, edges) -> Set[str]:
+def get_argument_node(node: Optional[str], edges) -> Set[str]:
     """Get all argument (claimer) nodes of the claim node"""
     claimers = set()
     for pred_node, arg_role, arg_node in edges:
         if pred_node == node and arg_role == ":ARG0":
+            # todo: if the argument has a ":name" argument, return the name
             claimers.add(arg_node)
     return claimers
 

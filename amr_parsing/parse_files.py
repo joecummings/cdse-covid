@@ -6,7 +6,7 @@ You will need to run this in your transition-amr virtual environment.
 import argparse
 from os import chdir, getcwd, makedirs
 from pathlib import Path
-from typing import List
+from typing import List, Tuple
 
 import spacy
 from transition_amr_parser.parse import AMRParser
@@ -44,8 +44,8 @@ def main(arg_parser):
     amr_parser = AMRParser.from_checkpoint(in_checkpoint)
     chdir(cdse_path)
     for input_file in args.input.iterdir():
-        doc_sentences = tokenize_sentences(input_file)
-        annotations = amr_parser.parse_sentences(doc_sentences)
+        doc_sentences, tokenized_sentences = tokenize_sentences(input_file)
+        annotations = amr_parser.parse_sentences(tokenized_sentences)
 
         output_file = f"{args.out}/{input_file.stem}.amr"
         with open(output_file, 'w+', encoding="utf-8") as outfile:
@@ -54,18 +54,19 @@ def main(arg_parser):
                 # Append an id to each graph so that
                 # it can be loaded by amr-utils later
                 outfile.write(f"# ::id {input_file.stem}_{anno_number}\n")
+                outfile.write(f"# ::snt {doc_sentences[anno_number]}")
                 outfile.writelines(''.join(annotation))
         print(f"AMR output saved to {Path(output_file).absolute()}")
 
 
-def tokenize_sentences(corpus_file) -> List[List[str]]:
+def tokenize_sentences(corpus_file) -> Tuple[List[str], List[List[str]]]:
     tokenized_sentences = []
     with open(corpus_file, 'r') as infile:
         input_sentences = infile.readlines()
     for sentence in input_sentences:
         tokens = TOKENIZER(sentence)
         tokenized_sentences.append([token.text for token in tokens])
-    return tokenized_sentences
+    return input_sentences, tokenized_sentences
 
 
 if __name__ == "__main__":
