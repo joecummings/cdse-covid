@@ -10,6 +10,7 @@ from allennlp_models.pretrained import load_predictor
 from amr_utils.amr_readers import AMR_Reader
 from amr_utils.amr import AMR
 from amr_utils.propbank_frames import propbank_frames_dictionary
+from collections import defaultdict
 from nltk.stem import WordNetLemmatizer
 from sentence_transformers import SentenceTransformer, util
 from spacy.matcher import Matcher
@@ -129,10 +130,8 @@ class RegexClaimDetector(ClaimDetector, Matcher):
         # Find the claim node by using one of two rules:
         # 1) Search for the Statement node of the claim by working up the graph
         # 2) If (1) fails, find the first Statement node in the graph
-        graph_nodes = amr.nodes
         claim_node = get_claim_node(span.text, amr)
-        claimer_node_list = get_argument_node(claim_node, amr.edges)
-        claimer_list = [graph_nodes[c_node] for c_node in claimer_node_list]
+        claimer_list = get_argument_node(amr, claim_node)
         return ", ".join(claimer_list)
 
     def find_matches(self, corpus: Path) -> Mapping[str, str]:
@@ -266,14 +265,53 @@ def search_for_claim_node(graph_nodes) -> Optional[str]:
     return None
 
 
-def get_argument_node(node: Optional[str], edges) -> Set[str]:
+def create_amr_dict(amr: AMR) -> Dict[str, Dict[str, str]]:
+    amr_dict = defaultdict(dict)
+    for parent, role, arg in amr.edges:
+        amr_dict[parent][role] = arg
+    return amr_dict
+
+
+def get_argument_node(amr: AMR, claim_node: Optional[str]) -> List[str]:
     """Get all argument (claimer) nodes of the claim node"""
     claimers = set()
-    for pred_node, arg_role, arg_node in edges:
-        if pred_node == node and arg_role == ":ARG0":
-            # todo: if the argument has a ":name" argument, return the name
-            claimers.add(arg_node)
-    return claimers
+    nodes = amr.nodes
+    amr_dict = create_amr_dict(amr)
+    node_args = amr_dict.get(claim_node)
+    if node_args:
+        claimer_node = node_args.get(":ARG0")
+        claimer_label = nodes[claimer_node]
+        if claimer_label == "person":
+            name = get_claimer_name(amr_dict, nodes, claimer_node)
+            if len(name) > 0:
+                claimers.add(f"'{name}'")
+        elif claimer_label == "and":
+            for role, arg_node in amr_dict[claimer_node].items():
+                co_claimer_label = nodes[arg_node]
+                if co_claimer_label == "person":
+                    name = get_claimer_name(amr_dict, nodes, arg_node)
+                    if len(name) > 0:
+                        claimers.add(f"'{name}'")
+                else:
+                    claimers.add(co_claimer_label)
+        else:
+            claimers.add(claimer_label)
+    return list(claimers)
+
+
+def get_claimer_name(
+        amr_dict: Dict[str, Dict[str, str]],
+        node_dict: Dict[str, str],
+        person_node: str
+) -> str:
+    name_strings = []
+    name_node = amr_dict[person_node].get(":name")
+    if name_node:
+        person_args = amr_dict[name_node]
+        for role, node in person_args.items():
+            if role.startswith(":op"):
+                name_strings.append(node_dict[node].strip("\""))
+    return " ".join(name_strings)
 
 
 def main():
