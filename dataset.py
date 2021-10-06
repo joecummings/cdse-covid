@@ -45,7 +45,6 @@ class AIDADataset:
                 for graph in amrs
             ]
             doc_text = " ".join(sentences)
-            print(doc_text)  # debugging
             parsed_english = self.nlp(doc_text)
             docs_to_amrs[parsed_english] = amrs
         return docs_to_amrs

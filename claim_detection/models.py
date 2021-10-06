@@ -3,6 +3,7 @@ import argparse
 import csv
 import json
 import logging
+import re
 from pathlib import Path
 from typing import Any, List, Mapping, Optional, Sequence, Dict, Set
 
@@ -147,7 +148,7 @@ class RegexClaimDetector(ClaimDetector, Matcher):
             doc_amrs = docs_to_amrs.get(doc)
             if doc_amrs:
                 sentences_to_amrs = {
-                    " ".join(amr_graph.tokens): amr_graph
+                    amr_graph.metadata["snt"]: amr_graph
                     for amr_graph in doc_amrs
                 }
             for (match_id, start, end) in matches:
@@ -173,15 +174,22 @@ class RegexClaimDetector(ClaimDetector, Matcher):
                         target_role = role
 
                 # Identify Claimer
+                claimer = ""
                 if doc_amrs:
-                    claim_amr = get_amr_for_claim(span.text, sentences_to_amrs)
-                    claimer = self._identify_claimer(span, claim_amr)
-                else:
-                    print(
-                        "No corresponding AMR graph found;"
-                        " no claimer will be identified."
-                    )
-                    claimer = ""
+                    # SpaCy may cut off trailing punctuation
+                    sentence_pattern = re.escape(str(span.sent)) + r"\"?"
+                    claim_amrs = [
+                        graph for sent, graph in sentences_to_amrs.items()
+                        if re.match(sentence_pattern, sent)
+                    ]
+                    # There should be no more than one result
+                    if len(claim_amrs) == 1:
+                        claimer = self._identify_claimer(span, claim_amrs[0])
+                    else:
+                        print(
+                            "No corresponding AMR graph found;"
+                            " no claimer will be identified."
+                        )
 
                 # Link & Format QNodes
                 links = self._find_links(span.sent, match_roles.values())
@@ -214,13 +222,6 @@ class RegexClaimDetector(ClaimDetector, Matcher):
                 writer.writerow(match.values())
 
 
-def get_amr_for_claim(span: str, sents_to_amrs: Dict[str, AMR]) -> Optional[AMR]:
-    for sentence, amr in sents_to_amrs.items():
-        if span in sentence:
-            return amr
-    return None
-
-
 def get_claim_node(claim_text: str, amr: AMR) -> Optional[str]:
     """Get the head node of the claim"""
     graph_nodes = amr.nodes
@@ -236,7 +237,8 @@ def get_claim_node(claim_text: str, amr: AMR) -> Optional[str]:
     return search_for_claim_node(graph_nodes)
 
 
-def is_claim_frame(node_label: str) -> bool:
+def is_statement_node(node_label: str) -> bool:
+    """Determine if the node under investigation represents a statement event"""
     if node_label in propbank_frames_dictionary:
         for claimer_role in CLAIMER_ROLES:
             if claimer_role in propbank_frames_dictionary[node_label].lower():
@@ -250,7 +252,7 @@ def get_claim_node_from_token(node, node_dict, edges) -> Optional[str]:
         if arg_node == node:
             # Check if the parent is a claim node
             parent_label = node_dict[parent_node]
-            if is_claim_frame(parent_label):
+            if is_statement_node(parent_label):
                 return parent_node
             else:
                 return get_claim_node_from_token(parent_node, node_dict, edges)
@@ -258,9 +260,12 @@ def get_claim_node_from_token(node, node_dict, edges) -> Optional[str]:
 
 
 def search_for_claim_node(graph_nodes) -> Optional[str]:
-    """Rule #2: try finding the statement by reading through all of the nodes"""
+    """
+    Rule #2: try finding the statement node by reading through all nodes
+    and returning the first match
+    """
     for node, label in graph_nodes.items():
-        if is_claim_frame(label):
+        if is_statement_node(label):
             return node
     return None
 
