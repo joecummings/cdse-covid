@@ -33,7 +33,11 @@ conda activate transition-amr-parser
 set -u  # /hack
 
 echo "Installing transition-amr-parser..."
-cd ../transition-amr-parser || { echo "Could not navigate to transition-amr-parser"; exit 1; }
+cd ..
+if [[ ! -d transition-amr-parser/ ]]; then
+  git clone https://github.com/IBM/transition-amr-parser.git
+fi
+cd transition-amr-parser || { echo "Could not navigate to transition-amr-parser"; exit 1; }
 python -m pip install -e .
 echo "Running installation test..."
 bash tests/correctly_installed.sh
