@@ -3,13 +3,19 @@ import argparse
 import csv
 import json
 import logging
+import re
 from pathlib import Path
-from typing import Any, List, Mapping, Optional, Sequence
+from typing import Any, List, Mapping, Optional, Sequence, Dict, Set
 
 from allennlp_models.pretrained import load_predictor
+from amr_utils.amr_readers import AMR_Reader
+from amr_utils.amr import AMR
+from amr_utils.propbank_frames import propbank_frames_dictionary
+from collections import defaultdict
+from nltk.stem import WordNetLemmatizer
 from sentence_transformers import SentenceTransformer, util
 from spacy.matcher import Matcher
-from spacy.tokens import Doc, Span
+from spacy.tokens import Span
 import spacy
 
 from wikidata_linker.wikidata_linking import disambiguate_kgtk
@@ -28,10 +34,24 @@ CORONA_NAME_VARIATIONS = [
     "covid-19",
     "covid 19",
 ]
+
+CLAIMER_ROLES = {
+    "admitter",
+    "arguer",
+    "asserter",
+    "claimer",
+    "sayer",
+    "speaker",
+}
+
 # ss_model = SentenceTransformer("paraphrase-MiniLM-L6-v2")
 
 NLP = spacy.load("en_core_web_sm")
 SRLModel = load_predictor("structured-prediction-srl")
+TOKENIZER = NLP.tokenizer
+
+AMR_READER = AMR_Reader()
+LEMMATIZER = WordNetLemmatizer()
 
 RegexPattern = Sequence[Mapping[str, Any]]
 
@@ -104,18 +124,33 @@ class RegexClaimDetector(ClaimDetector, Matcher):
             logging.warning("More than one main verb in instance: %s", span_text)
         return clean_srl_output(roles, NLP)
 
-    def _identify_claimer(self, span):
+    def _identify_claimer(self, span: Span, amr: Optional[AMR]) -> str:
         """Identify the claimer of the span."""
-        raise NotImplementedError()
+        if not amr:
+            return ""
+        # Find the claim node by using one of two rules:
+        # 1) Search for the Statement node of the claim by working up the graph
+        # 2) If (1) fails, find the first Statement node in the graph
+        claim_node = get_claim_node(span.text, amr)
+        claimer_list = get_argument_node(amr, claim_node)
+        return ", ".join(claimer_list)
 
     def find_matches(self, corpus: Path) -> Mapping[str, str]:
-        all_docs = AIDADataset(
+        docs_to_amrs = AIDADataset(
             nlp=NLP, templates_file=TEMPLATE_FILE
-        )._batch_convert_to_spacy(corpus)
+        )._batch_convert_amr_to_spacy(corpus)
+        all_docs = docs_to_amrs.keys()
 
         all_matches = []
         for doc in all_docs:
             matches = self.__call__(doc)
+            sentences_to_amrs = {}
+            doc_amrs = docs_to_amrs.get(doc)
+            if doc_amrs:
+                sentences_to_amrs = {
+                    amr_graph.metadata["snt"]: amr_graph
+                    for amr_graph in doc_amrs
+                }
             for (match_id, start, end) in matches:
                 rule_id: str = doc.vocab.strings[match_id]
                 span = doc[start:end]
@@ -140,6 +175,21 @@ class RegexClaimDetector(ClaimDetector, Matcher):
 
                 # Identify Claimer
                 claimer = ""
+                if doc_amrs:
+                    # SpaCy may cut off trailing punctuation
+                    sentence_pattern = re.escape(str(span.sent)) + r"\"?"
+                    claim_amrs = [
+                        graph for sent, graph in sentences_to_amrs.items()
+                        if re.match(sentence_pattern, sent)
+                    ]
+                    # There should be no more than one result
+                    if len(claim_amrs) == 1:
+                        claimer = self._identify_claimer(span, claim_amrs[0])
+                    else:
+                        print(
+                            "No corresponding AMR graph found;"
+                            " no claimer will be identified."
+                        )
 
                 # Link & Format QNodes
                 links = self._find_links(span.sent, match_roles.values())
@@ -172,9 +222,106 @@ class RegexClaimDetector(ClaimDetector, Matcher):
                 writer.writerow(match.values())
 
 
+def get_claim_node(claim_text: str, amr: AMR) -> Optional[str]:
+    """Get the head node of the claim"""
+    graph_nodes = amr.nodes
+    claim_tokens = claim_text.split(" ")
+    for token in claim_tokens:
+        for node, label in graph_nodes.items():
+            # We're hoping that at least one nominal/verbial lemma is found
+            if (
+                    LEMMATIZER.lemmatize(token, pos="n") == label or
+                    LEMMATIZER.lemmatize(token, pos="v") == label
+            ):
+                return get_claim_node_from_token(node, graph_nodes, amr.edges)
+    return search_for_claim_node(graph_nodes)
+
+
+def is_statement_node(node_label: str) -> bool:
+    """Determine if the node under investigation represents a statement event"""
+    if node_label in propbank_frames_dictionary:
+        for claimer_role in CLAIMER_ROLES:
+            if claimer_role in propbank_frames_dictionary[node_label].lower():
+                return True
+    return False
+
+
+def get_claim_node_from_token(node, node_dict, edges) -> Optional[str]:
+    """Fetch the claim node by traveling up from a child node"""
+    for parent_node, _, arg_node in edges:
+        if arg_node == node:
+            # Check if the parent is a claim node
+            parent_label = node_dict[parent_node]
+            if is_statement_node(parent_label):
+                return parent_node
+            else:
+                return get_claim_node_from_token(parent_node, node_dict, edges)
+    return search_for_claim_node(node_dict)
+
+
+def search_for_claim_node(graph_nodes) -> Optional[str]:
+    """
+    Rule #2: try finding the statement node by reading through all nodes
+    and returning the first match
+    """
+    for node, label in graph_nodes.items():
+        if is_statement_node(label):
+            return node
+    return None
+
+
+def create_amr_dict(amr: AMR) -> Dict[str, Dict[str, str]]:
+    amr_dict = defaultdict(dict)
+    for parent, role, arg in amr.edges:
+        amr_dict[parent][role] = arg
+    return amr_dict
+
+
+def get_argument_node(amr: AMR, claim_node: Optional[str]) -> List[str]:
+    """Get all argument (claimer) nodes of the claim node"""
+    claimers = set()
+    nodes = amr.nodes
+    amr_dict = create_amr_dict(amr)
+    node_args = amr_dict.get(claim_node)
+    if node_args:
+        claimer_node = node_args.get(":ARG0")
+        claimer_label = nodes[claimer_node]
+        if claimer_label == "person":
+            name = get_claimer_name(amr_dict, nodes, claimer_node)
+            if len(name) > 0:
+                claimers.add(f"'{name}'")
+        elif claimer_label == "and":
+            for role, arg_node in amr_dict[claimer_node].items():
+                co_claimer_label = nodes[arg_node]
+                if co_claimer_label == "person":
+                    name = get_claimer_name(amr_dict, nodes, arg_node)
+                    if len(name) > 0:
+                        claimers.add(f"'{name}'")
+                else:
+                    claimers.add(co_claimer_label)
+        else:
+            claimers.add(claimer_label)
+    return list(claimers)
+
+
+def get_claimer_name(
+        amr_dict: Dict[str, Dict[str, str]],
+        node_dict: Dict[str, str],
+        person_node: str
+) -> str:
+    name_strings = []
+    name_node = amr_dict[person_node].get(":name")
+    if name_node:
+        person_args = amr_dict[name_node]
+        for role, node in person_args.items():
+            if role.startswith(":op"):
+                name_strings.append(node_dict[node].strip("\""))
+    return " ".join(name_strings)
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--input", help="Input docs", type=Path)
+    parser.add_argument("--input", help="Input AMR docs", type=Path)
     parser.add_argument(
         "--patterns", help="Patterns for Regex", type=Path, default=None
     )
