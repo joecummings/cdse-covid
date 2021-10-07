@@ -81,12 +81,8 @@ cd ..
 echo "JAMR installed (2/4)"
 
 echo "Installing Kevin aligner..."
-# Install cmake through brew if OSX, else use pip
-if [[ $(uname -s) == "Darwin" ]]; then
-  brew install cmake
-else
-  python -m pip install cmake
-fi
+# Install cmake through brew if installed, else use pip
+brew install cmake || python -m pip install cmake
 if [[ ! -d kevin/ ]]; then
   git clone https://github.com/damghani/AMR_Aligner
   mv AMR_Aligner kevin
