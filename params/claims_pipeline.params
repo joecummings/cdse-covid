@@ -1,0 +1,18 @@
+_includes:
+    - "root.params"
+    - "local.params"
+
+site: local
+namespace: local
+partition: local
+
+include_saga: false
+
+workflow_directory: "%experiments_root%/claims"
+experiment_name: claims
+
+claim_detection:
+    patterns: "%project_root%/cdse_covid/claim_detection/topics.json"
+    corpus: "%project_root%/data/aida_english"
+    out_file: "%project_root%/test_pegasus.csv"
+
