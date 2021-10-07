@@ -1,7 +1,9 @@
 import json
+import spacy
 
 from vistautils.parameters_only_entrypoint import parameters_only_entry_point
 from cdse_covid.claim_detection.models import RegexClaimDetector
+from dataset import AIDADataset
 
 
 def main(params):
@@ -12,7 +14,8 @@ def main(params):
     model.add_patterns(patterns_json)
 
     corpus = params.existing_directory("corpus")
-    matches = model.find_matches(corpus)
+    dataset = AIDADataset.from_text_files(corpus, nlp=spacy.load("en_core_web_sm"))
+    matches = model.find_matches(dataset)
 
     out_file = params.creatable_file("out_file")
     model.save(out_file, matches)

@@ -1,10 +1,11 @@
 import abc
 import argparse
 import csv
+from dataclasses import dataclass
 import json
 import logging
 from pathlib import Path
-from typing import Any, List, Mapping, Optional, Sequence
+from typing import Any, List, Mapping, Optional, Sequence, Tuple
 
 from allennlp_models.pretrained import load_predictor
 from common import SENT_MODEL
@@ -37,21 +38,19 @@ RegexPattern = Sequence[Mapping[str, Any]]
 
 TEMPLATE_FILE = Path(__file__).parent / "topic_list.txt"
 
+@dataclass
+class Claim:
+    claim_id: str
+    doc_id: str
+    text: str
+    claim_span: Tuple[str, str]
+    claim_template: str
+
 
 class ClaimDetector:
-    def _structure_gaia_claim(
-        self, *, span: Span, rule_id: str, x_variable: str, claimer: str
-    ) -> Mapping[str, str]:
-        return {
-            "Natural Language Description": span.sent.text,
-            "Claim Template": rule_id,
-            "X Variable": x_variable,
-            "Claimer": claimer,
-            "Epistemic Status": "true-certain",
-        }
 
     @abc.abstractmethod
-    def find_matches(self, corpus: List[Path]):
+    def generate_candidates(self, corpus: List[Path]):
         pass
 
     @abc.abstractmethod
@@ -143,56 +142,30 @@ class RegexClaimDetector(ClaimDetector, Matcher):
         """Identify the claimer of the span."""
         raise NotImplementedError()
 
-    def find_matches(self, corpus: Path) -> Mapping[str, str]:
-        all_docs = AIDADataset(
-            nlp=NLP, templates_file=TEMPLATE_FILE
-        )._batch_convert_to_spacy(corpus)
-
+    def generate_candidates(self, corpus: AIDADataset) -> Mapping[str, str]:
+        i = 0
         all_matches = []
-        for doc in all_docs:
+
+        for doc in corpus.documents:
             matches = self.__call__(doc)
             for (match_id, start, end) in matches:
                 rule_id: str = doc.vocab.strings[match_id]
                 span = doc[start:end]
-                # Expand to get entire noun phrases
 
-                # Label w/ SRL
-                match_roles = self._label_roles(span.text)
-
-                cleaned_tokens = []
-                for token in rule_id.split():
-                    if "-" in token and "X" in token:
-                        cleaned_tokens.append("X")
-                    else:
-                        cleaned_tokens.append(token)
-                cleaned_rule_id = " ".join(cleaned_tokens)
-
-                template_roles = self._label_roles(cleaned_rule_id)
-                target_role = None
-                for role, token in template_roles.items():
-                    if token == "X":
-                        target_role = role
-
-                # Identify Claimer
-                claimer = ""
-
-                # Link & Format QNodes
-                links = self._find_links(span.sent, match_roles.values())
-                x_variable = match_roles.get(target_role, "")
-                for link in links:
-                    if link["query"] == x_variable and len(link["options"]) > 0:
-                        x_variable += f" ({link['options'][0]['qnode']})"
-
-                # Add to returns with proper claim format
-                claim = self._structure_gaia_claim(
-                    span=span,
-                    rule_id=rule_id,
-                    x_variable=x_variable,
-                    claimer=claimer,
+                new_claim = Claim(
+                    claim_id=i,
+                    doc_id=doc,
+                    text=span,
+                    claim_span=(start, end),
+                    claim_template=rule_id
                 )
-                all_matches.append(claim)
+
+                all_matches.append(new_claim)
 
         return all_matches
+    
+    def label_claims(self, claims):
+        pass
 
     @staticmethod
     def save(out_file: Path, matches: Sequence[Mapping[str, Any]]) -> None:
@@ -215,19 +188,6 @@ def main():
     )
     parser.add_argument("--out", help="Out file", type=Path)
     args = parser.parse_args()
-
-    if args.patterns:
-        with open(args.patterns, "r") as handle:
-            patterns = json.load(handle)
-
-    matcher = RegexClaimDetector()
-    matcher.add_patterns(patterns)
-    matches = matcher.find_matches(args.input)
-    matcher.save(args.out, matches)
-
-    # matcher = SBERTClaimDetector()
-    # matches = matcher.find_matches(args.input)
-
 
 
 if __name__ == "__main__":
