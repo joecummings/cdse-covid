@@ -1,0 +1,246 @@
+{
+    "X transmits / transfers COVID-19": [
+        [
+            {"POS": {"IN": ["NOUN", "PROPN", "PRON"]}, "OP": "+"},
+            {"LEMMA": {"IN": ["transmit", "transfer", "spread"]}, "OP": "+"},
+            {"TEXT": {"IN": "CORONA_NAME_VARIATIONS"}, "OP": "+"}
+        ]
+    ],
+    "X destroys COVID-19": [
+        [
+            {"POS": {"IN": ["NOUN", "PROPN"]}, "OP": "+"},
+            {"LEMMA": "destroy", "OP": "+"},
+            {"TEXT": {"IN": "CORONA_NAME_VARIATIONS"}, "OP": "+"}
+        ]
+    ],
+    "X prevents COVID-19": [
+        [
+            {"POS": {"IN": ["NOUN", "PROPN"]}, "OP": "+"},
+            {"LEMMA": "prevent", "OP": "+"},
+            {"TEXT": {"IN": "CORONA_NAME_VARIATIONS"}, "OP": "+"}
+        ]
+    ],
+    "X cures COVID-19": [
+        [
+            {"POS": {"IN": ["NOUN", "PROPN"]}, "OP": "+"},
+            {"LEMMA": "cure", "OP": "+"},
+            {"TEXT": {"IN": "CORONA_NAME_VARIATIONS"}, "OP": "+"}
+        ]
+    ],
+    "SARS-CoV-2 is X": [
+        [
+            {"TEXT": {"IN": "CORONA_NAME_VARIATIONS"}, "OP": "+"},
+            {"LEMMA": "be", "OP": "+"},
+            {"POS": "DET", "OP": "?"},
+            {"POS": "ADP", "OP": "*"},
+            {"POS": "ADV", "OP": "*"},
+            {"POS": {"IN": ["ADJ"]}, "OP": "+"},
+            {"POS": "NOUN", "OP": "+"}
+        ]
+    ],
+    "Immunity against COVID-19 is X": [
+        [
+            {"TEXT": "Immunity", "OP": "+"},
+            {"TEXT": {"IN": ["against", "from"]}, "OP": "+"},
+            {"TEXT": {"IN": "CORONA_NAME_VARIATIONS"}},
+            {"LEMMA": "be", "OP": "+"},
+            {"POS": {"IN": ["ADJ", "NOUN", "NOUNP"]}, "OP": "+"},
+            {"POS": {"IN": ["NOUN", "NOUNP"]}, "OP": "*"}
+        ]
+    ],
+    "The potency of SARS-CoV-2 is X": [
+        [
+            {"TEXT": "potency", "OP": "+"},
+            {"lemma": "of", "OP": "+"},
+            {"TEXT": {"IN": "CORONA_NAME_VARIATIONS"}},
+            {"LEMMA": "be", "OP": "+"},
+            {"POS": {"IN": ["ADJ", "NOUN", "NOUNP"]}, "OP": "+"},
+            {"POS": {"IN": ["NOUN", "NOUNP"]}, "OP": "*"}
+        ]
+    ],
+    "Wearing masks is required in location/GPE/facility-X": [
+        [
+            {"TEXT": "Wearing masks is", "OP": "+"},
+            {"TEXT": "required"},
+            {"POS": "ADP", "OP": "+"},
+            {"ENT_TYPE": {"IN": ["GPE", "LOC", "FAC"]}}
+        ]
+    ],
+    "Wearing masks is recommended in location/GPE/facility-X": [
+        [
+            {"TEXT": "Wearing masks is", "OP": "+"},
+            {"TEXT": "recommended"},
+            {"POS": "ADP", "OP": "+"},
+            {"ENT_TYPE": {"IN": ["GPE", "LOC", "FAC"]}}
+        ]
+    ],
+    "Wearing masks is necessary in location/GPE/facility-X": [
+        [
+            {"TEXT": "Wearing masks is", "OP": "+"},
+            {"TEXT": "necessary"},
+            {"POS": "ADP", "OP": "+"},
+            {"ENT_TYPE": {"IN": ["GPE", "LOC", "FAC"]}}
+        ]
+    ],
+    "Wearing masks has X negative effect": [
+        [
+            {"TEXT": "Wearing masks has", "OP": "+"},
+            {"POS": {"IN": ["ADJ", "NOUN", "AUX"]}, "OP": "*"},
+            {"TEXT": "effect"}
+        ]
+    ],
+    "Animal-X is associated/involved with the origin of COVID-19": [
+        [
+            {"POS": {"IN": ["NOUN", "NOUNP"]}, "OP": "+"},
+            {"LEMMA": "be", "OP": "+"},
+            {"TEXT": {"IN": ["associated", "involved"]}},
+            {"TEXT": "with the origin of", "OP": "+"},
+            {"TEXT": {"IN": "CORONA_NAME_VARIATIONS"}}
+        ]
+    ],
+    "X created SARS-CoV-2": [
+        [
+            {"POS": {"IN": ["NOUN", "NOUNP"]}, "OP": "+"},
+            {"TEXT": "created"},
+            {"TEXT": {"IN": "CORONA_NAME_VARIATIONS"}},
+            {"POS": "NOUN", "OP": "*"}
+        ]
+    ],
+    "X funded SARS-CoV-2 development": [
+        [
+            {"POS": {"IN": ["NOUN", "NOUNP"]}, "OP": "+"},
+            {"TEXT": "funded"},
+            {"TEXT": {"IN": "CORONA_NAME_VARIATIONS"}},
+            {"POS": "NOUN", "OP": "*"}
+        ]
+    ],
+    "SARS-CoV-2 originated in place-X": [
+        [
+            {"TEXT": {"IN": "CORONA_NAME_VARIATIONS"}},
+            {"TEXT": "originated", "OP": "+"},
+            {"POS": "ADP", "OP": "*"},
+            {"ENT_TYPE": {"IN": ["GPE", "LOC", "FAC"]}}
+        ]
+    ],
+    "SARS-CoV-2 was created in location/GPE/org/facility-X": [
+        [
+            {"TEXT": {"IN": "CORONA_NAME_VARIATIONS"}},
+            {"lemma": "be", "OP": "+"},
+            {"TEXT": "created", "OP": "+"},
+            {"POS": "ADP", "OP": "*"},
+            {"ENT_TYPE": {"IN": ["GPE", "LOC", "FAC", "ORG"]}}
+        ]
+    ],
+    "The first case of COVID-19 occurred in location-X": [
+        [
+            {"TEXT": "first case of", "OP": "+"},
+            {"TEXT": {"IN": "CORONA_NAME_VARIATIONS"}},
+            {"TEXT": "occurred", "OP": "+"},
+            {"POS": "ADP", "OP": "*"},
+            {"ENT_TYPE": {"IN": ["GPE", "LOC", "FAC", "ORG"]}}
+        ]
+    ],
+    "The first case of COVID-19 occurred on date-X": [
+        [
+            {"TEXT": "first case of", "OP": "+"},
+            {"TEXT": {"IN": "CORONA_NAME_VARIATIONS"}},
+            {"TEXT": "occurred", "OP": "+"},
+            {"POS": "ADP", "OP": "*"},
+            {"ENT_TYPE": {"IN": ["DATE"]}}
+        ]
+    ],
+    "SARS-CoV-2 was created on date-X": [
+        [
+            {"TEXT": {"IN": "CORONA_NAME_VARIATIONS"}},
+            {"LEMMA": "be", "OP": "+"},
+            {"TEXT": "created", "OP": "+"},
+            {"POS": "ADP", "OP": "*"},
+            {"ENT_TYPE": {"IN": ["DATE"]}}
+        ]
+    ],
+    "X was the target of the virus": [
+        [
+            {"POS": {"IN": ["NOUN", "NOUNP"]}, "OP": "+"},
+            {"lemma": "be", "OP": "+"},
+            {"TEXT": "the target of the virus", "OP": "+"}
+        ]
+    ],
+    "Government-X enacted population restrictions related to COVID-19": [
+        [
+            {"ENT_TYPE": {"IN": ["GPE", "ORG"]}},
+            {"POS": "VERB"},
+            {"TEXT": {"IN": ["restrictions"]}, "OP": "+"},
+            {"POS": "ADJ", "OP": "*"},
+            {"POS": "ADP", "OP": "+"},
+            {"TEXT": {"IN": "CORONA_NAME_VARIATIONS"}}
+        ]
+    ],
+    "Government-X enacted contact tracing related to COVID-19": [
+        [
+            {"ENT_TYPE": {"IN": ["GPE", "ORG"]}},
+            {"POS": "VERB"},
+            {"TEXT": {"IN": ["contact tracing"]}, "OP": "+"},
+            {"POS": "ADJ", "OP": "*"},
+            {"POS": "ADP", "OP": "+"},
+            {"TEXT": {"IN": "CORONA_NAME_VARIATIONS"}}
+        ]
+    ],
+    "X is an effective treatment for COVID-19": [
+        [
+            {"POS": {"IN": ["NOUN", "NOUNP"]}, "OP": "+"},
+            {"lemma": "be", "OP": "+"},
+            {"POS": "AUX", "OP": "*"},
+            {"TEXT": "effective treatment", "OP": "+"},
+            {"POS": "ADP", "OP": "+"},
+            {"TEXT": {"IN": "CORONA_NAME_VARIATIONS"}}
+        ]
+    ],
+    "Treatment-X shortens the length of COVID-19 infection": [
+        [
+            {"POS": {"IN": ["NOUN", "NOUNP"]}, "OP": "+"},
+            {"TEXT": {"IN": ["shortens the length of", "shortens"]}},
+            {"POS": "AUX", "OP": "*"},
+            {"TEXT": {"IN": "CORONA_NAME_VARIATIONS"}},
+            {"TEXT": "infection", "OP": "*"}
+        ]
+    ],
+    "Treatment-X prevents death or reduces the chance of death from COVID-19 infection": [
+        [
+            {"POS": {"IN": ["NOUN", "NOUNP"]}, "OP": "+"},
+            {"TEXT": {"IN": ["prevents death", "reduces the chance of death"]}},
+            {"POS": "ADP", "OP": "*"},
+            {"TEXT": {"IN": "CORONA_NAME_VARIATIONS"}},
+            {"TEXT": "infection", "OP": "*"}
+        ]
+    ],
+    "Treatment-X received emergency use approval": [
+        [
+            {"POS": {"IN": ["NOUN", "NOUNP"]}, "OP": "+"},
+            {"POS": "VERB", "OP": "+"},
+            {"TEXT": {"IN": ["emergency", "emergency use"]}},
+            {"TEXT": "approval", "OP": "+"}
+        ]
+    ],
+    "Treatment-X is a safe treatment for COVID-19": [
+        [
+            {"POS": {"IN": ["NOUN", "NOUNP"]}, "OP": "+"},
+            {"lemma": "be", "OP": "+"},
+            {"POS": "AUX", "OP": "*"},
+            {"TEXT": "safe", "OP": "*"},
+            {"TEXT": "treatment", "OP": "+"},
+            {"POS": "ADP", "OP": "*"},
+            {"TEXT": {"IN": "CORONA_NAME_VARIATIONS"}}
+        ]
+    ],
+    "Generally safe medication X is unsafe for COVID-19 patients": [
+        [
+            {"TEXT": {"IN": ["generally safe", "safe", "medication"]}, "OP": "*"},
+            {"POS": {"IN": ["NOUN", "NOUNP"]}, "OP": "+"},
+            {"lemma": "be", "OP": "+"},
+            {"TEXT": "safe", "OP": "+"},
+            {"POS": "ADP", "OP": "*"},
+            {"TEXT": {"IN": "CORONA_NAME_VARIATIONS"}},
+            {"TEXT": "patients", "OP": "*"}
+        ]
+    ]
+}
