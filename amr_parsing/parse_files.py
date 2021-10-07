@@ -16,19 +16,15 @@ TOKENIZER = NLP.tokenizer
 
 
 def main(arg_parser):
-    arg_parser.add_argument(
-        "--amr_parser",
-        help="Path to the installation of transition-amr-parser",
-        type=Path,
-    )
     arg_parser.add_argument("--input", help="Input docs", type=Path)
     arg_parser.add_argument("--out", help="AMR output dir", type=Path)
 
     args = arg_parser.parse_args()
+    parser_path = "../transition-amr-parser"
     cdse_path = getcwd()
 
     # We assume that the checkpoint is in this location within the repo
-    in_checkpoint = f"{args.amr_parser}/DATA/AMR2.0/models" \
+    in_checkpoint = f"{parser_path}/DATA/AMR2.0/models" \
                     "/exp_cofill_o8.3_act-states_RoBERTa-large-top24" \
                     "/_act-pos-grh_vmask1_shiftpos1_ptr-lay6-h1_grh-lay123-h2-allprev" \
                     "_1in1out_cam-layall-h2-abuf/ep120-seed42/checkpoint_best.pt"
@@ -40,7 +36,7 @@ def main(arg_parser):
     if not Path(args.out).exists():
         makedirs(args.out)
 
-    chdir(args.amr_parser)
+    chdir(parser_path)
     amr_parser = AMRParser.from_checkpoint(in_checkpoint)
     chdir(cdse_path)
     for input_file in args.input.iterdir():
@@ -61,12 +57,16 @@ def main(arg_parser):
 
 def tokenize_sentences(corpus_file) -> Tuple[List[str], List[List[str]]]:
     tokenized_sentences = []
+    final_doc_sentences = []
     with open(corpus_file, 'r') as infile:
         input_sentences = infile.readlines()
     for sentence in input_sentences:
-        tokens = TOKENIZER(sentence)
-        tokenized_sentences.append([token.text for token in tokens])
-    return input_sentences, tokenized_sentences
+        tokens = TOKENIZER(sentence.strip())
+        tokenized_sentence = [token.text for token in tokens]
+        if len(tokenized_sentence) >= 1:
+            tokenized_sentences.append(tokenized_sentence)
+            final_doc_sentences.append(sentence)
+    return final_doc_sentences, tokenized_sentences
 
 
 if __name__ == "__main__":

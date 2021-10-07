@@ -38,7 +38,10 @@ if [[ ! -d transition-amr-parser/ ]]; then
   git clone https://github.com/IBM/transition-amr-parser.git
 fi
 cd transition-amr-parser || { echo "Could not navigate to transition-amr-parser"; exit 1; }
+touch set_environment.sh
 python -m pip install -e .
+# fairseq loading fix
+sed -i ".bak" "s/pytorch\/fairseq/\pytorch\/fairseq\:main/" transition_amr_parser/parse.py
 echo "Running installation test..."
 bash tests/correctly_installed.sh
 if ! bash tests/correctly_installed.sh | grep -q 'correctly installed'; then
@@ -78,6 +81,12 @@ cd ..
 echo "JAMR installed (2/4)"
 
 echo "Installing Kevin aligner..."
+# Install cmake through brew if OSX, else use pip
+if [[ $(uname -s) == "Darwin" ]]; then
+  brew install cmake
+else
+  python -m pip install cmake
+fi
 if [[ ! -d kevin/ ]]; then
   git clone https://github.com/damghani/AMR_Aligner
   mv AMR_Aligner kevin
@@ -94,13 +103,17 @@ cd ..
 echo "Kevin installed (3/4)"
 
 MODEL_PATH="/nas/gaia/curated-training/repos/transition-amr-parser/DATA/AMR2.0"
+MODEL_PATH+="/models/exp_cofill_o8.3_act-states_RoBERTa-large-top24"
+MODEL_PATH+="/_act-pos-grh_vmask1_shiftpos1_ptr-lay6-h1_grh-lay123-h2-allprev_1in1out_cam-layall-h2-abuf"
+MODEL_PATH+="/ep120-seed42/{checkpoint_best.pt,config.sh,dict.actions_nopos.txt,dict.en.txt,entity_rules.json,train.rules.json}"
+
 cd DATA || { echo "Could not navigate to $(pwd)/DATA"; exit 1; }
 if [[ ! -d AMR2.0/ ]]; then
   echo "Downloading model..."
   if [[ $ISI_USERNAME == "" ]]; then
     cp -r $MODEL_PATH . || { echo "Failed to copy model over"; exit 1; }
   else
-    scp -r "$ISI_USERNAME"@gaiadev01:"$MODEL_PATH" . || { echo "Failed to download model"; exit 1; }
+    scp -r "$ISI_USERNAME"@minlp-dev-01:"$MODEL_PATH" . || { echo "Failed to download model"; exit 1; }
   fi
 else
   echo "Looks like the required model is already present"
