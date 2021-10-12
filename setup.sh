@@ -32,6 +32,9 @@ fi
 conda activate transition-amr-parser
 set -u  # /hack
 
+# Install proper SpaCy model
+python -m spacy download en_core_web_sm
+
 echo "Installing transition-amr-parser..."
 cd ..
 if [[ ! -d transition-amr-parser/ ]]; then
@@ -41,7 +44,7 @@ cd transition-amr-parser || { echo "Could not navigate to transition-amr-parser"
 touch set_environment.sh
 python -m pip install -e .
 # fairseq loading fix
-sed -i ".bak" "s/pytorch\/fairseq/\pytorch\/fairseq\:main/" transition_amr_parser/parse.py
+sed -i.bak "s/pytorch\/fairseq/\pytorch\/fairseq\:main/" transition_amr_parser/parse.py
 echo "Running installation test..."
 bash tests/correctly_installed.sh
 if ! bash tests/correctly_installed.sh | grep -q 'correctly installed'; then
@@ -69,9 +72,9 @@ grep -v "sbt-idea" $PLUGIN_FILE > tmpfile && mv tmpfile $PLUGIN_FILE
 
 # Update package versions
 echo "Updating package versions for JAMR..."
-sed -i ".bak" "s/\"scala-arm\" % \"[0-9]*\.[0-9]*\"/\"scala-arm\" % \"2\.0\"/" $BUILD_FILE
-sed -i ".bak" "s/\"sbt-assembly\" % \"[0-9]*\.[0-9]*\.[0-9]*\"/\"sbt-assembly\" % \"0\.14\.6\"/" $PLUGIN_FILE
-sed -i ".bak" "s/\"sbteclipse-plugin\" % \"[0-9]*\.[0-9]*\.[0-9]*\"/\"sbteclipse-plugin\" % \"5\.2\.4\"/" $PLUGIN_FILE
+sed -i.bak "s/\"scala-arm\" % \"[0-9]*\.[0-9]*\"/\"scala-arm\" % \"2\.0\"/" $BUILD_FILE
+sed -i.bak "s/\"sbt-assembly\" % \"[0-9]*\.[0-9]*\.[0-9]*\"/\"sbt-assembly\" % \"0\.14\.6\"/" $PLUGIN_FILE
+sed -i.bak "s/\"sbteclipse-plugin\" % \"[0-9]*\.[0-9]*\.[0-9]*\"/\"sbteclipse-plugin\" % \"5\.2\.4\"/" $PLUGIN_FILE
 echo "sbt.version=1.2.0" > project/build.properties
 
 ./setup || { echo "JAMR setup failed; you may need to further update the config files"; exit 1; }
