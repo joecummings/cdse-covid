@@ -1,7 +1,7 @@
 import argparse
 import json
 from pathlib import Path
-from typing import Any, Callable, List, Mapping, MutableMapping, Sequence, Tuple, Union
+from typing import Any, Callable, List, Mapping, MutableMapping, Sequence, Union
 from nltk.stem.snowball import SnowballStemmer
 import numpy as np
 import requests
@@ -10,9 +10,11 @@ import torch
 
 
 STEMMER = SnowballStemmer("english")
-PRETRAINED_MODEL = Path("wikidata_linker") / "sent_model"
-STEM_MAP_PATH = Path("wikidata_linker") / "stem_mapping.json"
-KGTK_CACHE = Path("wikidata_linker") / "kgtk_cache"
+
+BASE = Path(__file__).parent
+PRETRAINED_MODEL = BASE / "sent_model"
+STEM_MAP_PATH = BASE / "stem_mapping.json"
+KGTK_CACHE = BASE / "kgtk_cache"
 with open(STEM_MAP_PATH) as f:
     STEM_MAP = json.load(f)
 SS_MODEL = SentenceTransformer(str(PRETRAINED_MODEL))
@@ -92,8 +94,7 @@ def get_ss_model_similarity(
     ]
     all_encodings = ss_model.encode(all_strings, convert_to_tensor=True)
     source_emb, candidate_emb = all_encodings[0], all_encodings[1:]
-    sim_scores = ss_util.pytorch_cos_sim(source_emb, candidate_emb)[0]
-    return sim_scores
+    return ss_util.pytorch_cos_sim(source_emb, candidate_emb)[0]
 
 
 def get_request_kgtk(
@@ -116,8 +117,8 @@ def get_request_kgtk(
         A list of candidates, or an empty list.
     """
     if cache_file.is_file():
-        with open(cache_file) as f:
-            candidates: List[Any] = json.load(f)
+        with open(cache_file) as file:
+            candidates: List[Any] = json.load(file)
             return candidates
     kgtk_request_url = "https://kgtk.isi.edu/api"
     params = {
@@ -134,17 +135,16 @@ def get_request_kgtk(
         return []
     if kgtk_response.status_code != 200:
         return []
-    else:
-        candidates = list(kgtk_response.json())
-        for candidate in candidates:
-            if not candidate["label"]:
-                candidate["label"] = [""]
-        if filter_results:
-            candidates = list(filter(make_kgtk_candidates_filter(query), candidates))
-        with open(cache_file, "w") as f:
-            json.dump(candidates, f, ensure_ascii=False, indent=2)
-            f.write("\n")
-        return candidates
+    candidates = list(kgtk_response.json())
+    for candidate in candidates:
+        if not candidate["label"]:
+            candidate["label"] = [""]
+    if filter_results:
+        candidates = list(filter(make_kgtk_candidates_filter(query), candidates))
+    with open(cache_file, "w") as file:
+        json.dump(candidates, file, ensure_ascii=False, indent=2)
+        f.write("\n")
+    return candidates
 
 
 def wikidata_topk(
@@ -201,7 +201,7 @@ def request_top_n_qnodes(
     *,
     n: int,
     ss_model: SentenceTransformer,
-    embeddings: torch.FloatTensor,
+    embeddings: torch.FloatTensor, # pylint: disable=no-member
     qnodes: Sequence[MutableMapping[str, Any]],
 ) -> Sequence[MutableMapping[str, Any]]:
     """Get the top *n* predicted qnodes from the *ss_model* provided.
@@ -220,8 +220,7 @@ def request_top_n_qnodes(
     event_embedding = ss_model.encode([description], convert_to_tensor=True)
     cosine_scores = ss_util.pytorch_cos_sim(event_embedding, embeddings)
     sorted_indices = cosine_scores.argsort(descending=True)
-    recommended_qnodes = [qnodes[idx] for idx in sorted_indices[0][:n]]
-    return recommended_qnodes
+    return [qnodes[idx] for idx in sorted_indices[0][:n]]
 
 
 def disambiguate_kgtk(context, query, no_ss_model=False, no_expansion=False, k=3, thresh=0.15) -> Any:
@@ -239,12 +238,7 @@ def disambiguate_kgtk(context, query, no_ss_model=False, no_expansion=False, k=3
         for q in expanded_query:
             cache_file = make_cache_path(KGTK_CACHE, q)
             kgtk_json += get_request_kgtk(q, cache_file)
-    try:
-        unique_candidates = filter_duplicate_candidates(kgtk_json)
-    except Exception as e:
-        print(e)
-        import pdb
-        pdb.set_trace()
+    unique_candidates = filter_duplicate_candidates(kgtk_json)
     options = []
     if no_ss_model:
         top3 = wikidata_topk(None, context, unique_candidates, k, thresh=thresh)
@@ -258,13 +252,12 @@ def disambiguate_kgtk(context, query, no_ss_model=False, no_expansion=False, k=3
         }
         if option not in options:
             options.append(option)
-    response = {
+    return {
         "context": context,
         "query": query,
         "options": options,
         "all_options": kgtk_json,
     }
-    return response
 
 
 if __name__ == "__main__":
