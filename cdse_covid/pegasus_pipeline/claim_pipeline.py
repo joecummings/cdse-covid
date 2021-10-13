@@ -1,5 +1,6 @@
 from pathlib import Path
 from pegasus_wrapper.artifact import ValueArtifact
+from pegasus_wrapper.resource_request import SlurmResourceRequest
 from saga_tools.conda import CondaConfiguration
 import spacy
 import logging
@@ -11,6 +12,7 @@ from pegasus_wrapper import (
     run_python_on_args,
 )
 from pegasus_wrapper.locator import Locator
+from vistautils.memory_amount import MemoryAmount
 from vistautils.parameters import Parameters
 from vistautils.parameters_only_entrypoint import parameters_only_entry_point
 
@@ -74,6 +76,10 @@ def main(params: Parameters):
     amr_loc = base_locator / "amr"
     amr_python_file = amr_params.existing_file("python_file")
     amr_output_dir = directory_for(amr_loc) / "documents"
+    if params.string("site") == "saga":
+        larger_resource = SlurmResourceRequest(memory=MemoryAmount.parse("8G"))
+    else:
+        larger_resource = None
     amr_job = run_python_on_args(
         amr_loc,
         amr_python_file,
@@ -87,6 +93,7 @@ def main(params: Parameters):
             conda_base_path=params.existing_directory("conda_base_path"),
             conda_environment="transition-amr-parser"
         ),
+        resource_request=larger_resource,
         depends_on=[claim_detection_output]
     )
     amr_output = ValueArtifact(

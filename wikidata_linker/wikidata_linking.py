@@ -143,7 +143,7 @@ def get_request_kgtk(
         candidates = list(filter(make_kgtk_candidates_filter(query), candidates))
     with open(cache_file, "w") as file:
         json.dump(candidates, file, ensure_ascii=False, indent=2)
-        f.write("\n")
+        file.write("\n")
     return candidates
 
 

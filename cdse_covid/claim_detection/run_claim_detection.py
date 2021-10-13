@@ -14,6 +14,8 @@ from cdse_covid.dataset import AIDADataset
 from spacy.tokens import Span
 import uuid
 from collections import defaultdict
+import csv
+
 
 CORONA_NAME_VARIATIONS = [
     "COVID-19",
@@ -106,6 +108,15 @@ class ClaimDataset:
         for claim in self.claims:
             with open(f"{path / str(claim.claim_id)}.claim", "wb+") as handle:
                 pickle.dump(claim, handle, pickle.HIGHEST_PROTOCOL)
+
+    def print_out_claim_sentences(self, path: Path):
+        if not self.claims:
+            logging.warning("No claims found.")
+        with open(path, "w+") as handle:
+            writer = csv.writer(handle)
+            for claim in self.claims:
+                writer.writerow([claim.text])
+
 
 
 class ClaimDetector:
