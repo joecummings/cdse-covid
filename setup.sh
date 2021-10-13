@@ -20,7 +20,9 @@ fi
 # Download requirements into Conda or Venv environment
 pip install -r requirements.txt
 
-# Transition AMR Parser installation
+# Create this package as a module
+pip install -e .
+
 
 source ~/miniconda3/etc/profile.d/conda.sh
 set +u  # hack for conda issue
@@ -41,6 +43,7 @@ cd amr-utils || { echo "Could not navigate to amr-utils"; exit 1; }
 python -m pip install -e .
 echo "Finished installing amr-utils (1/5)"
 
+# Transition AMR Parser installation
 echo "Installing transition-amr-parser..."
 cd ..
 if [[ ! -d transition-amr-parser/ ]]; then
