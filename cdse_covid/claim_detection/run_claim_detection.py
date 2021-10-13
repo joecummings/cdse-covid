@@ -39,12 +39,30 @@ class AMRLabel:
 
 
 @dataclass
+class Qnode:
+    label: str
+    text: str
+
+
+@dataclass
 class Claim:
     claim_id: int
     doc_id: str
     text: str
     claim_span: Tuple[str, str]
-    claim_template: str
+    claim_template: Optional[str] = None
+    topic: Optional[str] = None
+    subtopic: Optional[str] = None
+    x_variable: Optional[str] = None
+    x_variable_qnode: Optional[Qnode] = None
+    claimer: Optional[str] = None
+    claimer_qnode: Optional[Qnode] = None
+    claim_date_time: Optional[str] = None
+    claim_location: Optional[str] = None
+    claim_location_qnode: Optional[Qnode] = None
+    event_qnode: Optional[Qnode] = None
+    epistemic_status: Optional[bool] = None
+    sentiment_status: Optional[str] = None
     theories: Mapping[str, Any] = field(default_factory=dict)
 
     def add_theory(self, name: str, theory: Any) -> None:
