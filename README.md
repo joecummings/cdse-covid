@@ -3,7 +3,7 @@
 ## Installation
 
 1. Clone repo
-2. Create virtual environment
+2. Create Python virtual environment
 3. Make sure that your current Java environment is **Java 8**.
    1. If the setup fails at the JAMR step, check that Java 8 is configured
       for the newly downloaded `transition-amr-parser` project.
@@ -16,6 +16,21 @@
       If not, it will assume that you are working from a `/nas`-mounted server.
 
 ## Usage
+
+### Via Pegasus
+
+1. Generate workflow
+```
+conda activate <cdse-covid-env>
+python -m cdse_covid.pegasus_pipeline.claim_pipeline params/claim_detection.params
+```
+2. Navigate to experiment dir specified in your params file, execute the workflow, and monitor the progress
+```
+bash setup.sh
+pegasus-status PEGASUS/RUN/DIR -w 60
+```
+
+### Via Individually
 
 1. Create the AMR files
    The files in `TXT_FILES` should consist of sentences separated by line.
