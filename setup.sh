@@ -32,8 +32,14 @@ fi
 conda activate transition-amr-parser
 set -u  # /hack
 
-# Install proper SpaCy model
-python -m spacy download en_core_web_sm
+echo "Installing amr-utils..."
+cd ..
+if [[ ! -d amr-utils/ ]]; then
+  git clone https://github.com/ablodge/amr-utils.git
+fi
+cd amr-utils || { echo "Could not navigate to amr-utils"; exit 1; }
+python -m pip install -e .
+echo "Finished installing amr-utils (1/5)"
 
 echo "Installing transition-amr-parser..."
 cd ..
@@ -51,7 +57,10 @@ if ! bash tests/correctly_installed.sh | grep -q 'correctly installed'; then
   echo "AMR parser not correctly installed -- check to make sure that each requirement has been installed properly"
   exit 1
 fi
-echo "Parser installed (1/4)"
+echo "Parser installed (2/5)"
+
+# Install proper SpaCy model
+python -m spacy download en_core_web_sm
 
 echo "Installing JAMR aligner..."
 cd preprocess || { echo "Could not navigate to $(pwd)/preprocess"; exit 1; }
@@ -81,7 +90,7 @@ echo "sbt.version=1.2.0" > project/build.properties
 . scripts/config.sh
 cd ..
 
-echo "JAMR installed (2/4)"
+echo "JAMR installed (3/5)"
 
 echo "Installing Kevin aligner..."
 # Install cmake through brew if installed, else use pip
@@ -99,7 +108,7 @@ else
   echo "Looks like Kevin is already installed"
 fi
 cd ..
-echo "Kevin installed (3/4)"
+echo "Kevin installed (4/5)"
 
 MODEL_PATH="/nas/gaia/curated-training/repos/transition-amr-parser/DATA/AMR2.0"
 MODEL_PATH+="/models/exp_cofill_o8.3_act-states_RoBERTa-large-top24"
@@ -117,4 +126,4 @@ if [[ ! -d AMR2.0/ ]]; then
 else
   echo "Looks like the required model is already present"
 fi
-echo "Done!"
+echo "Finished downloading model! (5/5)"
