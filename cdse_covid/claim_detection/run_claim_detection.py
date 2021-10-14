@@ -82,13 +82,13 @@ class ClaimDataset:
 
     @staticmethod
     def from_multiple_claims_ds(*claim_datasets: "ClaimDataset") -> "ClaimDataset":
-        ds = defaultdict(list)
+        datasets_dict = defaultdict(list)
         for dataset in claim_datasets:
             for claim in dataset:
-                ds[claim.claim_id].append(claim)
+                datasets_dict[claim.claim_id].append(claim)
 
         all_claims = []
-        for claim_id, claims in ds.items():
+        for claim_id, claims in datasets_dict.items():
             for i, claim in enumerate(claims):
                 if i == 0:
                     new_claim = Claim(
