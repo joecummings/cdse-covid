@@ -16,7 +16,8 @@ from transition_amr_parser.parse import AMRParser # pylint: disable=import-error
 
 from amr_utils.amr_readers import AMR_Reader, Matedata_Parser
 
-from cdse_covid.claim_detection.run_claim_detection import ClaimDataset, AMRLabel
+from cdse_covid.claim_detection.run_claim_detection import ClaimDataset
+from cdse_covid.semantic_extraction.models import AMRLabel
 
 
 def tokenize_sentences(text, spacy_tokenizer) -> Tuple[List[str], str]:
@@ -70,7 +71,5 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     model = spacy.load("en_core_web_sm")
-
-    from cdse_covid.claim_detection.run_claim_detection import AMRLabel
 
     main(args.input, args.output, spacy_model=model, parser_path=args.amr_parser_model)

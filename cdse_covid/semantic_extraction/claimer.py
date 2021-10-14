@@ -1,7 +1,6 @@
 from collections import defaultdict
 from amr_utils.amr import AMR
 from amr_utils.propbank_frames import propbank_frames_dictionary
-import re
 from typing import Dict, List, Optional
 from nltk.stem import WordNetLemmatizer
 

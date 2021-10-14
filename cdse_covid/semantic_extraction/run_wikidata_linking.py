@@ -1,21 +1,13 @@
 import argparse
-from dataclasses import dataclass
 import logging
 from pathlib import Path
-from typing import Optional, Sequence
+from typing import Sequence
 
 from cdse_covid.claim_detection.run_claim_detection import ClaimDataset
 from wikidata_linker.wikidata_linking import disambiguate_kgtk
 
 from cdse_covid.semantic_extraction.claimer import identify_claimer
-
-@dataclass
-class WikidataQnode:
-    qnode_id: str
-    label: str
-    description: Optional[str] = None
-    score: Optional[float] = None
-    from_query: Optional[str] = None
+from cdse_covid.semantic_extraction.models import WikidataQnode
 
 
 def _find_links(span, tokens: Sequence[str]):
@@ -70,8 +62,6 @@ if __name__ == "__main__":
     parser.add_argument("--output", type=Path)
 
     args = parser.parse_args()
-
-    from cdse_covid.semantic_extraction.run_wikidata_linking import WikidataQnode
 
     main(
         args.claim_input,

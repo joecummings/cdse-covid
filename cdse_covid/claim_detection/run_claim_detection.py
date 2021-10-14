@@ -1,11 +1,10 @@
 """Run claim detection over corpus of SpaCy encoded documents."""
 import abc
 import argparse
-from dataclasses import dataclass, field
 import json
 import logging
 from pathlib import Path
-from typing import Any, Mapping, Optional, Sequence, Tuple
+from typing import Any, Mapping, Optional, Sequence
 import pickle
 import spacy
 from spacy.language import Language
@@ -15,8 +14,7 @@ from spacy.tokens import Span
 import uuid
 from collections import defaultdict
 import csv
-from cdse_covid.semantic_extraction.run_wikidata_linking import WikidataQnode
-
+from cdse_covid.claim_detection.models import Claim
 
 CORONA_NAME_VARIATIONS = [
     "COVID-19",
@@ -30,42 +28,6 @@ CORONA_NAME_VARIATIONS = [
 
 
 RegexPattern = Sequence[Mapping[str, Any]]
-
-
-@dataclass
-class AMRLabel:
-    label_id: str
-    graph: Any
-    alignments: Any
-
-
-
-@dataclass
-class Claim:
-    claim_id: int
-    doc_id: str
-    text: str
-    claim_span: Tuple[str, str]
-    claim_template: Optional[str] = None
-    topic: Optional[str] = None
-    subtopic: Optional[str] = None
-    x_variable: Optional[str] = None
-    x_variable_qnode: Optional[WikidataQnode] = None
-    claimer: Optional[str] = None
-    claimer_qnode: Optional[WikidataQnode] = None
-    claim_date_time: Optional[str] = None
-    claim_location: Optional[str] = None
-    claim_location_qnode: Optional[WikidataQnode] = None
-    event_qnode: Optional[WikidataQnode] = None
-    epistemic_status: Optional[bool] = None
-    sentiment_status: Optional[str] = None
-    theories: Mapping[str, Any] = field(default_factory=dict)
-
-    def add_theory(self, name: str, theory: Any) -> None:
-        self.theories[name] = theory
-
-    def get_theory(self, name: str) -> Any:
-        return self.theories[name]
 
 
 class ClaimDataset:
@@ -205,6 +167,5 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     model = spacy.load(args.spacy_model)
-    from cdse_covid.claim_detection.run_claim_detection import Claim # pylint: disable=import-self
 
     main(args.input, args.patterns, args.out, spacy_model=model)

@@ -1,5 +1,4 @@
 import argparse
-from dataclasses import dataclass
 import logging
 from pathlib import Path
 from typing import Any, Mapping
@@ -10,11 +9,7 @@ from cdse_covid.claim_detection.run_claim_detection import ClaimDataset
 import spacy
 from spacy.language import Language
 
-
-@dataclass
-class SRLabel:
-    label_id: str
-    labels: Mapping[str, str]
+from cdse_covid.semantic_extraction.models import SRLabel
 
 class SRLModel:
     def __init__(self, predictor, *, spacy_model) -> None:
@@ -107,7 +102,5 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     model = spacy.load(args.spacy_model)
-
-    from cdse_covid.semantic_extraction.run_srl import SRLabel
 
     main(args.input, args.output, spacy_model=model)
