@@ -13,6 +13,7 @@ CLAIMER_ROLES = {
     "claimer",
     "sayer",
     "speaker",
+    "researcher"
 }
 
 
@@ -24,9 +25,7 @@ def identify_claimer(amr: AMR) -> List[str]:
     # 1) Search for the Statement node of the claim by working up the graph
     # 2) If (1) fails, find the first Statement node in the graph
     claim_node = get_claim_node(amr.tokens, amr)
-    claimer_list = get_argument_node(amr, claim_node)
-
-    return claimer_list
+    return get_argument_node(amr, claim_node)
 
 
 def get_claim_node(claim_tokens: List[str], amr: AMR) -> Optional[str]:
@@ -39,7 +38,7 @@ def get_claim_node(claim_tokens: List[str], amr: AMR) -> Optional[str]:
                 LEMMATIZER.lemmatize(token, pos="n") == label
                 or LEMMATIZER.lemmatize(token, pos="v") == label
             ):
-                return get_claim_node_from_token(node, graph_nodes, amr.edges)
+                return get_claim_node_from_token(node, graph_nodes, amr.edges, 0)
     return search_for_claim_node(graph_nodes)
 
 
@@ -52,7 +51,7 @@ def is_statement_node(node_label: str) -> bool:
     return False
 
 
-def get_claim_node_from_token(node, node_dict, edges) -> Optional[str]:
+def get_claim_node_from_token(node, node_dict, edges, i) -> Optional[str]:
     """Fetch the claim node by traveling up from a child node"""
     for parent_node, _, arg_node in edges:
         if arg_node == node:
@@ -60,8 +59,9 @@ def get_claim_node_from_token(node, node_dict, edges) -> Optional[str]:
             parent_label = node_dict[parent_node]
             if is_statement_node(parent_label):
                 return parent_node
-            else:
-                return get_claim_node_from_token(parent_node, node_dict, edges)
+            if i == 10:
+                break
+            return get_claim_node_from_token(parent_node, node_dict, edges, i + 1)
     return search_for_claim_node(node_dict)
 
 
@@ -91,6 +91,8 @@ def get_argument_node(amr: AMR, claim_node: Optional[str]) -> List[str]:
     node_args = amr_dict.get(claim_node)
     if node_args:
         claimer_node = node_args.get(":ARG0")
+        if not claimer_node:
+            return list(claimers)
         claimer_label = nodes[claimer_node]
         if claimer_label == "person":
             name = get_claimer_name(amr_dict, nodes, claimer_node)

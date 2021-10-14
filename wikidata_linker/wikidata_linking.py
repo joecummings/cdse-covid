@@ -188,6 +188,7 @@ def filter_duplicate_candidates(candidates: List[Mapping[str, Any]]) -> List[Map
     label_description_set = set()
     unique_candidates = []
     for candidate in candidates:
+        label_description_tuple = ()
         if candidate["description"]:
             label_description_tuple = (candidate["label"][0], candidate["description"][0])
         if label_description_tuple not in label_description_set:
@@ -248,7 +249,7 @@ def disambiguate_kgtk(context, query, no_ss_model=False, no_expansion=False, k=3
         option = {
             "qnode": candidate["qnode"],
             "rawName": candidate["label"][0],
-            "definition": candidate["description"][0],
+            "definition": candidate["description"][0] if candidate["description"] else "",
         }
         if option not in options:
             options.append(option)

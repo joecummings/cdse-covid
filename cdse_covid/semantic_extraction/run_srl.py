@@ -52,10 +52,13 @@ class SRLModel:
         Returns:
             A list of ARG strings from SRL output.
         """
+        if not srl_output["verbs"]:
+            return dict()
+
         cleaned_output = []
         for verb in srl_output["verbs"]:
+            tag_sequences: Mapping[str, str] = {}
             if "tags" in verb and len(verb["tags"]) > 0:
-                tag_sequences: Mapping[str, str] = {}
                 tags_words = zip(
                     [tag.split("-", 1)[-1] for tag in verb["tags"]], srl_output["words"]
                 )
