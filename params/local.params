@@ -1,2 +1,8 @@
 conda_base_path: /Users/jcummings/opt/miniconda3
 conda_environment: covid-claims
+
+site: local
+namespace: local
+partition: local
+
+include_saga: false
