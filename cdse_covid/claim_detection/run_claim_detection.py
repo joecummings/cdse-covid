@@ -15,6 +15,7 @@ from spacy.tokens import Span
 import uuid
 from collections import defaultdict
 import csv
+from cdse_covid.semantic_extraction.run_wikidata_linking import WikidataQnode
 
 
 CORONA_NAME_VARIATIONS = [
@@ -38,11 +39,6 @@ class AMRLabel:
     alignments: Any
 
 
-@dataclass
-class Qnode:
-    label: str
-    text: str
-
 
 @dataclass
 class Claim:
@@ -54,13 +50,13 @@ class Claim:
     topic: Optional[str] = None
     subtopic: Optional[str] = None
     x_variable: Optional[str] = None
-    x_variable_qnode: Optional[Qnode] = None
+    x_variable_qnode: Optional[WikidataQnode] = None
     claimer: Optional[str] = None
-    claimer_qnode: Optional[Qnode] = None
+    claimer_qnode: Optional[WikidataQnode] = None
     claim_date_time: Optional[str] = None
     claim_location: Optional[str] = None
-    claim_location_qnode: Optional[Qnode] = None
-    event_qnode: Optional[Qnode] = None
+    claim_location_qnode: Optional[WikidataQnode] = None
+    event_qnode: Optional[WikidataQnode] = None
     epistemic_status: Optional[bool] = None
     sentiment_status: Optional[str] = None
     theories: Mapping[str, Any] = field(default_factory=dict)
