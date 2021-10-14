@@ -65,7 +65,6 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--input", help="Input docs", type=Path)
     parser.add_argument("--output", help="AMR output dir", type=Path)
-    parser.add_argument("--spacy-model", type=Path)
     parser.add_argument("--amr-parser-model", type=Path)
 
     args = parser.parse_args()

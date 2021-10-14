@@ -86,7 +86,6 @@ def main(params: Parameters):
         f"""
         --input {claim_detection_output.value} \
         --output {amr_output_dir} \
-        --spacy-model {model_path} \
         --amr-parser-model {amr_params.existing_directory("model_path")}
         """,
         override_conda_config=CondaConfiguration(
