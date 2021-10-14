@@ -1,0 +1,3 @@
+spacy:
+    ingester: "%project_root%/cdse_covid/pegasus_pipeline/ingesters/aida_txt_ingester.py"
+    model_type: en_core_web_sm    

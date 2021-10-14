@@ -1,0 +1,34 @@
+_includes:
+    - "root.params"
+    - "local.params"
+    - "spacy.params"
+
+site: local
+namespace: local
+partition: local
+
+include_saga: false
+
+workflow_directory: "%experiments_root%"
+experiment_name: claims
+
+corpus: "%project_root%/data/aida_english"
+
+claim_detection:
+    python_file: "%project_root%/cdse_covid/claim_detection/run_claim_detection.py"
+    patterns: "%project_root%/cdse_covid/claim_detection/topics.json"
+
+amr:
+    python_file: "%project_root%/cdse_covid/semantic_extraction/run_amr_parsing.py"
+    model_path: /Users/jcummings/Desktop/projects/GAIA/transition-amr-parser
+
+srl:
+    python_file: "%project_root%/cdse_covid/semantic_extraction/run_srl.py"
+
+wikidata:
+    python_file: "%project_root%/cdse_covid/semantic_extraction/run_wikidata_linking.py"
+    model_path: /Users/jcummings/Desktop/projects/GAIA/cdse-covid/wikidata_linker
+
+unify:
+    output: "%experiments_root%/output.json"
+    python_file: /Users/jcummings/Desktop/projects/GAIA/cdse-covid/cdse_covid/pegasus_pipeline/merge.py

@@ -1,0 +1,6 @@
+site: "saga"
+namespace: gaia
+partition: gaia
+
+spack_root: ""
+conda_base_path: ""

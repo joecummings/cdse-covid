@@ -20,7 +20,9 @@ fi
 # Download requirements into Conda or Venv environment
 pip install -r requirements.txt
 
-# Transition AMR Parser installation
+# Create this package as a module
+pip install -e .
+
 
 source ~/miniconda3/etc/profile.d/conda.sh
 set +u  # hack for conda issue
@@ -32,6 +34,16 @@ fi
 conda activate transition-amr-parser
 set -u  # /hack
 
+echo "Installing amr-utils..."
+cd ..
+if [[ ! -d amr-utils/ ]]; then
+  git clone https://github.com/ablodge/amr-utils.git
+fi
+cd amr-utils || { echo "Could not navigate to amr-utils"; exit 1; }
+python -m pip install -e .
+echo "Finished installing amr-utils (1/5)"
+
+# Transition AMR Parser installation
 echo "Installing transition-amr-parser..."
 cd ..
 if [[ ! -d transition-amr-parser/ ]]; then
@@ -41,14 +53,17 @@ cd transition-amr-parser || { echo "Could not navigate to transition-amr-parser"
 touch set_environment.sh
 python -m pip install -e .
 # fairseq loading fix
-sed -i ".bak" "s/pytorch\/fairseq/\pytorch\/fairseq\:main/" transition_amr_parser/parse.py
+sed -i.bak "s/pytorch\/fairseq/\pytorch\/fairseq\:main/" transition_amr_parser/parse.py
 echo "Running installation test..."
 bash tests/correctly_installed.sh
 if ! bash tests/correctly_installed.sh | grep -q 'correctly installed'; then
   echo "AMR parser not correctly installed -- check to make sure that each requirement has been installed properly"
   exit 1
 fi
-echo "Parser installed (1/4)"
+echo "Parser installed (2/5)"
+
+# Install proper SpaCy model
+python -m spacy download en_core_web_sm
 
 echo "Installing JAMR aligner..."
 cd preprocess || { echo "Could not navigate to $(pwd)/preprocess"; exit 1; }
@@ -69,16 +84,16 @@ grep -v "sbt-idea" $PLUGIN_FILE > tmpfile && mv tmpfile $PLUGIN_FILE
 
 # Update package versions
 echo "Updating package versions for JAMR..."
-sed -i ".bak" "s/\"scala-arm\" % \"[0-9]*\.[0-9]*\"/\"scala-arm\" % \"2\.0\"/" $BUILD_FILE
-sed -i ".bak" "s/\"sbt-assembly\" % \"[0-9]*\.[0-9]*\.[0-9]*\"/\"sbt-assembly\" % \"0\.14\.6\"/" $PLUGIN_FILE
-sed -i ".bak" "s/\"sbteclipse-plugin\" % \"[0-9]*\.[0-9]*\.[0-9]*\"/\"sbteclipse-plugin\" % \"5\.2\.4\"/" $PLUGIN_FILE
+sed -i.bak "s/\"scala-arm\" % \"[0-9]*\.[0-9]*\"/\"scala-arm\" % \"2\.0\"/" $BUILD_FILE
+sed -i.bak "s/\"sbt-assembly\" % \"[0-9]*\.[0-9]*\.[0-9]*\"/\"sbt-assembly\" % \"0\.14\.6\"/" $PLUGIN_FILE
+sed -i.bak "s/\"sbteclipse-plugin\" % \"[0-9]*\.[0-9]*\.[0-9]*\"/\"sbteclipse-plugin\" % \"5\.2\.4\"/" $PLUGIN_FILE
 echo "sbt.version=1.2.0" > project/build.properties
 
 ./setup || { echo "JAMR setup failed; you may need to further update the config files"; exit 1; }
 . scripts/config.sh
 cd ..
 
-echo "JAMR installed (2/4)"
+echo "JAMR installed (3/5)"
 
 echo "Installing Kevin aligner..."
 # Install cmake through brew if installed, else use pip
@@ -96,7 +111,7 @@ else
   echo "Looks like Kevin is already installed"
 fi
 cd ..
-echo "Kevin installed (3/4)"
+echo "Kevin installed (4/5)"
 
 MODEL_PATH="/nas/gaia/curated-training/repos/transition-amr-parser/DATA/AMR2.0"
 MODEL_PATH+="/models/exp_cofill_o8.3_act-states_RoBERTa-large-top24"
@@ -114,4 +129,4 @@ if [[ ! -d AMR2.0/ ]]; then
 else
   echo "Looks like the required model is already present"
 fi
-echo "Done!"
+echo "Finished downloading model! (5/5)"
