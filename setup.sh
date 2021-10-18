@@ -34,15 +34,6 @@ fi
 conda activate transition-amr-parser
 set -u  # /hack
 
-echo "Installing amr-utils..."
-cd ..
-if [[ ! -d amr-utils/ ]]; then
-  git clone https://github.com/ablodge/amr-utils.git
-fi
-cd amr-utils || { echo "Could not navigate to amr-utils"; exit 1; }
-python -m pip install -e .
-echo "Finished installing amr-utils (1/5)"
-
 # Transition AMR Parser installation
 echo "Installing transition-amr-parser..."
 cd ..
@@ -53,22 +44,28 @@ cd transition-amr-parser || { echo "Could not navigate to transition-amr-parser"
 touch set_environment.sh
 python -m pip install -e .
 # fairseq loading fix
-sed -i.bak "s/pytorch\/fairseq/\pytorch\/fairseq\:main/" transition_amr_parser/parse.py
+sed -i.bak "s/pytorch\/fairseq'/\pytorch\/fairseq\:main/'" transition_amr_parser/parse.py
 echo "Running installation test..."
 bash tests/correctly_installed.sh
 if ! bash tests/correctly_installed.sh | grep -q 'correctly installed'; then
   echo "AMR parser not correctly installed -- check to make sure that each requirement has been installed properly"
   exit 1
 fi
-echo "Parser installed (2/5)"
+echo "Parser installed (1/5)"
 
-# Install proper SpaCy model
-python -m spacy download en_core_web_sm
+
+echo "Installing packages for transition-amr-parser..."
+pip install -r amr-requirements-lock.txt
+echo "Finished installing amr requirements (2/5)"
+
 
 echo "Installing JAMR aligner..."
 cd preprocess || { echo "Could not navigate to $(pwd)/preprocess"; exit 1; }
 rm -Rf jamr
 git clone https://github.com/jflanigan/jamr.git
+if [[ ! -d ~/.sbt ]]; then
+  mkdir ~/.sbt
+fi
 if [[ ! -e ~/.sbt/repositories ]]; then
   printf "[repositories]\n\tmaven-central: https://repo1.maven.org/maven2/" > ~/.sbt/repositories
 fi
@@ -113,13 +110,14 @@ fi
 cd ..
 echo "Kevin installed (4/5)"
 
-MODEL_PATH="/nas/gaia/curated-training/repos/transition-amr-parser/DATA/AMR2.0"
-MODEL_PATH+="/models/exp_cofill_o8.3_act-states_RoBERTa-large-top24"
-MODEL_PATH+="/_act-pos-grh_vmask1_shiftpos1_ptr-lay6-h1_grh-lay123-h2-allprev_1in1out_cam-layall-h2-abuf"
-MODEL_PATH+="/ep120-seed42/{checkpoint_best.pt,config.sh,dict.actions_nopos.txt,dict.en.txt,entity_rules.json,train.rules.json}"
+MODEL_BASE="/nas/gaia/curated-training/repos/transition-amr-parser/DATA/"
+MODEL_DIR="AMR2.0/models/exp_cofill_o8.3_act-states_RoBERTa-large-top24"
+MODEL_DIR+="/_act-pos-grh_vmask1_shiftpos1_ptr-lay6-h1_grh-lay123-h2-allprev_1in1out_cam-layall-h2-abuf/ep120-seed42/"
+MODEL_PATH=MODEL_BASE+MODEL_DIR+"{checkpoint_best.pt,config.sh,dict.actions_nopos.txt,dict.en.txt,entity_rules.json,train.rules.json}"
 
 cd DATA || { echo "Could not navigate to $(pwd)/DATA"; exit 1; }
 if [[ ! -d AMR2.0/ ]]; then
+  mkdir -p $MODEL_DIR && cd $MODEL_DIR
   echo "Downloading model..."
   if [[ $ISI_USERNAME == "" ]]; then
     cp -r $MODEL_PATH . || { echo "Failed to copy model over"; exit 1; }

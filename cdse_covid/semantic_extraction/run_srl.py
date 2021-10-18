@@ -1,5 +1,4 @@
 import argparse
-from dataclasses import dataclass
 import logging
 from pathlib import Path
 from typing import Any, Mapping
@@ -10,11 +9,7 @@ from cdse_covid.claim_detection.run_claim_detection import ClaimDataset
 import spacy
 from spacy.language import Language
 
-
-@dataclass
-class SRLabel:
-    label_id: str
-    labels: Mapping[str, str]
+from cdse_covid.semantic_extraction.models import SRLabel
 
 class SRLModel:
     def __init__(self, predictor, *, spacy_model) -> None:
@@ -57,10 +52,13 @@ class SRLModel:
         Returns:
             A list of ARG strings from SRL output.
         """
+        if not srl_output["verbs"]:
+            return dict()
+
         cleaned_output = []
         for verb in srl_output["verbs"]:
+            tag_sequences: Mapping[str, str] = {}
             if "tags" in verb and len(verb["tags"]) > 0:
-                tag_sequences: Mapping[str, str] = {}
                 tags_words = zip(
                     [tag.split("-", 1)[-1] for tag in verb["tags"]], srl_output["words"]
                 )
@@ -107,7 +105,5 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     model = spacy.load(args.spacy_model)
-
-    from cdse_covid.semantic_extraction.run_srl import SRLabel
 
     main(args.input, args.output, spacy_model=model)
