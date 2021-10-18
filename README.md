@@ -7,6 +7,7 @@
 3. Make sure that your current Java environment is **Java 8**.
    1. If the setup fails at the JAMR step, check that Java 8 is configured
       for the newly downloaded `transition-amr-parser` project.
+4. Make sure `cuda` is enabled if you are on a machine with a GPU.
 4. Run `bash setup.sh [$isi_username]`
    1. This assumes that your conda installation is within `~/miniconda3`.
    2. If you provide `isi_username`, it will assume that you can access
