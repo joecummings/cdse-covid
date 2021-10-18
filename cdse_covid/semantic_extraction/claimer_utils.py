@@ -59,7 +59,7 @@ def get_claim_node_from_token(node, node_dict, edges, i) -> Optional[str]:
             parent_label = node_dict[parent_node]
             if is_statement_node(parent_label):
                 return parent_node
-            if i == 10:
+            if i == len(node_dict): # Iterated through all nodes without success
                 break
             return get_claim_node_from_token(parent_node, node_dict, edges, i + 1)
     return search_for_claim_node(node_dict)
