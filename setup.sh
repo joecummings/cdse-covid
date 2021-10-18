@@ -117,7 +117,7 @@ MODEL_PATH=MODEL_BASE+MODEL_DIR+"{checkpoint_best.pt,config.sh,dict.actions_nopo
 
 cd DATA || { echo "Could not navigate to $(pwd)/DATA"; exit 1; }
 if [[ ! -d AMR2.0/ ]]; then
-  mkdir -p $MODEL_DIR
+  mkdir -p $MODEL_DIR && cd $MODEL_DIR
   echo "Downloading model..."
   if [[ $ISI_USERNAME == "" ]]; then
     cp -r $MODEL_PATH . || { echo "Failed to copy model over"; exit 1; }
