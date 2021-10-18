@@ -18,7 +18,7 @@ if [[ ! -d wikidata_linker/kgtk_cache/ ]]; then
 fi
 
 # Download requirements into Conda or Venv environment
-pip install -r requirements.txt
+pip install -r requirements-lock.txt
 
 # Create this package as a module
 pip install -e .
