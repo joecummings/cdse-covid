@@ -1,5 +1,5 @@
-allennlp==2.6.0
-allennlp-models==2.6.0
+allennlp==2.7.0
+allennlp-models==2.7.0
 argcomplete==1.12.3
 argon2-cffi==21.1.0
 attrs==21.2.0
@@ -22,7 +22,7 @@ cheroot==8.5.2
 CherryPy==18.6.1
 click==7.1.2
 configparser==5.0.2
-conllu==4.4
+conllu==4.4.1
 cryptography==35.0.0
 cymem==2.0.5
 dataclasses==0.6
