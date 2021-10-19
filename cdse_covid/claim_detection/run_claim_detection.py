@@ -15,6 +15,7 @@ import uuid
 from collections import defaultdict
 import csv
 from cdse_covid.claim_detection.models import Claim
+from dataclasses import replace
 
 CORONA_NAME_VARIATIONS = [
     "COVID-19",
@@ -50,21 +51,16 @@ class ClaimDataset:
                 datasets_dict[claim.claim_id].append(claim)
 
         all_claims = []
-        for claim_id, claims in datasets_dict.items():
+        for _, claims in datasets_dict.items():
             for i, claim in enumerate(claims):
                 if i == 0:
-                    new_claim = Claim(
-                        claim_id,
-                        claim.doc_id,
-                        claim.claim_text,
-                        claim.claim_sentence,
-                        claim.claim_span,
-                        claim.claim_template,
-                        claim.theories
-                    )
+                    new_claim = claim
                 else:
-                    for name, theory in claim.theories.items():
-                        new_claim.add_theory(name, theory)
+                    all_non_none_attrs = {k:v for k,v in claim.__dict__.items() if v != None and k != "theories"}
+                    new_claim: Claim = replace(new_claim, **all_non_none_attrs)
+                    for k, v in claim.theories.items():
+                        if not new_claim.get_theory(k):
+                            new_claim.add_theory(k, v)
             all_claims.append(new_claim)
         return ClaimDataset(all_claims)
 
