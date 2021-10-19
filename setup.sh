@@ -19,6 +19,8 @@ fi
 
 # Download requirements into Conda or Venv environment
 pip install -r requirements-lock.txt
+# Download wordnet to the currently active conda env
+python -m nltk.downloader -d ~/miniconda3/envs/"$CONDA_DEFAULT_ENV"/nltk_data wordnet
 
 # Create this package as a module
 pip install -e .
