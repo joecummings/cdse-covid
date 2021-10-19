@@ -3,7 +3,7 @@ antlr4-python3-runtime==4.8
 attrs==21.2.0
 backcall==0.2.0
 cached-property==1.5.2
-cdse-covid @ git+git@github.com:joecummings/cdse-covid.git@82a8cb8760c674b0d9a0d643d99da80a6dc1967c#egg=cdse_covid
+cdse-covid @ git+https://github.com/joecummings/cdse-covid.git@771ccd49943603f207caf1d3daad15d2e562b5b5#egg=cdse_covid
 certifi==2021.10.8
 cffi==1.15.0
 charset-normalizer==2.0.7

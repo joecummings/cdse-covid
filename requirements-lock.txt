@@ -1,5 +1,6 @@
 allennlp==2.7.0
 allennlp-models==2.7.0
+amr-utils @ git+https://github.com/ablodge/amr-utils.git@be5534db1312dc7c6ba25ee50eafeb0d0f5e3f69#egg=amr_utils
 argcomplete==1.12.3
 argon2-cffi==21.1.0
 attrs==21.2.0
@@ -140,6 +141,7 @@ scikit-learn==1.0
 scipy==1.7.1
 Send2Trash==1.8.0
 sentencepiece==0.1.96
+sentence-transformers==2.1.0
 sentry-sdk==1.4.3
 sgmllib3k==1.0.0
 shortuuid==1.0.1

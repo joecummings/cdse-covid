@@ -9,7 +9,7 @@
       for the newly downloaded `transition-amr-parser` project.
 4. Make sure `cuda` is enabled if you are on a machine with a GPU.
 4. Run `bash setup.sh [$isi_username]`
-   1. This assumes that your conda installation is within `~/miniconda3`.
+   1. This assumes that your conda installation is within `~/miniconda3`. If it is not, replace Line 27 of `setup.sh` with: `source ~/PATH_TO_MINICONDA_INSTALL`.
    2. If you provide `isi_username`, it will assume that you can access
       the `minlp-dev-01` server and that you are working from a local system.
       In that case, you will be prompted for a password after you see
