@@ -20,7 +20,8 @@ fi
 # Download requirements into Conda or Venv environment
 pip install -r requirements-lock.txt
 # Download wordnet to the currently active conda env
-python -m nltk.downloader -d ~/miniconda3/envs/"$CONDA_DEFAULT_ENV"/nltk_data wordnet
+# (CONDA_PREFIX is set automatically by conda upon activating an env)
+python -m nltk.downloader -d "$CONDA_PREFIX"/nltk_data wordnet
 
 # Create this package as a module
 pip install -e .
@@ -46,7 +47,7 @@ cd transition-amr-parser || { echo "Could not navigate to transition-amr-parser"
 touch set_environment.sh
 python -m pip install -e .
 # fairseq loading fix
-sed -i.bak "s/'pytorch\/fairseq'/\'pytorch\/fairseq\:main'/" transition_amr_parser/parse.py
+sed -i.bak "s/pytorch\/fairseq'/\pytorch\/fairseq\:main'/" transition_amr_parser/parse.py
 echo "Running installation test..."
 bash tests/correctly_installed.sh
 if ! bash tests/correctly_installed.sh | grep -q 'correctly installed'; then
