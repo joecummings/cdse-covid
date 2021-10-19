@@ -1,5 +1,4 @@
 from dataclasses import dataclass, field
-import json
 from typing import Any, Mapping, Optional, Tuple
 from cdse_covid.semantic_extraction.models import WikidataQnode
 
