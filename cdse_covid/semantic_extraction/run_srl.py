@@ -84,14 +84,36 @@ class SRLModel:
         return SRLabel(uuid.uuid1(), output)
 
 
+def reformat_x_variable_in_claim_template(claim_template, reference_word="this"):
+    """Replaces 'X' in claim template with reference word.
+    
+    TODO: Investigate how SRL deals with Person-X, Animal-X, etc.
+    """
+    template = []
+    for token in claim_template.split():
+        if token == "X":
+            template.append(reference_word)
+        else:
+            template.append(token)
+    claim_template = " ".join(template)
+    return claim_template
+
+
 def main(inputs, output, *, spacy_model):
     srl_model = SRLModel.from_hub("structured-prediction-srl", spacy_model)
     claim_ds = ClaimDataset.load_from_dir(inputs)
 
     for claim in claim_ds.claims:
-        srl_out = srl_model.predict(claim.text)
+        srl_out = srl_model.predict(claim.claim_text)
+        claim_template = reformat_x_variable_in_claim_template(claim.claim_template)
+        srl_claim_template = srl_model.predict(claim_template)
+        arg_label_for_x_variable = [k for k, v in srl_claim_template.labels.items() if v == "this"]
+        if arg_label_for_x_variable:
+            label = arg_label_for_x_variable[0] # Should only be one
+            x_variable = srl_out.labels.get(label)
+            if x_variable:
+                claim.x_variable = x_variable
         claim.add_theory("srl", srl_out)
-
     claim_ds.save_to_dir(output)
 
     logging.info("Finished saving SRL labels to %s.", output)

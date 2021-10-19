@@ -18,6 +18,7 @@ from amr_utils.amr_readers import AMR_Reader, Matedata_Parser
 
 from cdse_covid.claim_detection.run_claim_detection import ClaimDataset
 from cdse_covid.semantic_extraction.models import AMRLabel
+from cdse_covid.semantic_extraction.claimer_utils import identify_claimer
 
 
 def tokenize_sentences(text, spacy_tokenizer) -> Tuple[List[str], str]:
@@ -50,11 +51,14 @@ def main(input_dir, output, *, spacy_model, parser_path):
     claim_ds = ClaimDataset.load_from_dir(input_dir)
 
     for claim in claim_ds.claims:
-        _, tokenized_sentences = tokenize_sentences(claim.text, spacy_model.tokenizer)
+        _, tokenized_sentences = tokenize_sentences(claim.claim_sentence, spacy_model.tokenizer)
         annotations = amr_parser.parse_sentences([tokenized_sentences])
         metadata, graph_metadata = Matedata_Parser().readlines(annotations[0][0])
         amr, alignments = AMR_Reader._parse_amr_from_metadata(metadata["tok"], graph_metadata)
         amr_label = AMRLabel(uuid.uuid1(), amr, alignments)
+        possible_claimers = identify_claimer(amr)
+        if possible_claimers:
+            claim.claimer = possible_claimers[0] # Should only be one claimer
         claim.add_theory("amr", amr_label)
 
     claim_ds.save_to_dir(output)

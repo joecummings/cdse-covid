@@ -15,6 +15,7 @@ import uuid
 from collections import defaultdict
 import csv
 from cdse_covid.claim_detection.models import Claim
+from dataclasses import replace
 
 CORONA_NAME_VARIATIONS = [
     "COVID-19",
@@ -50,20 +51,16 @@ class ClaimDataset:
                 datasets_dict[claim.claim_id].append(claim)
 
         all_claims = []
-        for claim_id, claims in datasets_dict.items():
+        for _, claims in datasets_dict.items():
             for i, claim in enumerate(claims):
                 if i == 0:
-                    new_claim = Claim(
-                        claim_id,
-                        claim.doc_id,
-                        claim.text,
-                        claim.claim_span,
-                        claim.claim_template,
-                        claim.theories
-                    )
+                    new_claim = claim
                 else:
-                    for name, theory in claim.theories.items():
-                        new_claim.add_theory(name, theory)
+                    all_non_none_attrs = {k:v for k,v in claim.__dict__.items() if v != None and k != "theories"}
+                    new_claim: Claim = replace(new_claim, **all_non_none_attrs)
+                    for k, v in claim.theories.items():
+                        if not new_claim.get_theory(k):
+                            new_claim.add_theory(k, v)
             all_claims.append(new_claim)
         return ClaimDataset(all_claims)
 
@@ -91,7 +88,7 @@ class ClaimDataset:
         with open(path, "w+") as handle:
             writer = csv.writer(handle)
             for claim in self.claims:
-                writer.writerow([claim.text])
+                writer.writerow([claim.claim_text])
 
 
 
@@ -132,7 +129,8 @@ class RegexClaimDetector(ClaimDetector, Matcher):
                 new_claim = Claim(
                     claim_id=int(uuid.uuid1()),
                     doc_id=doc[0],
-                    text=span.sent.text,
+                    claim_text=span.text,
+                    claim_sentence=span.sent.text,
                     claim_span=(start, end),
                     claim_template=rule_id,
                 )
@@ -151,6 +149,19 @@ def main(input_corpus: Path, patterns: Path, out_dir: Path, *, spacy_model: Lang
 
     dataset = AIDADataset.from_serialized_docs(input_corpus)
     matches = regex_model.generate_candidates(dataset, spacy_model.vocab)
+
+    topics_info = {}
+    with open(Path(__file__).parent / "topic_list.txt", "r") as handle:
+        reader = csv.reader(handle, delimiter="\t")
+        for row in reader:
+            key = row[3]
+            topics_info[key] = {"topic": row[2], "subtopic": row[1]}
+    
+    for claim in matches:
+        template = topics_info[claim.claim_template]
+        claim.topic = template["topic"]
+        claim.subtopic = template["subtopic"]
+                
     matches.save_to_dir(out_dir)
 
     logging.info("Saved matches to %s", out_dir)
