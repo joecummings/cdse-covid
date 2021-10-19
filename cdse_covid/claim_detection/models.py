@@ -7,7 +7,8 @@ from cdse_covid.semantic_extraction.models import WikidataQnode
 class Claim:
     claim_id: int
     doc_id: str
-    text: str
+    claim_text: str
+    claim_sentence: str
     claim_span: Tuple[str, str]
     claim_template: Optional[str] = None
     topic: Optional[str] = None
