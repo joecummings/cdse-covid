@@ -44,7 +44,7 @@ cd transition-amr-parser || { echo "Could not navigate to transition-amr-parser"
 touch set_environment.sh
 python -m pip install -e .
 # fairseq loading fix
-sed -i.bak "s/pytorch\/fairseq'/\pytorch\/fairseq\:main/'" transition_amr_parser/parse.py
+sed -i.bak "s/'pytorch\/fairseq'/\'pytorch\/fairseq\:main'/" transition_amr_parser/parse.py
 echo "Running installation test..."
 bash tests/correctly_installed.sh
 if ! bash tests/correctly_installed.sh | grep -q 'correctly installed'; then
