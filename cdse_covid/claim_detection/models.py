@@ -1,4 +1,5 @@
 from dataclasses import dataclass, field
+import json
 from typing import Any, Mapping, Optional, Tuple
 from cdse_covid.semantic_extraction.models import WikidataQnode
 
@@ -28,5 +29,24 @@ class Claim:
     def add_theory(self, name: str, theory: Any) -> None:
         self.theories[name] = theory
 
-    def get_theory(self, name: str) -> Any:
-        return self.theories[name]
+    def get_theory(self, name: str) -> Optional[Any]:
+        return self.theories.get(name)
+    
+    @staticmethod
+    def to_json(obj, classkey=None):
+        if isinstance(obj, dict):
+            data = {k: Claim.to_json(v, classkey) for (k, v) in obj.items()}
+            return data
+        elif hasattr(obj, "_ast"):
+            return Claim.to_json(obj._ast())
+        elif hasattr(obj, "__iter__") and not isinstance(obj, str):
+            return [Claim.to_json(v, classkey) for v in obj]
+        elif hasattr(obj, "__dict__"):
+            data = dict([(key, Claim.to_json(value, classkey)) 
+                for key, value in obj.__dict__.items() 
+                if not callable(value) and not key.startswith('_')])
+            if classkey is not None and hasattr(obj, "__class__"):
+                data[classkey] = obj.__class__.__name__
+            return data
+        else:
+            return obj
