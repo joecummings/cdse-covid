@@ -149,6 +149,19 @@ def main(input_corpus: Path, patterns: Path, out_dir: Path, *, spacy_model: Lang
 
     dataset = AIDADataset.from_serialized_docs(input_corpus)
     matches = regex_model.generate_candidates(dataset, spacy_model.vocab)
+
+    topics_info = {}
+    with open(Path(__file__).parent / "topic_list.txt", "r") as handle:
+        reader = csv.reader(handle, delimiter="\t")
+        for row in reader:
+            key = row[3]
+            topics_info[key] = {"topic": row[2], "subtopic": row[1]}
+    
+    for claim in matches:
+        template = topics_info[claim.claim_template]
+        claim.topic = template["topic"]
+        claim.subtopic = template["subtopic"]
+                
     matches.save_to_dir(out_dir)
 
     logging.info("Saved matches to %s", out_dir)
