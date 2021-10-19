@@ -8,14 +8,8 @@ import argparse
 from cdse_covid.claim_detection.run_claim_detection import Claim, ClaimDataset
 
 def structure_claim(claim: Claim) -> Mapping[str, Any]:
-    qnodes = claim.get_theory("wikidata")
-    return {
-        "claim_text": claim.claim_text,
-        "claim_sentence": claim.claim_sentence,
-        "claim template": claim.claim_template,
-        "doc": claim.doc_id,
-        "qnodes": [(q.qnode_id, q.label) for q in qnodes],
-    }
+    claim.theories = None # Hack for now b/c we don't want to see theories
+    return Claim.to_json(claim)
 
 
 def main(input_dir: Path, output: Path):

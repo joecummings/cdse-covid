@@ -20,5 +20,4 @@ class WikidataQnode:
     qnode_id: str
     label: str
     description: Optional[str] = None
-    score: Optional[float] = None
     from_query: Optional[str] = None

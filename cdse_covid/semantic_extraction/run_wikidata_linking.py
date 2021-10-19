@@ -6,7 +6,6 @@ from typing import Sequence
 from cdse_covid.claim_detection.run_claim_detection import ClaimDataset
 from wikidata_linker.wikidata_linking import disambiguate_kgtk
 
-from cdse_covid.semantic_extraction.claimer_utils import identify_claimer
 from cdse_covid.semantic_extraction.models import WikidataQnode
 
 
@@ -23,15 +22,18 @@ def main(claim_input, srl_input, amr_input, output):
 
     for claim in claim_dataset:
         wikidata = []
-        possible_claimers = identify_claimer(claim.get_theory("amr").graph)
-        if possible_claimers:
-            claimer_links = _find_links(claim.claim_text, possible_claimers)
-            top_links = create_wikidata_qnodes(claimer_links)
-            wikidata.extend(top_links)
-        for _, sr_label in claim.get_theory("srl").labels.items():
-            srl_links = _find_links(claim.claim_text, sr_label.split())
-            top_links = create_wikidata_qnodes(srl_links)
-            wikidata.extend(top_links)
+        if claim.claimer:
+            claimer_links = _find_links(claim.claim_sentence, [claim.claimer])
+            top_link = create_wikidata_qnodes(claimer_links)
+            if top_link:
+                claim.claimer_qnode = top_link[0]
+            wikidata.extend(top_link)
+        if claim.x_variable:
+            srl_links = _find_links(claim.claim_sentence, [claim.x_variable])
+            top_link = create_wikidata_qnodes(srl_links)
+            if top_link:
+                claim.x_variable_qnode = top_link[0]
+            wikidata.extend(top_link)
 
         claim.add_theory("wikidata", wikidata)
 
@@ -43,23 +45,12 @@ def main(claim_input, srl_input, amr_input, output):
 def create_wikidata_qnodes(links):
     all_qnodes = []
     for link in links:
-        if not link["all_options"]:
+        if not link["options"]:
             continue
-        label = (
-            link["all_options"][0]["label"][0]
-            if link["all_options"][0]["label"]
-            else ""
-        )
-        description = (
-            link["all_options"][0]["description"][0]
-            if link["all_options"][0]["description"]
-            else ""
-        )
         qnode = WikidataQnode(
-            link["all_options"][0]["qnode"],
-            label,
-            description,
-            link["all_options"][0]["score"],
+            link["options"][0]["qnode"],
+            link["options"][0]["rawName"],
+            link["options"][0]["definition"],
             link["query"],
         )
         all_qnodes.append(qnode)
