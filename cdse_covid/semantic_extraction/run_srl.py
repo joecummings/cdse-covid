@@ -89,7 +89,7 @@ def main(inputs, output, *, spacy_model):
     claim_ds = ClaimDataset.load_from_dir(inputs)
 
     for claim in claim_ds.claims:
-        srl_out = srl_model.predict(claim.text)
+        srl_out = srl_model.predict(claim.claim_text)
         claim.add_theory("srl", srl_out)
 
     claim_ds.save_to_dir(output)

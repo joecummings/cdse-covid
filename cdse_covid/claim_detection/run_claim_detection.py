@@ -56,7 +56,8 @@ class ClaimDataset:
                     new_claim = Claim(
                         claim_id,
                         claim.doc_id,
-                        claim.text,
+                        claim.claim_text,
+                        claim.claim_sentence,
                         claim.claim_span,
                         claim.claim_template,
                         claim.theories
@@ -91,7 +92,7 @@ class ClaimDataset:
         with open(path, "w+") as handle:
             writer = csv.writer(handle)
             for claim in self.claims:
-                writer.writerow([claim.text])
+                writer.writerow([claim.claim_text])
 
 
 
@@ -132,7 +133,8 @@ class RegexClaimDetector(ClaimDetector, Matcher):
                 new_claim = Claim(
                     claim_id=int(uuid.uuid1()),
                     doc_id=doc[0],
-                    text=span.sent.text,
+                    claim_text=span.text,
+                    claim_sentence=span.sent.text,
                     claim_span=(start, end),
                     claim_template=rule_id,
                 )

@@ -25,11 +25,11 @@ def main(claim_input, srl_input, amr_input, output):
         wikidata = []
         possible_claimers = identify_claimer(claim.get_theory("amr").graph)
         if possible_claimers:
-            claimer_links = _find_links(claim.text, possible_claimers)
+            claimer_links = _find_links(claim.claim_text, possible_claimers)
             top_links = create_wikidata_qnodes(claimer_links)
             wikidata.extend(top_links)
         for _, sr_label in claim.get_theory("srl").labels.items():
-            srl_links = _find_links(claim.text, sr_label.split())
+            srl_links = _find_links(claim.claim_text, sr_label.split())
             top_links = create_wikidata_qnodes(srl_links)
             wikidata.extend(top_links)
 

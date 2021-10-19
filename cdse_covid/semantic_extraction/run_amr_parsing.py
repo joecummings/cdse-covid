@@ -50,7 +50,7 @@ def main(input_dir, output, *, spacy_model, parser_path):
     claim_ds = ClaimDataset.load_from_dir(input_dir)
 
     for claim in claim_ds.claims:
-        _, tokenized_sentences = tokenize_sentences(claim.text, spacy_model.tokenizer)
+        _, tokenized_sentences = tokenize_sentences(claim.claim_sentence, spacy_model.tokenizer)
         annotations = amr_parser.parse_sentences([tokenized_sentences])
         metadata, graph_metadata = Matedata_Parser().readlines(annotations[0][0])
         amr, alignments = AMR_Reader._parse_amr_from_metadata(metadata["tok"], graph_metadata)
