@@ -101,7 +101,7 @@ patternfork-nosql==3.6
 pdfminer.six==20211012
 pegasus-wms.api==5.0.0
 pegasus-wms.common==5.0.1
-pegasus-wrapper==0.3.0
+pegasus-wrapper==0.4.0
 pexpect==4.8.0
 pickleshare==0.7.5
 Pillow==8.4.0
