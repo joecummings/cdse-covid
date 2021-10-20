@@ -5,11 +5,14 @@ from typing import Any, Mapping
 import uuid
 
 from allennlp_models.pretrained import load_predictor
+from nltk.stem.snowball import SnowballStemmer
 from cdse_covid.claim_detection.run_claim_detection import ClaimDataset
 import spacy
 from spacy.language import Language
 
 from cdse_covid.semantic_extraction.models import SRLabel
+
+from cdse_covid.semantic_extraction.claimer_utils import LEMMATIZER
 
 class SRLModel:
     def __init__(self, predictor, *, spacy_model) -> None:
@@ -75,13 +78,22 @@ class SRLModel:
                         tag_sequences[tag] = cleaned_sequence
         return tag_sequences
 
+    def _stem_verb(self, verbs):
+        verb_word = verbs[0]["verb"]
+        return LEMMATIZER.lemmatize(verb_word, pos="v")
+
     def predict(self, sentence: str) -> SRLabel:
         """Predict SRL over a sentence."""
         roles = self.predictor.predict(sentence)
+        verb = None
         if len(roles["verbs"]) > 1:
             logging.warning("More than one main verb in instance: %s", sentence)
-        output = self._clean_srl_output(roles)
-        return SRLabel(uuid.uuid1(), output)
+        elif len(roles["verbs"]) < 1:
+            logging.warning("No verbs detected in sentence: %s", sentence)
+        else:
+            verb = self._stem_verb(roles["verbs"])
+        args = self._clean_srl_output(roles)
+        return SRLabel(int(uuid.uuid1()), verb=verb, args=args)
 
 
 def reformat_x_variable_in_claim_template(claim_template, reference_word="this"):
@@ -105,14 +117,23 @@ def main(inputs, output, *, spacy_model):
 
     for claim in claim_ds.claims:
         srl_out = srl_model.predict(claim.claim_text)
+        
+        # Add claim semantics
+        claim.claim_semantics = {
+            "event": srl_out.verb,
+            "args": srl_out.args
+        }
+
+        # Find X variable
         claim_template = reformat_x_variable_in_claim_template(claim.claim_template)
         srl_claim_template = srl_model.predict(claim_template)
-        arg_label_for_x_variable = [k for k, v in srl_claim_template.labels.items() if v == "this"]
+        arg_label_for_x_variable = [k for k, v in srl_claim_template.args.items() if v == "this"]
         if arg_label_for_x_variable:
             label = arg_label_for_x_variable[0] # Should only be one
-            x_variable = srl_out.labels.get(label)
+            x_variable = srl_out.args.get(label)
             if x_variable:
                 claim.x_variable = x_variable
+
         claim.add_theory("srl", srl_out)
     claim_ds.save_to_dir(output)
 
