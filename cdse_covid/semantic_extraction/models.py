@@ -12,7 +12,8 @@ class AMRLabel:
 @dataclass
 class SRLabel:
     label_id: str
-    labels: Mapping[str, str]
+    verb: Mapping[str, str]
+    args: Mapping[str, str]
 
 
 @dataclass
