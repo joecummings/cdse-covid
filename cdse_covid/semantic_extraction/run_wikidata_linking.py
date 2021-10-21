@@ -22,6 +22,22 @@ def main(claim_input, srl_input, amr_input, output):
 
     for claim in claim_dataset:
         wikidata = []
+        if claim.claim_semantics:
+            possible_event = claim.claim_semantics.get("event")
+            if possible_event:
+                # Find Qnodes for events
+                event_links = _find_links(claim.claim_sentence, [possible_event])
+                event_qnode = create_wikidata_qnodes(event_links)
+                if event_qnode:
+                    claim.claim_semantics["event"] = event_qnode[0]
+                wikidata.extend(event_qnode)
+            # Find Qnodes for args
+            for arg_role, arg in claim.claim_semantics["args"].items():
+                arg_links = _find_links(claim.claim_sentence, [arg])
+                arg_qnode = create_wikidata_qnodes(arg_links)
+                if arg_qnode:
+                    claim.claim_semantics["args"][arg_role] = arg_qnode[0]
+                wikidata.extend(arg_qnode)
         if claim.claimer:
             claimer_links = _find_links(claim.claim_sentence, [claim.claimer])
             top_link = create_wikidata_qnodes(claimer_links)
@@ -36,7 +52,6 @@ def main(claim_input, srl_input, amr_input, output):
             wikidata.extend(top_link)
 
         claim.add_theory("wikidata", wikidata)
-
     claim_dataset.save_to_dir(output)
 
     logging.info("Saved claims with Wikidata to %s", output)
