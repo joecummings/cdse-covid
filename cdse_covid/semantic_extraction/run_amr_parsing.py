@@ -55,10 +55,10 @@ def main(input_dir, output, *, spacy_model, parser_path):
         annotations = amr_parser.parse_sentences([tokenized_sentences])
         metadata, graph_metadata = Matedata_Parser().readlines(annotations[0][0])
         amr, alignments = AMR_Reader._parse_amr_from_metadata(metadata["tok"], graph_metadata)
-        amr_label = AMRLabel(uuid.uuid1(), amr, alignments)
-        possible_claimers = identify_claimer(amr)
-        if possible_claimers:
-            claim.claimer = possible_claimers[0] # Should only be one claimer
+        amr_label = AMRLabel(int(uuid.uuid1()), amr, alignments)
+        possible_claimer = identify_claimer(claim.claim_text.split(), amr)
+        if possible_claimer:
+            claim.claimer = possible_claimer
         claim.add_theory("amr", amr_label)
 
     claim_ds.save_to_dir(output)
