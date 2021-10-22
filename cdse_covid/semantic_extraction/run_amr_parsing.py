@@ -18,7 +18,7 @@ from amr_utils.amr_readers import AMR_Reader, Matedata_Parser
 
 from cdse_covid.claim_detection.run_claim_detection import ClaimDataset
 from cdse_covid.semantic_extraction.models import AMRLabel
-from cdse_covid.semantic_extraction.claimer_utils import identify_claimer
+from cdse_covid.semantic_extraction.claimer_utils import identify_claimer, identify_x_variable
 
 
 def tokenize_sentence(text, spacy_tokenizer) -> Tuple[List[str], str]:
@@ -55,12 +55,21 @@ def main(input_dir, output, *, spacy_model, parser_path):
         annotations = amr_parser.parse_sentences([tokenized_sentences])
         metadata, graph_metadata = Matedata_Parser().readlines(annotations[0][0])
         amr, alignments = AMR_Reader._parse_amr_from_metadata(metadata["tok"], graph_metadata)
-        _, tokenized_claim = tokenize_sentence(claim.claim_text, spacy_model.tokenizer)
-        possible_claimer = identify_claimer(tokenized_claim, amr)
-        if possible_claimer:
-            claim.claimer = possible_claimer
+        amr_label = AMRLabel(uuid.uuid1(), amr, alignments)
+        possible_claimers = identify_claimer(amr)
+        if possible_claimers:
+            claim.claimer = possible_claimers[0] # Should only be one claimer
 
-        amr_label = AMRLabel(int(uuid.uuid1()), amr, alignments)
+        _, tokenized_claims = tokenize_sentence(claim.claim_text, spacy_model.tokenizer)
+        claim_annotations = amr_parser.parse_sentences([tokenized_claims])
+        claim_metadata, claim_graph_metadata = Matedata_Parser().readlines(claim_annotations[0][0])
+        claimr, claim_alignments = AMR_Reader._parse_amr_from_metadata(
+            claim_metadata["tok"], claim_graph_metadata
+        )
+        possible_x_variable = identify_x_variable(claimr, claim.claim_template)
+        if possible_x_variable:
+            claim.x_variable = possible_x_variable
+
         claim.add_theory("amr", amr_label)
 
     claim_ds.save_to_dir(output)
