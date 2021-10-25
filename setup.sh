@@ -37,6 +37,10 @@ fi
 conda activate transition-amr-parser
 set -u  # /hack
 
+echo "Installing packages for transition-amr-parser..."
+pip install -r amr-requirements-lock.txt
+echo "Finished installing amr requirements (1/5)"
+
 # Download wordnet & framenet to the currently active conda env
 python -m nltk.downloader -d "$CONDA_PREFIX"/nltk_data wordnet
 python -m nltk.downloader -d "$CONDA_PREFIX"/nltk_data framenet_v17
@@ -58,12 +62,7 @@ if ! bash tests/correctly_installed.sh | grep -q 'correctly installed'; then
   echo "AMR parser not correctly installed -- check to make sure that each requirement has been installed properly"
   exit 1
 fi
-echo "Parser installed (1/5)"
-
-
-echo "Installing packages for transition-amr-parser..."
-pip install -r amr-requirements-lock.txt
-echo "Finished installing amr requirements (2/5)"
+echo "Parser installed (2/5)"
 
 
 echo "Installing JAMR aligner..."
