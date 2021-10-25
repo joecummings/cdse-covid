@@ -19,13 +19,13 @@ fi
 
 # Download requirements into Conda or Venv environment
 pip install -r requirements-lock.txt
-# Download wordnet to the currently active conda env
+# Download wordnet & framenet to the currently active conda env
 # (CONDA_PREFIX is set automatically by conda upon activating an env)
 python -m nltk.downloader -d "$CONDA_PREFIX"/nltk_data wordnet
+python -m nltk.downloader -d "$CONDA_PREFIX"/nltk_data framenet_v17
 
 # Create this package as a module
 pip install -e .
-
 
 source ~/miniconda3/etc/profile.d/conda.sh
 set +u  # hack for conda issue
