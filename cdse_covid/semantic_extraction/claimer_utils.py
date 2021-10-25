@@ -9,7 +9,7 @@ LEMMATIZER = WordNetLemmatizer()
 
 
 framenet_concepts = ["Statement", "Reasoning"]
-FRAMENET_VERBS = []
+FRAMENET_VERBS = set()
 for concept in framenet_concepts:
     frame = framenet.frame_by_name(concept)
     lex_units = frame.get("lexUnit")
@@ -17,7 +17,7 @@ for concept in framenet_concepts:
         word, pos = verb.split(".")
         if pos == "v":
             word = word.replace(" ", "-") # Account for multiple words
-            FRAMENET_VERBS.append(word)
+            FRAMENET_VERBS.add(word)
 
 
 def identify_claimer(claim_tokens, amr: AMR) -> str:
@@ -61,7 +61,8 @@ def get_claim_node(claim_tokens: List[str], amr: AMR) -> Optional[str]:
 
 def is_desired_framenet_node(node_label: str) -> bool:
     """Determine if the node under investigation represents a statement or reasoning event."""
-    return any(verb in node_label for verb in FRAMENET_VERBS)
+    verb = node_label.rsplit("-", 1)[0] # E.g. origin from origin-01
+    return verb in FRAMENET_VERBS
 
 
 def get_claim_node_from_token(node, node_dict, edges, i) -> Optional[str]:
