@@ -37,7 +37,8 @@ fi
 conda activate transition-amr-parser
 set -u  # /hack
 
-# Download framenet to the currently active conda env
+# Download wordnet & framenet to the currently active conda env
+python -m nltk.downloader -d "$CONDA_PREFIX"/nltk_data wordnet
 python -m nltk.downloader -d "$CONDA_PREFIX"/nltk_data framenet_v17
 
 # Transition AMR Parser installation
