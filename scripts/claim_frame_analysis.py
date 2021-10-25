@@ -8,6 +8,7 @@ import csv
 def main():
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument('--input', help='JSON input file')
+    p.add_argument("--wikidata", action="store_true", help="Evaluate accuracy of WikiData Qnodes.", default=False)
     args = p.parse_args()
 
     with open(args.input, "r") as handle:
@@ -58,29 +59,41 @@ def main():
     print(f"% of claimer qnodes found: {num_claimer_q_nodes / num_claimers}")
 
     # overall wikidata accuracy
-    wikidata_total = 0
-    wikidata_good = 0
-    for claim in claims:
-        print(claim["claim_text"])
-        if claim["x_variable_qnode"]:
-            good = int(input(f"{claim['x_variable_qnode']}\n"))
-            wikidata_good += good
-            wikidata_total += 1
-        if claim["claimer_qnode"]:
-            good = int(input(f'{claim["claimer_qnode"]}\n'))
-            wikidata_good += good
-            wikidata_total += 1
-        if claim["claim_semantics"]:
-            if claim["claim_semantics"]["event"]:
-                good = int(input(f'{claim["claim_semantics"]["event"]}\n'))
+    if args.wikidata:
+        prompt = "Is this event qnode appropriate for the sentence above? (1=yes, 0=no):"
+        valid_res = {1, 0}
+        wikidata_total = 0
+        wikidata_good = 0
+        for claim in claims:
+            print(claim["claim_sentence"])
+            if claim["x_variable_qnode"]:
+                good = evaluate_appropriate_qnode(claim["x_variable_qnode"], prompt, valid_res)
                 wikidata_good += good
                 wikidata_total += 1
-            if claim["claim_semantics"]["args"]:
-                for _, arg in claim["claim_semantics"]["args"].items():
-                    good = int(input(f'{arg}\n'))
+            if claim["claimer_qnode"]:
+                good = evaluate_appropriate_qnode(claim["claimer_qnode"], prompt, valid_res)
+                wikidata_good += good
+                wikidata_total += 1
+            if claim["claim_semantics"]:
+                if claim["claim_semantics"]["event"]:
+                    good = evaluate_appropriate_qnode(claim["claim_semantics"]["event"], prompt, valid_res)
                     wikidata_good += good
                     wikidata_total += 1
-    print(f"% of accurate qnode selections: {wikidata_good / wikidata_total}")
+                if claim["claim_semantics"]["args"]:
+                    for _, arg in claim["claim_semantics"]["args"].items():
+                        good = evaluate_appropriate_qnode(arg, prompt, valid_res)
+                        wikidata_good += good
+                        wikidata_total += 1
+        print(f"% of accurate qnode selections: {wikidata_good / wikidata_total}")
+
+def evaluate_appropriate_qnode(qnode, prompt, valid_res):
+    """Loop to evaluate if qnode is appropriate."""
+    good = -1
+    while good not in valid_res:
+        good = int(input(f"{prompt}\n{qnode}\n"))
+        if good not in valid_res:
+            print(f"Invalid input: {good}. Please only input a 1 for yes or a 0 for no.\n")
+    return good
 
 if __name__ == '__main__':
     main()
