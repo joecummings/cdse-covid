@@ -60,35 +60,36 @@ def main():
 
     # overall wikidata accuracy
     if args.wikidata:
-        prompt = "Is this event qnode appropriate for the sentence above? (1=yes, 0=no):"
+        prompt = "Is this QNODE_TYPE qnode appropriate for the sentence above? (1=yes, 0=no):"
         valid_res = {1, 0}
         wikidata_total = 0
         wikidata_good = 0
         for claim in claims:
             print(claim["claim_sentence"])
             if claim["x_variable_qnode"]:
-                good = evaluate_appropriate_qnode(claim["x_variable_qnode"], prompt, valid_res)
+                good = evaluate_appropriate_qnode(claim["x_variable_qnode"], prompt, valid_res, "X Variable")
                 wikidata_good += good
                 wikidata_total += 1
             if claim["claimer_qnode"]:
-                good = evaluate_appropriate_qnode(claim["claimer_qnode"], prompt, valid_res)
+                good = evaluate_appropriate_qnode(claim["claimer_qnode"], prompt, valid_res, "claimer")
                 wikidata_good += good
                 wikidata_total += 1
             if claim["claim_semantics"]:
                 if claim["claim_semantics"]["event"]:
-                    good = evaluate_appropriate_qnode(claim["claim_semantics"]["event"], prompt, valid_res)
+                    good = evaluate_appropriate_qnode(claim["claim_semantics"]["event"], prompt, valid_res, "event")
                     wikidata_good += good
                     wikidata_total += 1
                 if claim["claim_semantics"]["args"]:
-                    for _, arg in claim["claim_semantics"]["args"].items():
-                        good = evaluate_appropriate_qnode(arg, prompt, valid_res)
+                    for role, arg in claim["claim_semantics"]["args"].items():
+                        good = evaluate_appropriate_qnode(arg, prompt, valid_res, role)
                         wikidata_good += good
                         wikidata_total += 1
         print(f"% of accurate qnode selections: {wikidata_good / wikidata_total}")
 
-def evaluate_appropriate_qnode(qnode, prompt, valid_res):
+def evaluate_appropriate_qnode(qnode, prompt, valid_res, type_of_qnode):
     """Loop to evaluate if qnode is appropriate."""
     good = -1
+    prompt = prompt.replace("QNODE_TYPE", type_of_qnode)
     while good not in valid_res:
         good = int(input(f"{prompt}\n{qnode}\n"))
         if good not in valid_res:
