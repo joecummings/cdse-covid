@@ -32,7 +32,7 @@ RegexPattern = Sequence[Mapping[str, Any]]
 
 
 class ClaimDataset:
-    def __init__(self, claims: Sequence[Claim] = None) -> None:
+    def __init__(self, claims: Sequence[Claim] = []) -> None:
         self.claims = claims
 
     def add_claim(self, claim: Claim):
