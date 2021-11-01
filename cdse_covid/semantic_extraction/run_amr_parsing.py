@@ -59,6 +59,7 @@ def main(input_dir, output, *, spacy_model, parser_path):
         tokenized_claim = tokenize_sentence(claim.claim_text, spacy_model.tokenizer)
         possible_claimer = identify_claimer(tokenized_claim, amr, alignments)
         if possible_claimer:
+            print(f"CLAIMER: {possible_claimer}")
             claim.claimer = possible_claimer
 
         claim_annotations = amr_parser.parse_sentences([tokenized_claim])
@@ -72,6 +73,7 @@ def main(input_dir, output, *, spacy_model, parser_path):
             claimr, claim_alignments, claim.claim_template
         )
         if possible_x_variable:
+            print(f"X-VARIABLE: {possible_x_variable}")
             claim.x_variable = possible_x_variable
 
         amr_label = AMRLabel((int(uuid.uuid1())), amr, alignments)
