@@ -7,12 +7,12 @@ import argparse
 import logging
 from os import chdir, getcwd, makedirs
 from pathlib import Path
-from typing import List, Tuple
+from typing import List
 import uuid
 import spacy
 
 
-from transition_amr_parser.parse import AMRParser # pylint: disable=import-error
+from transition_amr_parser.parse import AMRParser  # pylint: disable=import-error
 
 from amr_utils.amr_readers import AMR_Reader, Matedata_Parser
 
