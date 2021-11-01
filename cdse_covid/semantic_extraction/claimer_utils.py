@@ -1,6 +1,3 @@
-import string
-from collections import defaultdict
-
 from amr_utils.alignments import AMR_Alignment
 from amr_utils.amr import AMR
 from nltk.corpus import framenet
