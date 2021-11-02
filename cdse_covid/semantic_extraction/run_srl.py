@@ -5,7 +5,6 @@ from typing import Any, Mapping
 import uuid
 
 from allennlp_models.pretrained import load_predictor
-from nltk.stem.snowball import SnowballStemmer
 from cdse_covid.claim_detection.run_claim_detection import ClaimDataset
 import spacy
 from spacy.language import Language
@@ -13,6 +12,7 @@ from spacy.language import Language
 from cdse_covid.semantic_extraction.models import SRLabel
 
 from cdse_covid.semantic_extraction.claimer_utils import LEMMATIZER
+
 
 class SRLModel:
     def __init__(self, predictor, *, spacy_model) -> None:
@@ -112,29 +112,34 @@ def reformat_x_variable_in_claim_template(claim_template, reference_word="this")
 
 
 def main(inputs, output, *, spacy_model):
-    srl_model = SRLModel.from_hub("structured-prediction-srl", spacy_model)
     claim_ds = ClaimDataset.load_from_dir(inputs)
+    claims_with_missing_x_variables = [
+        claim for claim in claim_ds.claims if not claim.x_variable
+    ]
+    if claims_with_missing_x_variables:
+        srl_model = SRLModel.from_hub("structured-prediction-srl", spacy_model)
 
-    for claim in claim_ds.claims:
-        srl_out = srl_model.predict(claim.claim_text)
-        
-        # Add claim semantics
-        claim.claim_semantics = {
-            "event": srl_out.verb,
-            "args": srl_out.args
-        }
+        for claim in claims_with_missing_x_variables:
+            print(f"Claim '{claim.claim_text}' has no X-variable")
+            srl_out = srl_model.predict(claim.claim_text)
 
-        # Find X variable
-        claim_template = reformat_x_variable_in_claim_template(claim.claim_template)
-        srl_claim_template = srl_model.predict(claim_template)
-        arg_label_for_x_variable = [k for k, v in srl_claim_template.args.items() if v == "this"]
-        if arg_label_for_x_variable:
-            label = arg_label_for_x_variable[0] # Should only be one
-            x_variable = srl_out.args.get(label)
-            if x_variable:
-                claim.x_variable = x_variable
+            # Add claim semantics
+            claim.claim_semantics = {
+                "event": srl_out.verb,
+                "args": srl_out.args
+            }
 
-        claim.add_theory("srl", srl_out)
+            # Find X variable
+            claim_template = reformat_x_variable_in_claim_template(claim.claim_template)
+            srl_claim_template = srl_model.predict(claim_template)
+            arg_label_for_x_variable = [k for k, v in srl_claim_template.args.items() if v == "this"]
+            if arg_label_for_x_variable:
+                label = arg_label_for_x_variable[0]  # Should only be one
+                x_variable = srl_out.args.get(label)
+                if x_variable:
+                    claim.x_variable = x_variable
+
+            claim.add_theory("srl", srl_out)
     claim_ds.save_to_dir(output)
 
     logging.info("Finished saving SRL labels to %s.", output)
