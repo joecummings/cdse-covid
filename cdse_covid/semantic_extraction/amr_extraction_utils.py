@@ -135,17 +135,24 @@ def create_node_to_token_dict(
 
 
 def fix_alignment(alignment: AMR_Alignment) -> AMR_Alignment:
-    """Make sure all of the 'token' values are lists"""
+    """
+    Make sure all of the 'token' values are lists
+
+    If a stringified token value isn't convertible into a list
+    of integers, we run into a problem since these strings cause
+    problems later when trying to run `to_json` on the alignment data.
+    """
     alignment_tokens = alignment.tokens
     if type(alignment_tokens) == str:
-        # The value will look like '2-3'
-        first_token, last_token = alignment_tokens.split("-")
+        # A str-type `alignment_tokens` should have a format like '11-12'.
         try:
+            first_token, last_token = alignment_tokens.split("-")
             first_tok_int = int(first_token)
             last_tok_int = int(last_token)
         except ValueError:
             raise RuntimeError(
-                "Looks like something is wrong with the token value conversion."
+                "Looks like something is wrong with the token index conversion; "
+                f"tried to convert index range '{alignment_tokens}' to int values"
             )
         token_range = range(first_tok_int, last_tok_int+1)
         alignment.tokens = [tok_index for tok_index in token_range]
