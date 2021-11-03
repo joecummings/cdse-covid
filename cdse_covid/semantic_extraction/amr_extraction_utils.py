@@ -330,3 +330,54 @@ def identify_x_variable(
                 return get_full_description(
                     amr_dict, nodes_to_labels, nodes_to_source_strings, child
                 )
+
+
+def identify_x_variable_general(
+        amr: AMR, alignments: List[AMR_Alignment], claim_ents: Dict[str, str]
+) -> Optional[str]:
+    """
+    Use the AMR graph of the claim to identify the X variable given the claim text
+
+    An alternative to `identify_x_variable` that doesn't rely on the templates
+    of our COVID-19 domain
+    """
+    location_entity_labels = {"GPE", "FAC" "LOC"}
+    place_types = {"city", "state", "country", "continent"}
+    amr_dict = create_amr_dict(amr)
+    nodes_to_labels = amr.nodes
+    nodes_to_source_strings = create_node_to_token_dict(amr, alignments)
+
+    # First use entity labels as clues for what the X-variable is
+    for entity, label in claim_ents.items():
+        if label in location_entity_labels:
+            # For claims with a FAC/GPE/LOC, try to find the full argument
+            for parent, role, child in amr.edges:
+                child_label = nodes_to_labels.get(child)
+                # Not all locations get the :location role label
+                if role == ":location" or role == ":source" or any(
+                        child_label == place_type for place_type in place_types
+                ):
+                    location_name = get_full_name_value(
+                        amr_dict, nodes_to_source_strings, child
+                    )
+                    return location_name if location_name else get_full_description(
+                        amr_dict, nodes_to_labels, nodes_to_source_strings, child
+                    )
+        # if label == "NORP":
+        #     # A nationality may hint at the variable
+        if label == "PERSON" or label == "ORG":
+            # If a PERSON/ORG is detected, get the full name
+            for parent, role, child in amr.edges:
+                child_label = nodes_to_labels.get(child)
+                if child_label == "person" or child_label == "organization":
+                    person_name = get_full_name_value(
+                        amr_dict, nodes_to_source_strings, child
+                    )
+                    return person_name if person_name else child_label
+
+    # If there is a date-entity in the AMR graph, that may be the X-variable
+    for node, node_label in nodes_to_labels.items():
+        if node_label == "date-entity":
+            return get_full_description(
+                amr_dict, nodes_to_labels, nodes_to_source_strings, node
+            )

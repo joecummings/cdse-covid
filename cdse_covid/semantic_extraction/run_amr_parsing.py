@@ -19,7 +19,7 @@ from amr_utils.amr_readers import AMR_Reader, Matedata_Parser
 from cdse_covid.claim_detection.run_claim_detection import ClaimDataset
 from cdse_covid.semantic_extraction.models import AMRLabel
 from cdse_covid.semantic_extraction.claimer_utils import identify_claimer
-from cdse_covid.semantic_extraction.amr_extraction_utils import identify_x_variable
+from cdse_covid.semantic_extraction.amr_extraction_utils import identify_x_variable, identify_x_variable_general
 
 
 def tokenize_sentence(text, spacy_tokenizer) -> List[str]:
@@ -68,8 +68,14 @@ def main(input_dir, output, *, spacy_model, parser_path):
         claimr, claim_alignments = AMR_Reader._parse_amr_from_metadata(
             claim_metadata["tok"], claim_graph_metadata
         )
-        possible_x_variable = identify_x_variable(
-            claimr, claim_alignments, claim.claim_template
+        claim_ents = {
+            ent.text: ent.label_ for ent in spacy_model(claim.claim_text).ents
+        }
+        # possible_x_variable = identify_x_variable(
+        #     claimr, claim_alignments, claim.claim_template
+        # )
+        possible_x_variable = identify_x_variable_general(
+            claimr, claim_alignments, claim_ents
         )
         if possible_x_variable:
             claim.x_variable = possible_x_variable
