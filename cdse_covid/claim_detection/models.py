@@ -1,6 +1,11 @@
-from dataclasses import dataclass, field
-from typing import Any, Mapping, Optional, Tuple
+from collections import defaultdict
+import csv
+from dataclasses import dataclass, field, replace
+from pathlib import Path
+import pickle
+from typing import Any, Mapping, Optional, Sequence, Tuple
 from cdse_covid.semantic_extraction.models import WikidataQnode
+import logging
 
 
 @dataclass
@@ -49,3 +54,63 @@ class Claim:
             return data
         else:
             return obj
+
+
+class ClaimDataset:
+    def __init__(self, claims: Sequence[Claim] = []) -> None:
+        self.claims = claims
+
+    def add_claim(self, claim: Claim):
+        if not self.claims:
+            self.claims = []
+        self.claims.append(claim)
+
+    def __iter__(self):
+        return iter(self.claims)
+
+    @staticmethod
+    def from_multiple_claims_ds(*claim_datasets: "ClaimDataset") -> "ClaimDataset":
+        datasets_dict = defaultdict(list)
+        for dataset in claim_datasets:
+            for claim in dataset:
+                datasets_dict[claim.claim_id].append(claim)
+
+        all_claims = []
+        for _, claims in datasets_dict.items():
+            for i, claim in enumerate(claims):
+                if i == 0:
+                    new_claim = claim
+                else:
+                    all_non_none_attrs = {k:v for k,v in claim.__dict__.items() if v != None and k != "theories"}
+                    new_claim: Claim = replace(new_claim, **all_non_none_attrs)
+                    for k, v in claim.theories.items():
+                        if not new_claim.get_theory(k):
+                            new_claim.add_theory(k, v)
+            all_claims.append(new_claim)
+        return ClaimDataset(all_claims)
+
+
+    @staticmethod
+    def load_from_dir(path: Path) -> "ClaimDataset":
+        claims = []
+        for claim_file in path.glob("*.claim"):
+            with open(claim_file, "rb") as handle:
+                claim = pickle.load(handle)
+                claims.append(claim)
+        return ClaimDataset(claims)
+
+    def save_to_dir(self, path: Path):
+        if not self.claims:
+            logging.warning("No claims found.")
+        path.mkdir(exist_ok=True)
+        for claim in self.claims:
+            with open(f"{path / str(claim.claim_id)}.claim", "wb+") as handle:
+                pickle.dump(claim, handle, pickle.HIGHEST_PROTOCOL)
+
+    def print_out_claim_sentences(self, path: Path):
+        if not self.claims:
+            logging.warning("No claims found.")
+        with open(path, "w+") as handle:
+            writer = csv.writer(handle)
+            for claim in self.claims:
+                writer.writerow([claim.claim_text])

@@ -1,8 +1,11 @@
+import logging
 from pathlib import Path
+import spacy
 from spacy.language import Language
 from spacy.tokens import Doc
 from spacy.vocab import Vocab # pylint: disable=no-name-in-module
 from typing import Sequence, Tuple
+from spacy.attrs import HEAD, SENT_START
 
 
 class AIDADataset:
@@ -26,7 +29,11 @@ class AIDADataset:
     def from_serialized_docs(cls, path_to_docs: Path) -> "AIDADataset":
         all_docs = []
         for doc in path_to_docs.glob("*.spacy"):
-            spacy_doc = Doc(Vocab()).from_disk(doc)
+            try:
+                spacy_doc = Doc(Vocab()).from_disk(doc)
+            except ValueError as e:
+                logging.warning(e)
+                spacy_doc = Doc(Vocab()).from_disk(doc, exclude=[SENT_START])
             all_docs.append((doc.stem, spacy_doc))
         return cls(all_docs)
 

@@ -50,21 +50,26 @@ def main(params: Parameters):
         value=spacified_output_dir, depends_on=[preprocess_job]
     )
 
+    amr_params = params.namespace("amr")
+
     # Claim detection
     claim_params = params.namespace("claim_detection")
     claim_loc = base_locator / "claim_detection"
     claim_python_file = claim_params.existing_file("python_file")
-    patterns_file = claim_params.existing_file("patterns")
     claim_output_dir = directory_for(claim_loc) / "documents"
     claim_detection_job = run_python_on_args(
         claim_loc,
         claim_python_file,
         f"""
         --input {preprocessed_docs.value} \
-        --patterns {patterns_file} \
+        --amr-parser {amr_params.existing_directory("model_path")} \
         --out {claim_output_dir} \
         --spacy-model {model_path}
         """,
+        override_conda_config=CondaConfiguration(
+            conda_base_path=params.existing_directory("conda_base_path"),
+            conda_environment="transition-amr-parser"
+        ),
         depends_on=[preprocessed_docs]
     )
     claim_detection_output = ValueArtifact(
@@ -72,7 +77,6 @@ def main(params: Parameters):
     )
 
     # AMR
-    amr_params = params.namespace("amr")
     amr_loc = base_locator / "amr"
     amr_python_file = amr_params.existing_file("python_file")
     amr_output_dir = directory_for(amr_loc) / "documents"
