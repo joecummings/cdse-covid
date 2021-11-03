@@ -51,7 +51,7 @@ def main(params: Parameters):
         value=spacified_output_dir, depends_on=[preprocess_job]
     )
 
-    # Document-level AMR parsing
+    # AMR parsing over the entirety of each document
     amr_params = params.namespace("amr")
     amr_all_loc = base_locator / "amr_all"
     amr_all_python_file = amr_params.existing_file("python_file_all")
