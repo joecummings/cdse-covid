@@ -6,12 +6,18 @@ You will need to run this in your transition-amr virtual environment.
 import argparse
 from os import getcwd, makedirs, chdir
 from pathlib import Path
-from typing import List, Tuple
+from typing import List, Tuple, Union, Dict, Optional
 
 import spacy
+from amr_utils.alignments import AMR_Alignment
+from amr_utils.amr import AMR
+from amr_utils.amr_readers import AMR_Reader
 from transition_amr_parser.parse import AMRParser  # pylint: disable=import-error
 
 from cdse_covid.semantic_extraction.run_amr_parsing import tokenize_sentence
+
+ALIGNMENTS_TYPE = Dict[Union[List[str], str], Union[List[AMR_Alignment], list]]
+AMR_READER = AMR_Reader()
 
 
 def tokenize_sentences(corpus_file, spacy_tokenizer) -> Tuple[List[str], List[List[str]]]:
@@ -26,6 +32,19 @@ def tokenize_sentences(corpus_file, spacy_tokenizer) -> Tuple[List[str], List[Li
             tokenized_sentences.append(tokenized_sentence)
             doc_sentences_to_include.append(sentence)
     return doc_sentences_to_include, tokenized_sentences
+
+
+def load_amr_from_text_file(
+        amr_file: Path, output_alignments: bool = False
+) -> Tuple[List[AMR], Optional[ALIGNMENTS_TYPE]]:
+    """
+    Reads a document of AMR graphs and returns an AMR graph.
+    If `output_alignments` is True, it will also return
+    the alignment data of that graph.
+    """
+    if output_alignments:
+        return AMR_READER.load(amr_file, remove_wiki=True, output_alignments=True)
+    return AMR_READER.load(amr_file, remove_wiki=True)
 
 
 def main(corpus_dir, output_dir, spacy_model, parser_path):
