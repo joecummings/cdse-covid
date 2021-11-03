@@ -159,7 +159,9 @@ def fix_alignment(alignment: AMR_Alignment) -> AMR_Alignment:
     return alignment
 
 
-def identify_x_variable(amr: AMR, alignments: List[AMR_Alignment], claim_template: str) -> Optional[str]:
+def identify_x_variable(
+        amr: AMR, alignments: List[AMR_Alignment], claim_template: str
+) -> Optional[str]:
     """
     Use the AMR graph of the claim to identify the X variable given the template
     """
