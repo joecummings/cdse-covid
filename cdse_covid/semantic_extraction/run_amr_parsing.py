@@ -74,7 +74,7 @@ def main(input_dir, output, *, spacy_model, parser_path):
         if possible_x_variable:
             claim.x_variable = possible_x_variable
 
-        amr_label = AMRLabel((int(uuid.uuid1())), amr, alignments)
+        amr_label = AMRLabel(int(uuid.uuid1()), amr, alignments)
         claim.add_theory("amr", amr_label)
 
     claim_ds.save_to_dir(output)

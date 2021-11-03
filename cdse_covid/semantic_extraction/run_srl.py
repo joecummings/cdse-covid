@@ -134,6 +134,7 @@ def main(inputs, output, *, spacy_model):
                 x_variable = srl_out.args.get(label)
                 if x_variable:
                     claim.x_variable = x_variable
+
         claim.add_theory("srl", srl_out)
     claim_ds.save_to_dir(output)
 
