@@ -1,9 +1,12 @@
-from collections import defaultdict
+from amr_utils.alignments import AMR_Alignment
 from amr_utils.amr import AMR
 from nltk.corpus import framenet
-from typing import Dict, List, Optional
+from typing import List, Optional
 from nltk.stem import WordNetLemmatizer
 import re
+
+from cdse_covid.semantic_extraction.amr_extraction_utils import get_full_name_value, get_full_description, \
+    create_node_to_token_dict, create_amr_dict
 
 LEMMATIZER = WordNetLemmatizer()
 
@@ -16,11 +19,11 @@ for concept in framenet_concepts:
     for verb in lex_units.keys():
         word, pos = verb.split(".")
         if pos == "v":
-            word = word.replace(" ", "-") # Account for multiple words
+            word = word.replace(" ", "-")  # Account for multiple words
             FRAMENET_VERBS.add(word)
 
 
-def identify_claimer(claim_tokens, amr: AMR) -> str:
+def identify_claimer(claim_tokens, amr: AMR, alignments: List[AMR_Alignment]) -> str:
     """Identify the claimer of the span.
 
     Finding claim node:
@@ -36,7 +39,7 @@ def identify_claimer(claim_tokens, amr: AMR) -> str:
         return ""
 
     claim_node = get_claim_node(claim_tokens, amr)
-    return get_argument_node(amr, claim_node)
+    return get_argument_node(amr, alignments, claim_node)
 
 
 def get_claim_node(claim_tokens: List[str], amr: AMR) -> Optional[str]:
@@ -46,7 +49,7 @@ def get_claim_node(claim_tokens: List[str], amr: AMR) -> Optional[str]:
     for token in claim_tokens:
         token = token.lower() # Make sure the token is lowercased
         for node, label in graph_nodes.items():
-            label = re.sub("(-\d*)", "", label) # Remove any PropBank numbering
+            label = re.sub("(-\d*)", "", label)  # Remove any PropBank numbering
             # We're hoping that at least one nominal/verbial lemma is found
             if (
                 LEMMATIZER.lemmatize(token, pos="n") == label
@@ -61,7 +64,7 @@ def get_claim_node(claim_tokens: List[str], amr: AMR) -> Optional[str]:
 
 def is_desired_framenet_node(node_label: str) -> bool:
     """Determine if the node under investigation represents a statement or reasoning event."""
-    verb = node_label.rsplit("-", 1)[0] # E.g. origin from origin-01
+    verb = node_label.rsplit("-", 1)[0]  # E.g. origin from origin-01
     return verb in FRAMENET_VERBS
 
 
@@ -73,7 +76,7 @@ def get_claim_node_from_token(node, node_dict, edges, i) -> Optional[str]:
             parent_label = node_dict[parent_node]
             if is_desired_framenet_node(parent_label):
                 return parent_node
-            if i == len(node_dict): # Iterated through all nodes without success
+            if i == len(node_dict):  # Iterated through all nodes without success
                 break
             return get_claim_node_from_token(parent_node, node_dict, edges, i + 1)
 
@@ -87,36 +90,21 @@ def search_for_claim_node(graph_nodes) -> Optional[str]:
             return node
 
 
-def create_amr_dict(amr: AMR) -> Dict[str, Dict[str, str]]:
-    amr_dict = defaultdict(dict)
-    for parent, role, arg in amr.edges:
-        amr_dict[parent][role] = arg
-    return amr_dict
-
-
-def get_argument_node(amr: AMR, claim_node: Optional[str]) -> Optional[str]:
+def get_argument_node(
+        amr: AMR, alignments: List[AMR_Alignment], claim_node: Optional[str]
+) -> Optional[str]:
     """Get all argument (claimer) nodes of the claim node"""
     nodes = amr.nodes
+    nodes_to_strings = create_node_to_token_dict(amr, alignments)
     amr_dict = create_amr_dict(amr)
     node_args = amr_dict.get(claim_node)
     if node_args:
-        claimer_node = node_args.get(":ARG0")
-        claimer_label = nodes.get(claimer_node)
-        if claimer_label == "person":
-            return get_claimer_name(amr_dict, nodes, claimer_node)
-        return claimer_label
-
-
-def get_claimer_name(
-    amr_dict: Dict[str, Dict[str, str]], node_dict: Dict[str, str], person_node: str
-) -> Optional[str]:
-    name_node = amr_dict[person_node].get(":name")
-    if name_node:
-        person_args = amr_dict[name_node]
-        name_strings = [
-            node_dict[node].strip('"')
-            for role, node in person_args.items()
-            if role.startswith(":op")
-        ]
-
-        return " ".join(name_strings)
+        claimer_nodes = node_args.get(":ARG0")
+        if claimer_nodes:
+            claimer_node = claimer_nodes[0]  # only get one
+            claimer_label = nodes.get(claimer_node)
+            if claimer_label == "person" or claimer_label == "organization":
+                return get_full_name_value(amr_dict, nodes_to_strings, claimer_node)
+            return get_full_description(
+                amr_dict, nodes, nodes_to_strings, claimer_node
+            )

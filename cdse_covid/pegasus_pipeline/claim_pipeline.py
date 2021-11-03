@@ -108,11 +108,11 @@ def main(params: Parameters):
         srl_loc,
         srl_python_file,
         f"""
-        --input {claim_detection_output.value} \
+        --input {amr_output.value} \
         --output {srl_output_dir} \
         --spacy-model {model_path} \
         """,
-        depends_on=[claim_detection_output]
+        depends_on=[amr_output]
     )
     srl_output = ValueArtifact(
         value=srl_output_dir, depends_on=[srl_job]
