@@ -1,5 +1,5 @@
 """
-Takes the corpus files and creates AMR graphs for each sentence.
+Takes the claim data and uses AMR graphs to extract claimers and x-variables.
 
 You will need to run this in your transition-amr virtual environment.
 """
@@ -52,8 +52,8 @@ def main(input_dir, output, *, spacy_model, parser_path):
     claim_ds = ClaimDataset.load_from_dir(input_dir)
 
     for claim in claim_ds.claims:
-        tokenized_sentences = tokenize_sentence(claim.claim_sentence, spacy_model.tokenizer)
-        annotations = amr_parser.parse_sentences([tokenized_sentences])
+        tokenized_sentence = tokenize_sentence(claim.claim_sentence, spacy_model.tokenizer)
+        annotations = amr_parser.parse_sentences([tokenized_sentence])
         metadata, graph_metadata = Matedata_Parser().readlines(annotations[0][0])
         amr, alignments = AMR_Reader._parse_amr_from_metadata(metadata["tok"], graph_metadata)
         tokenized_claim = tokenize_sentence(claim.claim_text, spacy_model.tokenizer)

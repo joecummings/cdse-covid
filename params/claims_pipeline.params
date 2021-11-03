@@ -13,6 +13,7 @@ claim_detection:
     patterns: "%project_root%/cdse_covid/claim_detection/topics.json"
 
 amr:
+    python_file_all: "%project_root%/cdse_covid/pegasus_pipeline/run_amr_parsing_all.py"
     python_file: "%project_root%/cdse_covid/semantic_extraction/run_amr_parsing.py"
     model_path: /Users/jcummings/Desktop/projects/GAIA/transition-amr-parser
 

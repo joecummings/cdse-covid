@@ -19,6 +19,7 @@ from vistautils.parameters_only_entrypoint import parameters_only_entry_point
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
+
 def load_and_serialize_spacy_model(
     path_to_saved_model: Path, model="en_core_web_sm"
 ) -> None:
@@ -50,6 +51,30 @@ def main(params: Parameters):
         value=spacified_output_dir, depends_on=[preprocess_job]
     )
 
+    # Document-level AMR parsing
+    amr_params = params.namespace("amr")
+    amr_all_loc = base_locator / "amr_all"
+    amr_all_python_file = amr_params.existing_file("python_file_all")
+    amr_all_output_dir = directory_for(amr_all_loc) / "documents"
+    if params.string("site") == "saga":
+        larger_resource = SlurmResourceRequest(memory=MemoryAmount.parse("8G"))
+    else:
+        larger_resource = None
+    amr_all_job = run_python_on_args(
+        amr_all_loc,
+        amr_all_python_file,
+        f"""--corpus {input_corpus_dir} --output {amr_all_output_dir}""",
+        override_conda_config=CondaConfiguration(
+            conda_base_path=params.existing_directory("conda_base_path"),
+            conda_environment="transition-amr-parser"
+        ),
+        resource_request=larger_resource,
+        depends_on=[]
+    )
+    amr_all_output = ValueArtifact(
+        value=amr_all_output_dir, depends_on=[amr_all_job]
+    )
+
     # Claim detection
     claim_params = params.namespace("claim_detection")
     claim_loc = base_locator / "claim_detection"
@@ -71,15 +96,10 @@ def main(params: Parameters):
         value=claim_output_dir, depends_on=[claim_detection_job]
     )
 
-    # AMR
-    amr_params = params.namespace("amr")
+    # AMR parsing for claims
     amr_loc = base_locator / "amr"
     amr_python_file = amr_params.existing_file("python_file")
     amr_output_dir = directory_for(amr_loc) / "documents"
-    if params.string("site") == "saga":
-        larger_resource = SlurmResourceRequest(memory=MemoryAmount.parse("8G"))
-    else:
-        larger_resource = None
     amr_job = run_python_on_args(
         amr_loc,
         amr_python_file,
