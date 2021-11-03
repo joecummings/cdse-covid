@@ -125,7 +125,7 @@ def main(inputs, output, *, spacy_model):
         }
 
         # Find X variable if it wasn't found in the AMR step
-        if not claim.x_variable:
+        if claim.x_variable is None:
             claim_template = reformat_x_variable_in_claim_template(claim.claim_template)
             srl_claim_template = srl_model.predict(claim_template)
             arg_label_for_x_variable = [k for k, v in srl_claim_template.args.items() if v == "this"]
