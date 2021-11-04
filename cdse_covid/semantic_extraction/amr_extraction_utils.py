@@ -8,6 +8,7 @@ from amr_utils.amr import AMR
 
 PROPBANK_PATTERN = r"[a-z]*-[0-9]{2}"
 
+
 def create_amr_dict(amr: AMR) -> Dict[str, Dict[str, List[str]]]:
     # {"parent": {"role1": ["child1"], "role2": ["child2", "child3"]}, ...}
     amr_dict = defaultdict(lambda: defaultdict(list))
@@ -159,7 +160,7 @@ def fix_alignment(alignment: AMR_Alignment) -> AMR_Alignment:
     return alignment
 
 
-def identify_x_variable(
+def identify_x_variable_covid(
         amr: AMR, alignments: List[AMR_Alignment], claim_template: str
 ) -> Optional[str]:
     """
@@ -330,7 +331,7 @@ def identify_x_variable(
                 )
 
 
-def identify_x_variable_general(
+def identify_x_variable(
         amr: AMR,
         alignments: List[AMR_Alignment],
         claim_ents: Dict[str, str],
@@ -339,7 +340,7 @@ def identify_x_variable_general(
     """
     Use the AMR graph of the claim to identify the X variable given the claim text
 
-    An alternative to `identify_x_variable` that doesn't rely on the templates
+    An alternative to `identify_x_variable_covid` that doesn't rely on the templates
     of our COVID-19 domain
     """
     place_types = {"city", "state", "country", "continent"}
