@@ -6,6 +6,8 @@ from typing import List, Optional, Dict
 from amr_utils.alignments import AMR_Alignment
 from amr_utils.amr import AMR
 
+PROPBANK_PATTERN = r"[a-z]*-[0-9]{2}"
+
 
 def create_amr_dict(amr: AMR) -> Dict[str, Dict[str, List[str]]]:
     # {"parent": {"role1": ["child1"], "role2": ["child2", "child3"]}, ...}
@@ -53,9 +55,8 @@ def get_full_description(
     <ARG1-of> <consist-of> <mod>* <focus_node> <op1> <ARG1>
     """
     descr_strings = []
-    propbank_pattern = r"[a-z]*-[0-9]{2}"
     focus_string = nodes_to_strings[focus_node]
-    if re.match(propbank_pattern, nodes_to_labels[focus_node]):
+    if re.match(PROPBANK_PATTERN, nodes_to_labels[focus_node]):
         node_args = amr_dict[focus_node]
         for arg_role, arg_node_list in node_args.items():
             # Only check ARG1 to avoid grabbing extraneous arguments
@@ -159,7 +160,7 @@ def fix_alignment(alignment: AMR_Alignment) -> AMR_Alignment:
     return alignment
 
 
-def identify_x_variable(
+def identify_x_variable_covid(
         amr: AMR, alignments: List[AMR_Alignment], claim_template: str
 ) -> Optional[str]:
     """
@@ -176,9 +177,7 @@ def identify_x_variable(
         for parent, role, child in amr.edges:
             child_label = nodes_to_labels.get(child)
             # Not all locations get the :location role label
-            if role == ":location" or role == ":source" or any(
-                    child_label == place_type for place_type in place_types
-            ):
+            if role == ":location" or role == ":source" or child_label in place_types:
                 location_name = get_full_name_value(
                     amr_dict, nodes_to_source_strings, child
                 )
@@ -330,3 +329,90 @@ def identify_x_variable(
                 return get_full_description(
                     amr_dict, nodes_to_labels, nodes_to_source_strings, child
                 )
+
+
+def identify_x_variable(
+        amr: AMR,
+        alignments: List[AMR_Alignment],
+        claim_ents: Dict[str, str],
+        claim_pos: Dict[str, str]
+) -> Optional[str]:
+    """
+    Use the AMR graph of the claim to identify the X variable given the claim text
+
+    An alternative to `identify_x_variable_covid` that doesn't rely on the templates
+    of our COVID-19 domain
+    """
+    place_types = {"city", "state", "country", "continent"}
+    amr_dict = create_amr_dict(amr)
+    nodes_to_labels = amr.nodes
+    nodes_to_source_strings = create_node_to_token_dict(amr, alignments)
+
+    # First use entity labels as clues for what the X-variable is
+    for entity, label in claim_ents.items():
+        if label == "NORP":
+            # A nationality may hint at the variable
+            for parent, role, child in amr.edges:
+                parent_label = nodes_to_labels.get(parent)
+                child_label = nodes_to_labels.get(child)
+                # Check if it's a government organization
+                if parent_label == "government-organization":
+                    add_gov_token = True if "government" in amr.tokens else False
+                    # try up to two steps down
+                    full_name = None
+                    if child_label in place_types:
+                        full_name = get_full_name_value(
+                            amr_dict, nodes_to_source_strings, child
+                        )
+                    else:
+                        gov_args = amr_dict[child]
+                        for values in gov_args.values():
+                            for value in values:
+                                if nodes_to_labels[value] in place_types:
+                                    full_name = get_full_name_value(
+                                        amr_dict, nodes_to_source_strings, value
+                                    )
+                    if full_name and add_gov_token:
+                        return full_name + " government"
+                    return full_name
+                if parent_label in place_types:
+                    return get_full_description(
+                        amr_dict, nodes_to_labels, nodes_to_source_strings, parent
+                    )
+                if child_label in place_types:
+                    # If the nationality is a mod, check the parent
+                    if claim_pos.get(nodes_to_source_strings[child]) == "ADJ":
+                        return get_full_description(
+                            amr_dict, nodes_to_labels, nodes_to_source_strings, parent
+                        )
+                    else:
+                        return get_full_description(
+                            amr_dict, nodes_to_labels, nodes_to_source_strings, child
+                        )
+        if label == "PERSON" or label == "ORG":
+            # If a PERSON/ORG is detected, get the full name
+            for parent, role, child in amr.edges:
+                child_label = nodes_to_labels.get(child)
+                if child_label == "person" or child_label == "organization":
+                    person_name = get_full_name_value(
+                        amr_dict, nodes_to_source_strings, child
+                    )
+                    return person_name if person_name else child_label
+
+    # Next, simply look for a location
+    for parent, role, child in amr.edges:
+        parent_label = nodes_to_labels.get(parent)
+        child_label = nodes_to_labels.get(child)
+        # Not all locations get the :location role label
+        if role == ":location" or role == ":source" or child_label in place_types:
+            location_name = get_full_name_value(
+                amr_dict, nodes_to_source_strings, child
+            )
+            return location_name if location_name else get_full_description(
+                amr_dict, nodes_to_labels, nodes_to_source_strings, child
+            )
+        # If there is a date-entity in the AMR graph, that may be the X-variable
+        if parent_label == "date-entity":
+            return get_full_description(
+                amr_dict, nodes_to_labels, nodes_to_source_strings, parent
+            )

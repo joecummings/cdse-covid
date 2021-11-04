@@ -19,7 +19,9 @@ from amr_utils.amr_readers import AMR_Reader, Matedata_Parser
 from cdse_covid.claim_detection.run_claim_detection import ClaimDataset
 from cdse_covid.semantic_extraction.models import AMRLabel
 from cdse_covid.semantic_extraction.claimer_utils import identify_claimer
-from cdse_covid.semantic_extraction.amr_extraction_utils import identify_x_variable
+from cdse_covid.semantic_extraction.amr_extraction_utils import identify_x_variable_covid, identify_x_variable
+
+COVID_DOMAIN = "covid"
 
 
 def tokenize_sentence(text, spacy_tokenizer) -> List[str]:
@@ -28,7 +30,7 @@ def tokenize_sentence(text, spacy_tokenizer) -> List[str]:
     return tokenized_sentence
 
 
-def main(input_dir, output, *, spacy_model, parser_path):
+def main(input_dir, output, *, spacy_model, parser_path, domain):
 
     cdse_path = getcwd()
 
@@ -68,9 +70,20 @@ def main(input_dir, output, *, spacy_model, parser_path):
         claimr, claim_alignments = AMR_Reader._parse_amr_from_metadata(
             claim_metadata["tok"], claim_graph_metadata
         )
-        possible_x_variable = identify_x_variable(
-            claimr, claim_alignments, claim.claim_template
-        )
+        if domain == COVID_DOMAIN:
+            possible_x_variable = identify_x_variable_covid(
+                claimr, claim_alignments, claim.claim_template
+            )
+        else:
+            claim_ents = {
+                ent.text: ent.label_ for ent in spacy_model(claim.claim_text).ents
+            }
+            claim_pos = {
+                token.text: token.pos_ for token in spacy_model(claim.claim_text).doc
+            }
+            possible_x_variable = identify_x_variable(
+                claimr, claim_alignments, claim_ents, claim_pos
+            )
         if possible_x_variable:
             claim.x_variable = possible_x_variable
 
@@ -87,9 +100,18 @@ if __name__ == "__main__":
     parser.add_argument("--input", help="Input docs", type=Path)
     parser.add_argument("--output", help="AMR output dir", type=Path)
     parser.add_argument("--amr-parser-model", type=Path)
+    parser.add_argument(
+        "--domain", help="`covid` or `general`", type=str, default="general"
+    )
 
     args = parser.parse_args()
 
     model = spacy.load("en_core_web_sm")
 
-    main(args.input, args.output, spacy_model=model, parser_path=args.amr_parser_model)
+    main(
+        args.input,
+        args.output,
+        spacy_model=model,
+        parser_path=args.amr_parser_model,
+        domain=args.domain
+    )

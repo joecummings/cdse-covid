@@ -106,7 +106,8 @@ def main(params: Parameters):
         f"""
         --input {claim_detection_output.value} \
         --output {amr_output_dir} \
-        --amr-parser-model {amr_params.existing_directory("model_path")}
+        --amr-parser-model {amr_params.existing_directory("model_path")} \
+        --domain {amr_params.string("domain")}
         """,
         override_conda_config=CondaConfiguration(
             conda_base_path=params.existing_directory("conda_base_path"),
