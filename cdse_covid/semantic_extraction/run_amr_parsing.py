@@ -71,11 +71,14 @@ def main(input_dir, output, *, spacy_model, parser_path):
         claim_ents = {
             ent.text: ent.label_ for ent in spacy_model(claim.claim_text).ents
         }
+        claim_pos = {
+            token.text: token.pos_ for token in spacy_model(claim.claim_text).doc
+        }
         # possible_x_variable = identify_x_variable(
         #     claimr, claim_alignments, claim.claim_template
         # )
         possible_x_variable = identify_x_variable_general(
-            claimr, claim_alignments, claim_ents
+            claimr, claim_alignments, claim_ents, claim_pos
         )
         if possible_x_variable:
             claim.x_variable = possible_x_variable
