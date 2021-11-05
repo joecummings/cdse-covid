@@ -6,7 +6,7 @@ _includes:
 workflow_directory: "%experiments_root%"
 experiment_name: claims
 
-corpus: "%project_root%/data/large_aida_english"
+corpus: "%project_root%/data/english_data_large"
 
 claim_detection:
     python_file: "%project_root%/cdse_covid/claim_detection/run_claim_detection.py"
@@ -22,6 +22,7 @@ srl:
     python_file: "%project_root%/cdse_covid/semantic_extraction/run_srl.py"
 
 wikidata:
+    python_file_amr: "%project_root%/cdse_covid/semantic_extraction/run_wikidata_from_amr.py"
     python_file: "%project_root%/cdse_covid/semantic_extraction/run_wikidata_linking.py"
     model_path: /Users/jcummings/Desktop/projects/GAIA/cdse-covid/wikidata_linker
 

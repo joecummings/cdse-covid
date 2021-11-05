@@ -79,7 +79,7 @@ def main(params: Parameters):
         value=amr_all_output_dir, depends_on=[amr_all_job]
     )
 
-    # Claim detection
+    # Find claims
     claim_params = params.namespace("claim_detection")
     claim_loc = base_locator / "claim_detection"
     claim_python_file = claim_params.existing_file("python_file")
@@ -100,64 +100,58 @@ def main(params: Parameters):
         value=claim_output_dir, depends_on=[claim_detection_job]
     )
 
-    # AMR parsing for claims
-    amr_loc = base_locator / "amr"
-    amr_python_file = amr_params.existing_file("python_file")
-    amr_output_dir = directory_for(amr_loc) / "documents"
-    amr_job = run_python_on_args(
-        amr_loc,
-        amr_python_file,
+    # Find x variable
+    x_var_params = params.namespace("x_variable")
+    x_var_job_loc = base_locator / "x_variable"
+    x_var_python_file = x_var_params.existing_file("python_file")
+    x_var_output_dir = directory_for(x_var_job_loc) / "documents"
+    x_variable_job = run_python_on_args(
+        x_var_job_loc,
+        x_var_python_file,
         f"""
         --input {claim_detection_output.value} \
-        --output {amr_output_dir} \
+        --output {x_var_output_dir} \
         --amr-parser-model {amr_params.existing_directory("model_path")} \
         --domain {amr_params.string("domain")}
         """,
-        override_conda_config=CondaConfiguration(
-            conda_base_path=params.existing_directory("conda_base_path"),
-            conda_environment="transition-amr-parser"
-        ),
-        resource_request=larger_resource,
         depends_on=[claim_detection_output]
     )
-    amr_output = ValueArtifact(
-        value=amr_output_dir, depends_on=[amr_job]
+    x_var_output = ValueArtifact(
+        value=x_var_output_dir, depends_on=[x_variable_job]
     )
 
-    # SRL
-    srl_params = params.namespace("srl")
-    srl_loc = base_locator / "srl"
-    srl_python_file = srl_params.existing_file("python_file")
-    srl_output_dir = directory_for(srl_loc) / "documents"
-    srl_job = run_python_on_args(
-        srl_loc,
-        srl_python_file,
-        f"""
-        --input {amr_output.value} \
-        --output {srl_output_dir} \
-        --spacy-model {model_path} \
-        """,
-        depends_on=[amr_output]
-    )
-    srl_output = ValueArtifact(
-        value=srl_output_dir, depends_on=[srl_job]
-    )
-
-    # Wikidata
-    wikidata_params = params.namespace("wikidata")
-    wikidata_loc = base_locator / "wikidata"
-    wikidata_python_file = wikidata_params.existing_file("python_file")
-    wikidata_output_dir = directory_for(wikidata_loc) / "documents"
-    wikidata_job = run_python_on_args(
-        wikidata_loc,
-        wikidata_python_file,
+    # Find claimer
+    claimer_params = params.namespace("claimer")
+    claimer_job_loc = base_locator / "claimer"
+    claimer_python_file = claimer_params.existing_file("python_file")
+    claimer_output_dir = directory_for(claimer_job_loc) / "documents"
+    claimer_job = run_python_on_args(
+        claimer_job_loc,
+        claimer_python_file,
         f"""
         --claim-input {claim_detection_output.value} \
-        --srl-input {srl_output.value} \
-        --amr-input {amr_output.value} \
-        --output {wikidata_output_dir} \
+        --ouptut {claimer_output_dir} \
+        --amr-model $PATH
         """,
-        depends_on=[srl_output, amr_output]
+        depends_on=[claim_detection_output]
+    )
+    claimer_output = ValueArtifact(
+        value=claimer_output_dir, depends_on=[claimer_job]
+    )
+    
+    # Link DWD for important objects
+    wikidata_params = params.namespace("wikidata")
+    wikidata_job_loc = base_locator / "wikidata"
+    wikidata_python_file = wikidata_params.existing_file("python_file")
+    wikidata_output_dir = directory_for(wikidata_job_loc) / "documents"
+    wikidata_job = run_python_on_args(
+        wikidata_job_loc,
+        wikidata_python_file,
+        f"""
+        --input {claim_detection_output.value} {x_var_output.value} {claimer_output.value} \
+        --output {wikidata_output_dir} \
+        --use-overlay
+        """
     )
     wikidata_output = ValueArtifact(
         value=wikidata_output_dir, depends_on=[wikidata_job]

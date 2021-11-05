@@ -4,6 +4,7 @@ Takes the corpus files and creates AMR graphs for each sentence.
 You will need to run this in your transition-amr virtual environment.
 """
 import argparse
+from dataclasses import dataclass
 from os import getcwd, makedirs, chdir
 from pathlib import Path
 from typing import List, Tuple, Union, Dict, Optional
@@ -18,6 +19,11 @@ from cdse_covid.semantic_extraction.run_amr_parsing import tokenize_sentence
 
 ALIGNMENTS_TYPE = Dict[Union[List[str], str], Union[List[AMR_Alignment], list]]
 AMR_READER = AMR_Reader()
+
+@dataclass
+class LocalAMR:
+    doc_id: str
+    graph: Tuple[List[AMR], Optional[ALIGNMENTS_TYPE]]
 
 
 def tokenize_sentences(
@@ -35,19 +41,6 @@ def tokenize_sentences(
                 tokenized_sentences.append(tokenized_sentence)
                 doc_sentences_to_include.append(sentence)
     return doc_sentences_to_include, tokenized_sentences
-
-
-def load_amr_from_text_file(
-        amr_file: Path, output_alignments: bool = False
-) -> Tuple[List[AMR], Optional[ALIGNMENTS_TYPE]]:
-    """
-    Reads a document of AMR graphs and returns an AMR graph.
-    If `output_alignments` is True, it will also return
-    the alignment data of that graph.
-    """
-    if output_alignments:
-        return AMR_READER.load(amr_file, remove_wiki=True, output_alignments=True)
-    return AMR_READER.load(amr_file, remove_wiki=True)
 
 
 def main(corpus_dir, output_dir, spacy_model, parser_path):
@@ -72,8 +65,11 @@ def main(corpus_dir, output_dir, spacy_model, parser_path):
 
     for input_file in corpus_dir.iterdir():
         original_sentences, tokenized_sentences = tokenize_sentences(input_file, spacy_model.tokenizer)
-        annotations = amr_parser.parse_sentences(tokenized_sentences)
-
+        try:
+            annotations = amr_parser.parse_sentences(tokenized_sentences)
+        except IndexError as e:
+            print(e)
+            continue
         output_file = f"{output_dir}/{input_file.stem}.amr"
         with open(output_file, 'w+', encoding="utf-8") as outfile:
             # PENMAN notation is at index 0

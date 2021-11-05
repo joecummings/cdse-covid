@@ -1,0 +1,46 @@
+{
+    "claim_id": 66175760570233291463321915968267740300, 
+    "doc_id": "L0C04CA23.rsd", 
+    "claim_text": "coronavirus originated in India", 
+    "claim_sentence": "Battling global adversity over COVID-19, Chinese scientists are now arguing that the novel coronavirus originated in India in the summer of 2019.", 
+    "claim_span": [33, 37], 
+    "claim_template": "SARS-CoV-2 originated in place-X", 
+    "topic": "Origin of the Virus", 
+    "subtopic": "Where the virus originated", 
+    "x_variable": "India", 
+    "x_variable_qnode": {
+        "qnode_id": "Q668",
+        "label": "India",
+        "description": "sovreign state in South Asia"
+    }, 
+    "claimer": "scientist", 
+    "claimer_qnode": {
+        "qnode_id": "Q901", 
+        "label": "scientist", 
+        "description": "person who conducts scientific research into an area of interest", 
+    }, 
+    "claim_date_time": null, 
+    "claim_location": null, 
+    "claim_location_qnode": null, 
+    "claim_semantics": {
+       "event": {
+           "name": "argue-01",
+           "qnode": {
+               "qnode_id": "Q186619",
+               "label": "argument",
+               "description": "attempt to persuade or to determine the truth of a conclusion"
+            }
+        },
+       "args": {
+           "ARG0": {
+               "name": "Chinese scientists",
+               "qnode": {
+                   "qnode_id": "Q901",
+                   "label": "scientist",
+                   "description": "person who conducts scientific research into an area of interest"
+               }}},
+        }
+    }, 
+    "epistemic_status": null, 
+    "sentiment_status": null, 
+}, 

@@ -1,0 +1,2 @@
+attrs>=19.2.0
+vistautils>=0.21.0

@@ -1,10 +1,38 @@
+from dataclasses import dataclass
+from pathlib import Path
 import re
 import string
 from collections import defaultdict
-from typing import List, Optional, Dict
+from typing import List, Optional, Dict, Tuple, Union
 
 from amr_utils.alignments import AMR_Alignment
 from amr_utils.amr import AMR
+from amr_utils.amr_readers import AMR_Reader
+
+
+ALIGNMENTS_TYPE = Dict[Union[List[str], str], Union[List[AMR_Alignment], list]]
+AMR_READER = AMR_Reader()
+
+@dataclass
+class LocalAMR:
+    doc_id: str
+    graph: List[AMR]
+    alignments: Optional[ALIGNMENTS_TYPE] = None
+
+
+def load_amr_from_text_file(
+        amr_file: Path, output_alignments: bool = False
+) -> LocalAMR:
+    """
+    Reads a document of AMR graphs and returns an AMR graph.
+    If `output_alignments` is True, it will also return
+    the alignment data of that graph.
+    """
+    if output_alignments:
+        amr, alignments = AMR_READER.load(amr_file, remove_wiki=True, output_alignments=True)
+        return LocalAMR(amr_file.stem, amr, alignments)
+    amr = AMR_READER.load(amr_file, remove_wiki=True)
+    return LocalAMR(amr_file.stem, amr)
 
 PROPBANK_PATTERN = r"[a-z]*-[0-9]{2}"
 

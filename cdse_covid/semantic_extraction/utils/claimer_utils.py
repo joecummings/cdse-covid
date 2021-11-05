@@ -5,7 +5,7 @@ from typing import List, Optional
 from nltk.stem import WordNetLemmatizer
 import re
 
-from cdse_covid.semantic_extraction.amr_extraction_utils import get_full_name_value, get_full_description, \
+from cdse_covid.semantic_extraction.utils.amr_extraction_utils import get_full_name_value, get_full_description, \
     create_node_to_token_dict
 
 LEMMATIZER = WordNetLemmatizer()

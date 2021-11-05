@@ -4,7 +4,7 @@ import argparse
 import json
 import logging
 from pathlib import Path
-from typing import Any, Mapping, Optional, Sequence
+from typing import Any, Iterable, Mapping, Optional, Sequence
 import pickle
 import spacy
 from spacy.language import Language
@@ -40,7 +40,7 @@ class ClaimDataset:
             self.claims = []
         self.claims.append(claim)
 
-    def __iter__(self):
+    def __iter__(self) -> Iterable[Claim]:
         return iter(self.claims)
 
     @staticmethod
@@ -65,14 +65,14 @@ class ClaimDataset:
         return ClaimDataset(all_claims)
 
 
-    @staticmethod
-    def load_from_dir(path: Path) -> "ClaimDataset":
+    @classmethod
+    def load_from_dir(cls, path: Path) -> "ClaimDataset":
         claims = []
         for claim_file in path.glob("*.claim"):
             with open(claim_file, "rb") as handle:
                 claim = pickle.load(handle)
                 claims.append(claim)
-        return ClaimDataset(claims)
+        return cls(claims)
 
     def save_to_dir(self, path: Path):
         if not self.claims:
