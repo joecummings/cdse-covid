@@ -63,7 +63,11 @@ def main(params: Parameters):
     amr_all_job = run_python_on_args(
         amr_all_loc,
         amr_all_python_file,
-        f"""--corpus {input_corpus_dir} --output {amr_all_output_dir}""",
+        f"""
+        --corpus {input_corpus_dir}
+        --output {amr_all_output_dir}
+        --amr-parser-model {amr_params.existing_directory("model_path")}
+        """,
         override_conda_config=CondaConfiguration(
             conda_base_path=params.existing_directory("conda_base_path"),
             conda_environment="transition-amr-parser"

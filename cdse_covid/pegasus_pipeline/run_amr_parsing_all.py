@@ -20,17 +20,20 @@ ALIGNMENTS_TYPE = Dict[Union[List[str], str], Union[List[AMR_Alignment], list]]
 AMR_READER = AMR_Reader()
 
 
-def tokenize_sentences(corpus_file, spacy_tokenizer) -> Tuple[List[str], List[List[str]]]:
+def tokenize_sentences(
+        corpus_file: Path, spacy_tokenizer
+) -> Tuple[List[str], List[List[str]]]:
     tokenized_sentences = []
     doc_sentences_to_include = []
-    with open(corpus_file, 'r') as infile:
-        input_sentences = infile.readlines()
-    for sentence in input_sentences:
-        tokenized_sentence = tokenize_sentence(sentence, spacy_tokenizer)
-        # Blank line filter
-        if len(tokenized_sentence) >= 1:
-            tokenized_sentences.append(tokenized_sentence)
-            doc_sentences_to_include.append(sentence)
+    if corpus_file.suffix == ".txt":
+        with open(corpus_file, 'r') as infile:
+            input_sentences = infile.readlines()
+        for sentence in input_sentences:
+            tokenized_sentence = tokenize_sentence(sentence, spacy_tokenizer)
+            # Blank line filter
+            if len(tokenized_sentence) >= 1:
+                tokenized_sentences.append(tokenized_sentence)
+                doc_sentences_to_include.append(sentence)
     return doc_sentences_to_include, tokenized_sentences
 
 

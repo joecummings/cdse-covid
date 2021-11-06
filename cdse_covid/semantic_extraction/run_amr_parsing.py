@@ -14,7 +14,7 @@ import spacy
 
 from transition_amr_parser.parse import AMRParser  # pylint: disable=import-error
 
-from amr_utils.amr_readers import AMR_Reader, Matedata_Parser
+from amr_utils.amr_readers import AMR_Reader, Metadata_Parser
 
 from cdse_covid.claim_detection.run_claim_detection import ClaimDataset
 from cdse_covid.semantic_extraction.models import AMRLabel
@@ -56,7 +56,7 @@ def main(input_dir, output, *, spacy_model, parser_path, domain):
     for claim in claim_ds.claims:
         tokenized_sentence = tokenize_sentence(claim.claim_sentence, spacy_model.tokenizer)
         annotations = amr_parser.parse_sentences([tokenized_sentence])
-        metadata, graph_metadata = Matedata_Parser().readlines(annotations[0][0])
+        metadata, graph_metadata = Metadata_Parser().readlines(annotations[0][0])
         amr, alignments = AMR_Reader._parse_amr_from_metadata(metadata["tok"], graph_metadata)
         tokenized_claim = tokenize_sentence(claim.claim_text, spacy_model.tokenizer)
         possible_claimer = identify_claimer(tokenized_claim, amr, alignments)
@@ -64,7 +64,7 @@ def main(input_dir, output, *, spacy_model, parser_path, domain):
             claim.claimer = possible_claimer
 
         claim_annotations = amr_parser.parse_sentences([tokenized_claim])
-        claim_metadata, claim_graph_metadata = Matedata_Parser().readlines(
+        claim_metadata, claim_graph_metadata = Metadata_Parser().readlines(
             claim_annotations[0][0]
         )
         claimr, claim_alignments = AMR_Reader._parse_amr_from_metadata(

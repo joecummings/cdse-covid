@@ -6,7 +6,7 @@ from nltk.stem import WordNetLemmatizer
 import re
 
 from cdse_covid.semantic_extraction.amr_extraction_utils import get_full_name_value, get_full_description, \
-    create_node_to_token_dict, create_amr_dict
+    create_node_to_token_dict
 
 LEMMATIZER = WordNetLemmatizer()
 
@@ -55,7 +55,7 @@ def get_claim_node(claim_tokens: List[str], amr: AMR) -> Optional[str]:
                 LEMMATIZER.lemmatize(token, pos="n") == label
                 or LEMMATIZER.lemmatize(token, pos="v") == label
             ):
-                pot_claim_node = get_claim_node_from_token(node, graph_nodes, amr.edges, 0)
+                pot_claim_node = get_claim_node_from_token(amr, node)
                 if pot_claim_node:
                     return pot_claim_node
     # No token match was found. Gets here 53% of the time.
@@ -68,17 +68,23 @@ def is_desired_framenet_node(node_label: str) -> bool:
     return verb in FRAMENET_VERBS
 
 
-def get_claim_node_from_token(node, node_dict, edges, i) -> Optional[str]:
-    """Fetch the claim node by traveling up from a child node."""
-    for parent_node, _, arg_node in edges:
-        if arg_node == node:
-            # Check if the parent is a claim node / Should you stop at the first one?
-            parent_label = node_dict[parent_node]
-            if is_desired_framenet_node(parent_label):
-                return parent_node
-            if i == len(node_dict):  # Iterated through all nodes without success
-                break
-            return get_claim_node_from_token(parent_node, node_dict, edges, i + 1)
+def get_claim_node_from_token(amr, node, checked_nodes=None) -> Optional[str]:
+    """
+    Fetch the claim node by traveling up from a child node within the claim.
+    """
+    if checked_nodes is None:
+        checked_nodes = set()
+    nodes_to_labels = amr.nodes
+    parents = amr.get_parents_for_node(node)
+    for parent_node in parents:
+        if parent_node in checked_nodes:
+            continue
+        if is_desired_framenet_node(nodes_to_labels[parent_node]):
+            return parent_node
+        checked_nodes.add(parent_node)
+        next_check = get_claim_node_from_token(amr, parent_node, checked_nodes)
+        if next_check:
+            return next_check
 
 
 def search_for_claim_node(graph_nodes) -> Optional[str]:
@@ -96,7 +102,7 @@ def get_argument_node(
     """Get all argument (claimer) nodes of the claim node"""
     nodes = amr.nodes
     nodes_to_strings = create_node_to_token_dict(amr, alignments)
-    amr_dict = create_amr_dict(amr)
+    amr_dict = amr.edge_mapping()
     node_args = amr_dict.get(claim_node)
     if node_args:
         claimer_nodes = node_args.get(":ARG0")
