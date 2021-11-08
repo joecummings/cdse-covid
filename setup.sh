@@ -41,6 +41,7 @@ echo "Installing packages for transition-amr-parser..."
 pip install -r amr-requirements-lock.txt
 echo "Finished installing amr requirements (1/5)"
 
+
 # Download wordnet & framenet to the currently active conda env
 python -m nltk.downloader -d "$CONDA_PREFIX"/nltk_data wordnet
 python -m nltk.downloader -d "$CONDA_PREFIX"/nltk_data framenet_v17
@@ -133,4 +134,7 @@ if [[ ! -d AMR2.0/ ]]; then
 else
   echo "Looks like the required model is already present"
 fi
+
+python -m pip install -e .
+
 echo "Finished downloading model! (5/5)"

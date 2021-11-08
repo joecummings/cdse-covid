@@ -1,6 +1,6 @@
 from dataclasses import dataclass, field
 from typing import Any, Mapping, Optional, Tuple
-from cdse_covid.semantic_extraction.models import WikidataQnode
+from cdse_covid.semantic_extraction.entities import WikidataQnode
 
 
 @dataclass

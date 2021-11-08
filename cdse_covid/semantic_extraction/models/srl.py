@@ -2,7 +2,10 @@ import logging
 from typing import Any, Mapping
 import uuid
 
-from allennlp_models.pretrained import load_predictor
+try:
+    from allennlp_models.pretrained import load_predictor
+except ModuleNotFoundError:
+    logging.warn("Cannot use Allen NLP models in current env.")
 from cdse_covid.semantic_extraction.utils.claimer_utils import LEMMATIZER
 from cdse_covid.semantic_extraction.entities import SRLabel
 from spacy.language import Language

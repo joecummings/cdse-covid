@@ -7,6 +7,7 @@ workflow_directory: "%experiments_root%"
 experiment_name: claims
 
 corpus: "%project_root%/data/english_data_large"
+amr_model_path: /Users/jcummings/Desktop/projects/GAIA/transition-amr-parser
 
 claim_detection:
     python_file: "%project_root%/cdse_covid/claim_detection/run_claim_detection.py"
@@ -18,12 +19,11 @@ amr:
     model_path: /Users/jcummings/Desktop/projects/GAIA/transition-amr-parser
     domain: "covid"
 
-srl:
-    python_file: "%project_root%/cdse_covid/semantic_extraction/run_srl.py"
+claimer:
+    python_file: "%project_root%/cdse_covid/semantic_extraction/find_claimer.py"
 
 wikidata:
-    python_file_amr: "%project_root%/cdse_covid/semantic_extraction/run_wikidata_from_amr.py"
-    python_file: "%project_root%/cdse_covid/semantic_extraction/run_wikidata_linking.py"
+    python_file: "%project_root%/cdse_covid/semantic_extraction/link_wikidata.py"
     model_path: /Users/jcummings/Desktop/projects/GAIA/cdse-covid/wikidata_linker
 
 unify:

@@ -85,7 +85,7 @@ def main(input, output, model_type, amr_model, amr_documents):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--input-claims", type=Path)
+    parser.add_argument("--claim-input", type=Path)
     parser.add_argument("--output", type=Path)
     parser.add_argument("--model-type", choices=[SRL, AMR], default=SRL, type=str)
     parser.add_argument("--amr-model", type=Path, default=None)
@@ -93,7 +93,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     main(
-        args.input_claims,
+        args.claim_input,
         args.output,
         args.model_type,
         args.amr_model, 

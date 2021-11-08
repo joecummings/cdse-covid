@@ -2,7 +2,7 @@
 import argparse
 from pathlib import Path
 from cdse_covid.claim_detection.run_claim_detection import ClaimDataset
-from cdse_covid.semantic_extraction.amr_extraction_utils import load_amr_from_text_file
+from cdse_covid.semantic_extraction.utils.amr_extraction_utils import load_amr_from_text_file
 from cdse_covid.semantic_extraction.entities import AMRLabel
 from wikidata_linker.disambiguate_with_amr_v2 import disambiguate_with_amr_v2
 from cdse_covid.semantic_extraction.run_wikidata_linking import WikidataQnode

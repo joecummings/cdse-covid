@@ -100,6 +100,8 @@ def main(params: Parameters):
         value=claim_output_dir, depends_on=[claim_detection_job]
     )
 
+    amr_model = params.existing_directory("amr_model_path")
+
     # Find x variable
     x_var_params = params.namespace("x_variable")
     x_var_job_loc = base_locator / "x_variable"
@@ -131,7 +133,7 @@ def main(params: Parameters):
         f"""
         --claim-input {claim_detection_output.value} \
         --ouptut {claimer_output_dir} \
-        --amr-model $PATH
+        --amr-model {amr_model}
         """,
         depends_on=[claim_detection_output]
     )
@@ -150,8 +152,8 @@ def main(params: Parameters):
         f"""
         --input {claim_detection_output.value} {x_var_output.value} {claimer_output.value} \
         --output {wikidata_output_dir} \
-        --use-overlay
-        """
+        """,
+        depends_on=[claimer_output, x_var_output]
     )
     wikidata_output = ValueArtifact(
         value=wikidata_output_dir, depends_on=[wikidata_job]
