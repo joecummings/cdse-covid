@@ -9,14 +9,6 @@ from amr_utils.amr import AMR
 PROPBANK_PATTERN = r"[a-z]*-[0-9]{2}"
 
 
-def create_amr_dict(amr: AMR) -> Dict[str, Dict[str, List[str]]]:
-    # {"parent": {"role1": ["child1"], "role2": ["child2", "child3"]}, ...}
-    amr_dict = defaultdict(lambda: defaultdict(list))
-    for parent, role, arg in amr.edges:
-        amr_dict[parent][role].append(arg)
-    return amr_dict
-
-
 def get_full_name_value(
     amr_dict: Dict[str, Dict[str, List[str]]],
     nodes_to_strings: Dict[str, str],
@@ -114,10 +106,9 @@ def create_node_to_token_dict(
     amr_tokens = amr.tokens
     # Use this dict to get the list of tokens first
     nodes_to_token_lists = defaultdict(list)
+
     for alignment in alignments:
-        # Make sure all of the 'token' values are lists
-        preprocessed_alignment = fix_alignment(alignment)
-        alignment_dict = preprocessed_alignment.to_json(amr)
+        alignment_dict = alignment.to_json(amr)
         nodes = alignment_dict["nodes"]
         tokens = alignment_dict["tokens"]
         for node in nodes:
@@ -135,31 +126,6 @@ def create_node_to_token_dict(
     return nodes_to_strings
 
 
-def fix_alignment(alignment: AMR_Alignment) -> AMR_Alignment:
-    """
-    Make sure all of the 'token' values are lists
-
-    If a stringified token value isn't convertible into a list
-    of integers, we run into a problem since these strings cause
-    problems later when trying to run `to_json` on the alignment data.
-    """
-    alignment_tokens = alignment.tokens
-    if type(alignment_tokens) == str:
-        # A str-type `alignment_tokens` should have a format like '11-12'.
-        try:
-            first_token, last_token = alignment_tokens.split("-")
-            first_tok_int = int(first_token)
-            last_tok_int = int(last_token)
-        except ValueError:
-            raise RuntimeError(
-                "Looks like something is wrong with the token index conversion; "
-                f"tried to convert index range '{alignment_tokens}' to int values"
-            )
-        token_range = range(first_tok_int, last_tok_int+1)
-        alignment.tokens = [tok_index for tok_index in token_range]
-    return alignment
-
-
 def identify_x_variable_covid(
         amr: AMR, alignments: List[AMR_Alignment], claim_template: str
 ) -> Optional[str]:
@@ -168,7 +134,7 @@ def identify_x_variable_covid(
     """
     place_variables = {"facility", "location", "place"}  # from the templates
     place_types = {"city", "state", "country", "continent"}
-    amr_dict = create_amr_dict(amr)
+    amr_dict = amr.edge_mapping()
     nodes_to_labels = amr.nodes
     nodes_to_source_strings = create_node_to_token_dict(amr, alignments)
 
@@ -344,7 +310,7 @@ def identify_x_variable(
     of our COVID-19 domain
     """
     place_types = {"city", "state", "country", "continent"}
-    amr_dict = create_amr_dict(amr)
+    amr_dict = amr.edge_mapping()
     nodes_to_labels = amr.nodes
     nodes_to_source_strings = create_node_to_token_dict(amr, alignments)
 

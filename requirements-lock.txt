@@ -1,6 +1,6 @@
 allennlp==2.7.0
 allennlp-models==2.7.0
-amr-utils @ git+https://github.com/elizlee/amr-utils.git@be5534db1312dc7c6ba25ee50eafeb0d0f5e3f69#egg=amr_utils
+amr-utils @ git+https://github.com/elizlee/amr-utils.git@10bc9ca825a9f726e021109869655e8d0c7776b0#egg=amr_utils
 argcomplete==1.12.3
 argon2-cffi==21.1.0
 attrs==21.2.0
