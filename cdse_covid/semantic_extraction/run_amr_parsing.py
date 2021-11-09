@@ -30,7 +30,7 @@ def tokenize_sentence(text, spacy_tokenizer) -> List[str]:
     return tokenized_sentence
 
 
-def main(input_dir, output, *, spacy_model, parser_path, domain):
+def main(input_dir, output, *, max_tokens: int, spacy_model, parser_path, domain):
 
     cdse_path = getcwd()
 
@@ -55,6 +55,12 @@ def main(input_dir, output, *, spacy_model, parser_path, domain):
 
     for claim in claim_ds.claims:
         tokenized_sentence = tokenize_sentence(claim.claim_sentence, spacy_model.tokenizer)
+        if len(tokenized_sentence) > max_tokens:
+            logging.warning(
+                "Claim sentence %s exceeds the max token length of %d "
+                "and will be skipped.", (claim.claim_sentence, max_tokens)
+            )
+            continue
         annotations = amr_parser.parse_sentences([tokenized_sentence])
         metadata, graph_metadata = Metadata_Parser().readlines(annotations[0][0])
         amr, alignments = AMR_Reader._parse_amr_from_metadata(metadata["tok"], graph_metadata)
@@ -101,6 +107,12 @@ if __name__ == "__main__":
     parser.add_argument("--output", help="AMR output dir", type=Path)
     parser.add_argument("--amr-parser-model", type=Path)
     parser.add_argument(
+        "--max-tokens",
+        help="Max tokens allowed in a sentence to be parsed",
+        type=int,
+        default=50
+    )
+    parser.add_argument(
         "--domain", help="`covid` or `general`", type=str, default="general"
     )
 
@@ -111,6 +123,7 @@ if __name__ == "__main__":
     main(
         args.input,
         args.output,
+        max_tokens=args.max_tokens,
         spacy_model=model,
         parser_path=args.amr_parser_model,
         domain=args.domain

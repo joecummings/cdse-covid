@@ -21,7 +21,7 @@ AMR_READER = AMR_Reader()
 
 
 def tokenize_sentences(
-        corpus_file: Path, spacy_tokenizer
+        corpus_file: Path, max_tokens: int, spacy_tokenizer
 ) -> Tuple[List[str], List[List[str]]]:
     tokenized_sentences = []
     doc_sentences_to_include = []
@@ -30,8 +30,8 @@ def tokenize_sentences(
             input_sentences = infile.readlines()
         for sentence in input_sentences:
             tokenized_sentence = tokenize_sentence(sentence, spacy_tokenizer)
-            # Blank line filter
-            if len(tokenized_sentence) >= 1:
+            # Blank line & long sentence filter
+            if 1 <= len(tokenized_sentence) <= max_tokens:
                 tokenized_sentences.append(tokenized_sentence)
                 doc_sentences_to_include.append(sentence)
     return doc_sentences_to_include, tokenized_sentences
@@ -50,7 +50,7 @@ def load_amr_from_text_file(
     return AMR_READER.load(amr_file, remove_wiki=True)
 
 
-def main(corpus_dir, output_dir, spacy_model, parser_path):
+def main(corpus_dir, output_dir, max_tokens: int, spacy_model, parser_path):
     cdse_path = getcwd()
 
     # We assume that the checkpoint is in this location within the repo
@@ -71,7 +71,12 @@ def main(corpus_dir, output_dir, spacy_model, parser_path):
     chdir(cdse_path)
 
     for input_file in corpus_dir.iterdir():
-        original_sentences, tokenized_sentences = tokenize_sentences(input_file, spacy_model.tokenizer)
+        original_sentences, tokenized_sentences = tokenize_sentences(
+            input_file, max_tokens, spacy_model.tokenizer
+        )
+        # Attempting to AMR-parse an empty list yields an error
+        if not tokenized_sentences:
+            continue
         annotations = amr_parser.parse_sentences(tokenized_sentences)
 
         output_file = f"{output_dir}/{input_file.stem}.amr"
@@ -90,9 +95,21 @@ if __name__ == "__main__":
     parser.add_argument("--corpus", help="Input docs", type=Path)
     parser.add_argument("--output", help="AMR documents output dir", type=Path)
     parser.add_argument("--amr-parser-model", type=Path)
+    parser.add_argument(
+        "--max-tokens",
+        help="Max tokens allowed in a sentence to be parsed",
+        type=int,
+        default=50
+    )
 
     args = parser.parse_args()
 
     model = spacy.load("en_core_web_sm")
 
-    main(args.corpus, args.output, spacy_model=model, parser_path=args.amr_parser_model)
+    main(
+        args.corpus,
+        args.output,
+        args.max_tokens,
+        spacy_model=model,
+        parser_path=args.amr_parser_model
+    )

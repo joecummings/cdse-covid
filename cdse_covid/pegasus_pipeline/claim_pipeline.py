@@ -56,17 +56,22 @@ def main(params: Parameters):
     amr_all_loc = base_locator / "amr_all"
     amr_all_python_file = amr_params.existing_file("python_file_all")
     amr_all_output_dir = directory_for(amr_all_loc) / "documents"
+    amr_max_tokens = amr_params.integer("max_tokens", default=50)
     if params.string("site") == "saga":
-        larger_resource = SlurmResourceRequest(memory=MemoryAmount.parse("8G"))
+        larger_resource = SlurmResourceRequest(
+            memory=MemoryAmount.parse("8G"),
+            num_gpus=1
+        )
     else:
         larger_resource = None
     amr_all_job = run_python_on_args(
         amr_all_loc,
         amr_all_python_file,
         f"""
-        --corpus {input_corpus_dir}
-        --output {amr_all_output_dir}
-        --amr-parser-model {amr_params.existing_directory("model_path")}
+        --corpus {input_corpus_dir} \
+        --output {amr_all_output_dir} \
+        --amr-parser-model {amr_params.existing_directory("model_path")} \
+        --max-tokens {amr_max_tokens}
         """,
         override_conda_config=CondaConfiguration(
             conda_base_path=params.existing_directory("conda_base_path"),
@@ -111,7 +116,8 @@ def main(params: Parameters):
         --input {claim_detection_output.value} \
         --output {amr_output_dir} \
         --amr-parser-model {amr_params.existing_directory("model_path")} \
-        --domain {amr_params.string("domain")}
+        --max_tokens {amr_max_tokens} \
+        --domain {amr_params.string("domain", default="general")}
         """,
         override_conda_config=CondaConfiguration(
             conda_base_path=params.existing_directory("conda_base_path"),
