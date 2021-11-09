@@ -52,6 +52,7 @@ if [[ ! -d transition-amr-parser/ ]]; then
   git clone https://github.com/IBM/transition-amr-parser.git
 fi
 cd transition-amr-parser || { echo "Could not navigate to transition-amr-parser"; exit 1; }
+git checkout action-pointer
 touch set_environment.sh
 python -m pip install -e .
 # fairseq loading fix
@@ -106,6 +107,7 @@ if [[ ! -d kevin/ ]]; then
   mv AMR_Aligner kevin
   cd kevin
   git clone https://github.com/moses-smt/mgiza.git
+  cd mgiza
   cmake .
   make
   make install
@@ -119,7 +121,7 @@ echo "Kevin installed (4/5)"
 MODEL_BASE="/nas/gaia/curated-training/repos/transition-amr-parser/DATA/"
 MODEL_DIR="AMR2.0/models/exp_cofill_o8.3_act-states_RoBERTa-large-top24"
 MODEL_DIR+="/_act-pos-grh_vmask1_shiftpos1_ptr-lay6-h1_grh-lay123-h2-allprev_1in1out_cam-layall-h2-abuf/ep120-seed42/"
-MODEL_PATH=MODEL_BASE+MODEL_DIR+"{checkpoint_best.pt,config.sh,dict.actions_nopos.txt,dict.en.txt,entity_rules.json,train.rules.json}"
+MODEL_PATH=$MODEL_BASE+$MODEL_DIR+"{checkpoint_best.pt,config.sh,dict.actions_nopos.txt,dict.en.txt,entity_rules.json,train.rules.json}"
 
 cd DATA || { echo "Could not navigate to $(pwd)/DATA"; exit 1; }
 if [[ ! -d AMR2.0/ ]]; then
