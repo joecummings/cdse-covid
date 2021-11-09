@@ -34,14 +34,62 @@ pegasus-status PEGASUS/RUN/DIR -w 60
 ### Via Individually
 
 1. Create the AMR files
+   
    The files in `TXT_FILES` should consist of sentences separated by line.
    ```
    conda activate transition-amr-parser
-   python -m amr_parsing.parse_files \
-       --input TXT_FILES --out AMR_FILES
+   python -m cdse_covid.pegasus_pipeline.run_amr_parsing_all \
+       --corpus TXT_FILES \
+       --output AMR_FILES \
+       --max-tokens MAX_TOKENS \
+       --amr-parser-model TRANSITION_AMR_PARSER_PATH
    ```
-2. Claim detection:
+2. Preprocessing
    ```
    conda activate <cdse-covid-env>
-   python -m claim_detection.models --input AMR_FILES --patterns claim_detection/topics.json --out OUT_FILE
+   python -m cdse_covid.pegasus_pipeline.ingesters.aida_txt_ingester \
+       --corpus TXT_FILES --output SPACIFIED --spacy-model SPACY_PATH
+   ```
+3. Claim detection
+   ```
+   conda activate <cdse-covid-env>
+   python -m cdse_covid.claim_detection.run_claim_detection \
+       --input SPACIFIED \
+       --patterns claim_detection/topics.json \
+       --out CLAIMS_OUT \
+       --spacy-model SPACY_PATH
+   ```
+4. Semantic extraction from AMR
+   ```
+   conda activate transition-amr-parser
+   python -m cdse_covid.semantic_extraction.run_amr_parsing \
+       --input CLAIMS_OUT \
+       --output AMR_CLAIMS_OUT \
+       --amr-parser-model TRANSITION_AMR_PARSER_PATH \
+       --max-tokens MAX_TOKENS \
+       --domain DOMAIN
+   ```
+5. Semantic extraction from SRL
+   ```
+   conda activate <cdse-covid-env>
+   python -m cdse_covid.semantic_extraction.run_srl \
+       --input AMR_CLAIMS_OUT \
+       --output SRL_OUT \
+       --spacy-model SPACY_PATH
+   ```
+6. Wikidata linking
+   ```
+   conda activate <cdse-covid-env>
+   python -m cdse_covid.semantic_extraction.run_wikidata_linking \
+       --claim-input CLAIMS_OUT \
+       --srl-input SRL_OUT \
+       --amr-input AMR_CLAIMS_OUT \
+       --output WIKIDATA_OUT
+   ```
+7. Postprocessing
+   ```
+   conda activate <cdse-covid-env>
+   python -m cdse_covid.pegasus_pipeline.merge \
+       --input WIKIDATA_OUT \
+       --output OUTPUT_FILE
    ```
