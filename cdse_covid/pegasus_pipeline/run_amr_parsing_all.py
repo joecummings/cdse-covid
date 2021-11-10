@@ -4,6 +4,7 @@ Takes the corpus files and creates AMR graphs for each sentence.
 You will need to run this in your transition-amr virtual environment.
 """
 import argparse
+import string
 from os import getcwd, makedirs, chdir
 from pathlib import Path
 from typing import List, Tuple, Union, Dict, Optional
@@ -30,11 +31,31 @@ def tokenize_sentences(
             input_sentences = infile.readlines()
         for sentence in input_sentences:
             tokenized_sentence = tokenize_sentence(sentence, spacy_tokenizer)
-            # Blank line & long sentence filter
-            if 1 <= len(tokenized_sentence) <= max_tokens:
+            # Filter for blank lines and sentences with many or weird tokens
+            if (
+                    1 <= len(tokenized_sentence) <= max_tokens
+                    and not has_weird_token(tokenized_sentence)
+            ):
+
                 tokenized_sentences.append(tokenized_sentence)
                 doc_sentences_to_include.append(sentence)
     return doc_sentences_to_include, tokenized_sentences
+
+
+def has_weird_token(
+        tokenized_sentence: List[str]
+) -> bool:
+    """
+    Filter out sentences with tokens containing letters and punctuation;
+    we believe this has something to do with weird parsing errors
+    """
+    for token in tokenized_sentence:
+        if (
+                any(punc in token for punc in string.punctuation) and
+                any(letter in token for letter in string.ascii_letters)
+        ):
+            return True
+    return False
 
 
 def load_amr_from_text_file(

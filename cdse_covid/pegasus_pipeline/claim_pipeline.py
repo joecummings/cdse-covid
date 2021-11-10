@@ -116,7 +116,7 @@ def main(params: Parameters):
         --input {claim_detection_output.value} \
         --output {amr_output_dir} \
         --amr-parser-model {amr_params.existing_directory("model_path")} \
-        --max_tokens {amr_max_tokens} \
+        --max-tokens {amr_max_tokens} \
         --domain {amr_params.string("domain", default="general")}
         """,
         override_conda_config=CondaConfiguration(
