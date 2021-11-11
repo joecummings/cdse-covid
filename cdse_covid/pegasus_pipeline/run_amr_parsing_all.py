@@ -4,6 +4,7 @@ Takes the corpus files and creates AMR graphs for each sentence.
 You will need to run this in your transition-amr virtual environment.
 """
 import argparse
+import re
 from os import getcwd, makedirs, chdir
 from pathlib import Path
 from typing import List, Tuple, Union, Dict, Optional
@@ -14,14 +15,13 @@ from amr_utils.amr import AMR
 from amr_utils.amr_readers import AMR_Reader
 from transition_amr_parser.parse import AMRParser  # pylint: disable=import-error
 
-from cdse_covid.semantic_extraction.run_amr_parsing import tokenize_sentence
-
 ALIGNMENTS_TYPE = Dict[Union[List[str], str], Union[List[AMR_Alignment], list]]
 AMR_READER = AMR_Reader()
+STOP_PUNCTUATION = "!?.:;—,"
 
 
 def tokenize_sentences(
-        corpus_file: Path, spacy_tokenizer
+        corpus_file: Path, max_tokens: int, spacy_tokenizer
 ) -> Tuple[List[str], List[List[str]]]:
     tokenized_sentences = []
     doc_sentences_to_include = []
@@ -29,12 +29,37 @@ def tokenize_sentences(
         with open(corpus_file, 'r') as infile:
             input_sentences = infile.readlines()
         for sentence in input_sentences:
-            tokenized_sentence = tokenize_sentence(sentence, spacy_tokenizer)
-            # Blank line filter
-            if len(tokenized_sentence) >= 1:
+            tokenized_sentence = tokenize_sentence(
+                sentence, spacy_tokenizer, max_tokens
+            )
+            # Filter for blank lines
+            if 1 <= len(tokenized_sentence):
                 tokenized_sentences.append(tokenized_sentence)
                 doc_sentences_to_include.append(sentence)
     return doc_sentences_to_include, tokenized_sentences
+
+
+def tokenize_sentence(text, spacy_tokenizer, max_tokens) -> List[str]:
+    tokens = spacy_tokenizer(text.strip())
+    tokenized_sentence = [token.text for token in tokens]
+    return refine_sentence(tokenized_sentence, max_tokens)
+
+
+def refine_sentence(tokenized_sentence: List[str], max_tokens: int) -> List[str]:
+    """
+    If a sentence exceeds the token limit, split the sentence into clauses
+    based on punctuation and keep all tokens within a clause that passes
+    the threshold.
+    Additionally, take any token with a format like
+    "X)Y" and separate it ("X", ")", "Y") to avoid parser errors.
+    """
+    refined_sentence = []
+    for idx, token in enumerate(tokenized_sentence):
+        refined_sentence.extend(re.split(r'([()\"\[\]—])', token))
+        if token in STOP_PUNCTUATION and idx >= max_tokens:
+            break
+
+    return refined_sentence
 
 
 def load_amr_from_text_file(
@@ -50,7 +75,7 @@ def load_amr_from_text_file(
     return AMR_READER.load(amr_file, remove_wiki=True)
 
 
-def main(corpus_dir, output_dir, spacy_model, parser_path):
+def main(corpus_dir, output_dir, max_tokens: int, spacy_model, parser_path):
     cdse_path = getcwd()
 
     # We assume that the checkpoint is in this location within the repo
@@ -71,7 +96,12 @@ def main(corpus_dir, output_dir, spacy_model, parser_path):
     chdir(cdse_path)
 
     for input_file in corpus_dir.iterdir():
-        original_sentences, tokenized_sentences = tokenize_sentences(input_file, spacy_model.tokenizer)
+        original_sentences, tokenized_sentences = tokenize_sentences(
+            input_file, max_tokens, spacy_model.tokenizer
+        )
+        # Attempting to AMR-parse an empty list yields an error
+        if not tokenized_sentences:
+            continue
         annotations = amr_parser.parse_sentences(tokenized_sentences)
 
         output_file = f"{output_dir}/{input_file.stem}.amr"
@@ -90,9 +120,21 @@ if __name__ == "__main__":
     parser.add_argument("--corpus", help="Input docs", type=Path)
     parser.add_argument("--output", help="AMR documents output dir", type=Path)
     parser.add_argument("--amr-parser-model", type=Path)
+    parser.add_argument(
+        "--max-tokens",
+        help="Max tokens allowed in a sentence to be parsed",
+        type=int,
+        default=50
+    )
 
     args = parser.parse_args()
 
     model = spacy.load("en_core_web_sm")
 
-    main(args.corpus, args.output, spacy_model=model, parser_path=args.amr_parser_model)
+    main(
+        args.corpus,
+        args.output,
+        args.max_tokens,
+        spacy_model=model,
+        parser_path=args.amr_parser_model
+    )

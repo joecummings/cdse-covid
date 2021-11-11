@@ -17,6 +17,7 @@ from transition_amr_parser.parse import AMRParser  # pylint: disable=import-erro
 from amr_utils.amr_readers import AMR_Reader, Metadata_Parser
 
 from cdse_covid.claim_detection.run_claim_detection import ClaimDataset
+from cdse_covid.pegasus_pipeline.run_amr_parsing_all import refine_sentence, tokenize_sentence
 from cdse_covid.semantic_extraction.models import AMRLabel
 from cdse_covid.semantic_extraction.claimer_utils import identify_claimer
 from cdse_covid.semantic_extraction.amr_extraction_utils import identify_x_variable_covid, identify_x_variable
@@ -24,13 +25,7 @@ from cdse_covid.semantic_extraction.amr_extraction_utils import identify_x_varia
 COVID_DOMAIN = "covid"
 
 
-def tokenize_sentence(text, spacy_tokenizer) -> List[str]:
-    tokens = spacy_tokenizer(text.strip())
-    tokenized_sentence = [token.text for token in tokens]
-    return tokenized_sentence
-
-
-def main(input_dir, output, *, spacy_model, parser_path, domain):
+def main(input_dir, output, *, max_tokens: int, spacy_model, parser_path, domain):
 
     cdse_path = getcwd()
 
@@ -54,11 +49,15 @@ def main(input_dir, output, *, spacy_model, parser_path, domain):
     claim_ds = ClaimDataset.load_from_dir(input_dir)
 
     for claim in claim_ds.claims:
-        tokenized_sentence = tokenize_sentence(claim.claim_sentence, spacy_model.tokenizer)
+        tokenized_sentence = tokenize_sentence(
+            claim.claim_sentence, spacy_model.tokenizer, max_tokens
+        )
         annotations = amr_parser.parse_sentences([tokenized_sentence])
         metadata, graph_metadata = Metadata_Parser().readlines(annotations[0][0])
         amr, alignments = AMR_Reader._parse_amr_from_metadata(metadata["tok"], graph_metadata)
-        tokenized_claim = tokenize_sentence(claim.claim_text, spacy_model.tokenizer)
+        tokenized_claim = tokenize_sentence(
+            claim.claim_text, spacy_model.tokenizer, max_tokens
+        )
         possible_claimer = identify_claimer(tokenized_claim, amr, alignments)
         if possible_claimer:
             claim.claimer = possible_claimer
@@ -101,6 +100,12 @@ if __name__ == "__main__":
     parser.add_argument("--output", help="AMR output dir", type=Path)
     parser.add_argument("--amr-parser-model", type=Path)
     parser.add_argument(
+        "--max-tokens",
+        help="Max tokens allowed in a sentence to be parsed",
+        type=int,
+        default=50
+    )
+    parser.add_argument(
         "--domain", help="`covid` or `general`", type=str, default="general"
     )
 
@@ -111,6 +116,7 @@ if __name__ == "__main__":
     main(
         args.input,
         args.output,
+        max_tokens=args.max_tokens,
         spacy_model=model,
         parser_path=args.amr_parser_model,
         domain=args.domain
