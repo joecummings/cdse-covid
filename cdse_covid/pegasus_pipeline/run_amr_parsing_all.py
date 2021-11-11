@@ -15,8 +15,6 @@ from amr_utils.amr import AMR
 from amr_utils.amr_readers import AMR_Reader
 from transition_amr_parser.parse import AMRParser  # pylint: disable=import-error
 
-from cdse_covid.semantic_extraction.run_amr_parsing import tokenize_sentence
-
 ALIGNMENTS_TYPE = Dict[Union[List[str], str], Union[List[AMR_Alignment], list]]
 AMR_READER = AMR_Reader()
 STOP_PUNCTUATION = "!?.:;—,"
@@ -31,14 +29,20 @@ def tokenize_sentences(
         with open(corpus_file, 'r') as infile:
             input_sentences = infile.readlines()
         for sentence in input_sentences:
-            tokenized_sentence = tokenize_sentence(sentence, spacy_tokenizer)
+            tokenized_sentence = tokenize_sentence(
+                sentence, spacy_tokenizer, max_tokens
+            )
             # Filter for blank lines
             if 1 <= len(tokenized_sentence):
-                tokenized_sentences.append(
-                    refine_sentence(tokenized_sentence, max_tokens)
-                )
+                tokenized_sentences.append(tokenized_sentence)
                 doc_sentences_to_include.append(sentence)
     return doc_sentences_to_include, tokenized_sentences
+
+
+def tokenize_sentence(text, spacy_tokenizer, max_tokens) -> List[str]:
+    tokens = spacy_tokenizer(text.strip())
+    tokenized_sentence = [token.text for token in tokens]
+    return refine_sentence(tokenized_sentence, max_tokens)
 
 
 def refine_sentence(tokenized_sentence: List[str], max_tokens: int) -> List[str]:

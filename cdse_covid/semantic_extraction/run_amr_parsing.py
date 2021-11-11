@@ -17,17 +17,12 @@ from transition_amr_parser.parse import AMRParser  # pylint: disable=import-erro
 from amr_utils.amr_readers import AMR_Reader, Metadata_Parser
 
 from cdse_covid.claim_detection.run_claim_detection import ClaimDataset
+from cdse_covid.pegasus_pipeline.run_amr_parsing_all import refine_sentence, tokenize_sentence
 from cdse_covid.semantic_extraction.models import AMRLabel
 from cdse_covid.semantic_extraction.claimer_utils import identify_claimer
 from cdse_covid.semantic_extraction.amr_extraction_utils import identify_x_variable_covid, identify_x_variable
 
 COVID_DOMAIN = "covid"
-
-
-def tokenize_sentence(text, spacy_tokenizer) -> List[str]:
-    tokens = spacy_tokenizer(text.strip())
-    tokenized_sentence = [token.text for token in tokens]
-    return tokenized_sentence
 
 
 def main(input_dir, output, *, max_tokens: int, spacy_model, parser_path, domain):
@@ -54,17 +49,15 @@ def main(input_dir, output, *, max_tokens: int, spacy_model, parser_path, domain
     claim_ds = ClaimDataset.load_from_dir(input_dir)
 
     for claim in claim_ds.claims:
-        tokenized_sentence = tokenize_sentence(claim.claim_sentence, spacy_model.tokenizer)
-        if len(tokenized_sentence) > max_tokens:
-            logging.warning(
-                "Claim sentence %s exceeds the max token length of %d "
-                "and will be skipped.", (claim.claim_sentence, max_tokens)
-            )
-            continue
+        tokenized_sentence = tokenize_sentence(
+            claim.claim_sentence, spacy_model.tokenizer, max_tokens
+        )
         annotations = amr_parser.parse_sentences([tokenized_sentence])
         metadata, graph_metadata = Metadata_Parser().readlines(annotations[0][0])
         amr, alignments = AMR_Reader._parse_amr_from_metadata(metadata["tok"], graph_metadata)
-        tokenized_claim = tokenize_sentence(claim.claim_text, spacy_model.tokenizer)
+        tokenized_claim = tokenize_sentence(
+            claim.claim_text, spacy_model.tokenizer, max_tokens
+        )
         possible_claimer = identify_claimer(tokenized_claim, amr, alignments)
         if possible_claimer:
             claim.claimer = possible_claimer
