@@ -4,7 +4,7 @@ Takes the corpus files and creates AMR graphs for each sentence.
 You will need to run this in your transition-amr virtual environment.
 """
 import argparse
-import string
+import re
 from os import getcwd, makedirs, chdir
 from pathlib import Path
 from typing import List, Tuple, Union, Dict, Optional
@@ -19,6 +19,7 @@ from cdse_covid.semantic_extraction.run_amr_parsing import tokenize_sentence
 
 ALIGNMENTS_TYPE = Dict[Union[List[str], str], Union[List[AMR_Alignment], list]]
 AMR_READER = AMR_Reader()
+STOP_PUNCTUATION = "!?.:;—,"
 
 
 def tokenize_sentences(
@@ -31,31 +32,30 @@ def tokenize_sentences(
             input_sentences = infile.readlines()
         for sentence in input_sentences:
             tokenized_sentence = tokenize_sentence(sentence, spacy_tokenizer)
-            # Filter for blank lines and sentences with many or weird tokens
-            if (
-                    1 <= len(tokenized_sentence) <= max_tokens
-                    and not has_weird_token(tokenized_sentence)
-            ):
-
-                tokenized_sentences.append(tokenized_sentence)
+            # Filter for blank lines
+            if 1 <= len(tokenized_sentence):
+                tokenized_sentences.append(
+                    refine_sentence(tokenized_sentence, max_tokens)
+                )
                 doc_sentences_to_include.append(sentence)
     return doc_sentences_to_include, tokenized_sentences
 
 
-def has_weird_token(
-        tokenized_sentence: List[str]
-) -> bool:
+def refine_sentence(tokenized_sentence: List[str], max_tokens: int) -> List[str]:
     """
-    Filter out sentences with tokens containing letters and punctuation;
-    we believe this has something to do with weird parsing errors
+    If a sentence exceeds the token limit, split the sentence into clauses
+    based on punctuation and keep all tokens within a clause that passes
+    the threshold.
+    Additionally, take any token with a format like
+    "X)Y" and separate it ("X", ")", "Y") to avoid parser errors.
     """
-    for token in tokenized_sentence:
-        if (
-                any(punc in token for punc in string.punctuation) and
-                any(letter in token for letter in string.ascii_letters)
-        ):
-            return True
-    return False
+    refined_sentence = []
+    for idx, token in enumerate(tokenized_sentence):
+        refined_sentence.extend(re.split(r'([()\"\[\]—])', token))
+        if token in STOP_PUNCTUATION and idx >= max_tokens:
+            break
+
+    return refined_sentence
 
 
 def load_amr_from_text_file(
