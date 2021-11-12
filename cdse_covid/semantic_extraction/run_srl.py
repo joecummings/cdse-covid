@@ -1,4 +1,5 @@
 import argparse
+from dataclasses import dataclass
 import logging
 from pathlib import Path
 from typing import Any, Mapping
@@ -9,9 +10,14 @@ from cdse_covid.claim_detection.run_claim_detection import ClaimDataset
 import spacy
 from spacy.language import Language
 
-from cdse_covid.semantic_extraction.models import SRLabel
-
 from cdse_covid.semantic_extraction.utils.claimer_utils import LEMMATIZER
+
+
+@dataclass
+class SRLOutput:
+    label_id: int
+    verb: str
+    args: Mapping[str, str]
 
 
 class SRLModel:
@@ -82,7 +88,7 @@ class SRLModel:
         verb_word = verbs[0]["verb"]
         return LEMMATIZER.lemmatize(verb_word, pos="v")
 
-    def predict(self, sentence: str) -> SRLabel:
+    def predict(self, sentence: str) -> SRLOutput:
         """Predict SRL over a sentence."""
         roles = self.predictor.predict(sentence)
         verb = None
@@ -93,7 +99,7 @@ class SRLModel:
         else:
             verb = self._stem_verb(roles["verbs"])
         args = self._clean_srl_output(roles)
-        return SRLabel(int(uuid.uuid1()), verb=verb, args=args)
+        return SRLOutput(int(uuid.uuid1()), verb=verb, args=args)
 
 
 def reformat_x_variable_in_claim_template(claim_template, reference_word="this"):

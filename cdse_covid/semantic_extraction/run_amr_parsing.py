@@ -4,10 +4,11 @@ Takes the claim data and uses AMR graphs to extract claimers and x-variables.
 You will need to run this in your transition-amr virtual environment.
 """
 import argparse
+from dataclasses import dataclass
 import logging
 from os import chdir, getcwd, makedirs
 from pathlib import Path
-from typing import List
+from typing import Any, List
 import uuid
 import spacy
 
@@ -18,11 +19,16 @@ from amr_utils.amr_readers import AMR_Reader, Metadata_Parser
 
 from cdse_covid.claim_detection.run_claim_detection import ClaimDataset
 from cdse_covid.pegasus_pipeline.run_amr_parsing_all import refine_sentence, tokenize_sentence
-from cdse_covid.semantic_extraction.models import AMRLabel
 from cdse_covid.semantic_extraction.utils.claimer_utils import identify_claimer
 from cdse_covid.semantic_extraction.utils.amr_extraction_utils import identify_x_variable_covid, identify_x_variable
 
 COVID_DOMAIN = "covid"
+
+@dataclass
+class AMROutput:
+    label_id: int
+    graph: Any
+    alignments: Any
 
 
 def main(input_dir, output, *, max_tokens: int, spacy_model, parser_path, domain):
@@ -86,7 +92,7 @@ def main(input_dir, output, *, max_tokens: int, spacy_model, parser_path, domain
         if possible_x_variable:
             claim.x_variable = possible_x_variable
 
-        amr_label = AMRLabel(int(uuid.uuid1()), amr, alignments)
+        amr_label = AMROutput(int(uuid.uuid1()), amr, alignments)
         claim.add_theory("amr", amr_label)
 
     claim_ds.save_to_dir(output)
