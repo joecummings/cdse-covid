@@ -1,3 +1,4 @@
+"""Classes related to SRL Models."""
 from dataclasses import dataclass
 import logging
 from typing import Any, List, MutableMapping
@@ -11,18 +12,24 @@ from cdse_covid.semantic_extraction.utils.claimer_utils import LEMMATIZER
 
 @dataclass
 class SRLOutput:
+    """Class to hold SRL Output."""
+
     label_id: int
     verb: str
     args: MutableMapping[str, str]
 
 
 class SRLModel:
+    """AllenNLP's Semantic Role Labeller."""
+
     def __init__(self, predictor: Any, *, spacy_model: Language) -> None:
+        """Initialize SRLModel."""
         self.predictor = predictor
         self.spacy_model = spacy_model
 
     @classmethod
     def from_hub(cls, filename: str, spacy_model: Language) -> "SRLModel":
+        """Load SRL from AllenNLP hub."""
         return cls(load_predictor(filename), spacy_model=spacy_model)
 
     def _remove_leading_trailing_stopwords(self, string: str) -> str:
@@ -81,6 +88,7 @@ class SRLModel:
         return tag_sequences
 
     def _stem_verb(self, verbs: List[MutableMapping[str, Any]]) -> str:
+        """Stem verb from list of verbs."""
         verb_word = verbs[0]["verb"]
         return str(LEMMATIZER.lemmatize(verb_word, pos="v"))
 

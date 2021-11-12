@@ -34,19 +34,25 @@ RegexPattern = Dict[str, Any]
 
 
 class ClaimDataset:
+    """Dataset of claims."""
+
     def __init__(self, claims: List[Claim] = []) -> None:
+        """Init ClaimDataset."""
         self.claims = claims
 
     def add_claim(self, claim: Claim) -> None:
+        """Add a claim to the dataset."""
         if not self.claims:
             self.claims = []
         self.claims.append(claim)
 
     def __iter__(self) -> Any:
+        """Return iterator over claims in dataset."""
         return iter(self.claims)
 
     @staticmethod
     def from_multiple_claims_ds(*claim_datasets: "ClaimDataset") -> "ClaimDataset":
+        """Create a new instance of the dataset from multiple *claim_datasets*."""
         datasets_dict = defaultdict(list)
         for dataset in claim_datasets:
             for claim in dataset:
@@ -70,6 +76,7 @@ class ClaimDataset:
 
     @staticmethod
     def load_from_dir(path: Path) -> "ClaimDataset":
+        """Load a ClaimDataset from a directory of claims."""
         claims = []
         for claim_file in path.glob("*.claim"):
             with open(claim_file, "rb") as handle:
@@ -78,6 +85,7 @@ class ClaimDataset:
         return ClaimDataset(claims)
 
     def save_to_dir(self, path: Path) -> None:
+        """Save all claims in dataset to given *path*."""
         if not self.claims:
             logging.warning("No claims found.")
         path.mkdir(exist_ok=True)
@@ -86,6 +94,7 @@ class ClaimDataset:
                 pickle.dump(claim, handle, pickle.HIGHEST_PROTOCOL)
 
     def print_out_claim_sentences(self, path: Path) -> None:
+        """Print out the actual text of the existing claims."""
         if not self.claims:
             logging.warning("No claims found.")
         with open(path, "w+", encoding="utf-8") as handle:
@@ -95,15 +104,18 @@ class ClaimDataset:
 
 
 class ClaimDetector:
+    """ABC to detect claims."""
+
     @abc.abstractmethod
     def generate_candidates(self, corpus: AIDADataset, *args: Any) -> ClaimDataset:
-        pass
+        """ABM for generating candidates."""
 
 
 class RegexClaimDetector(ClaimDetector, Matcher):  # type: ignore
     """Detect claims using Regex patterns."""
 
     def __init__(self, spacy_model: Language) -> None:
+        """Init RegexClaimDetector."""
         Matcher.__init__(self, spacy_model.vocab, validate=True)
 
     def add_patterns(self, patterns: RegexPattern) -> None:
@@ -144,7 +156,7 @@ class RegexClaimDetector(ClaimDetector, Matcher):  # type: ignore
 
 
 def main(input_corpus: Path, patterns: Path, out_dir: Path, *, spacy_model: Language) -> None:
-
+    """Entrypoint to claim detection script."""
     regex_model = RegexClaimDetector(spacy_model)
     with open(patterns, "r", encoding="utf-8") as handle:
         patterns_json = json.load(handle)

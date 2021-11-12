@@ -1,3 +1,4 @@
+"""Collection of Claimer utils."""
 import re
 from typing import Any, List, MutableMapping, Optional
 
@@ -97,9 +98,7 @@ def get_claim_node_from_token(amr: AMR, node: str, checked_nodes: Any = None) ->
 
 
 def search_for_claim_node(graph_nodes: MutableMapping[str, Any]) -> Optional[str]:
-    """Rule #2: try finding the statement node by reading through all nodes
-    and returning the first match.
-    """
+    """Rule #2: Try finding the statement node by reading through all nodes and returning the first match."""
     for node, label in graph_nodes.items():
         if is_desired_framenet_node(label):
             return node
@@ -109,7 +108,7 @@ def search_for_claim_node(graph_nodes: MutableMapping[str, Any]) -> Optional[str
 def get_argument_node(
     amr: AMR, alignments: List[AMR_Alignment], claim_node: Optional[str]
 ) -> Optional[str]:
-    """Get all argument (claimer) nodes of the claim node"""
+    """Get all argument (claimer) nodes of the claim node."""
     nodes = amr.nodes
     nodes_to_strings = create_node_to_token_dict(amr, alignments)
     amr_dict = amr.edge_MutableMapping()

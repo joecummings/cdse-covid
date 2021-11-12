@@ -1,5 +1,4 @@
-"""
-Takes the claim data and uses AMR graphs to extract claimers and x-variables.
+"""Takes the claim data and uses AMR graphs to extract claimers and x-variables.
 
 You will need to run this in your transition-amr virtual environment.
 """
@@ -31,7 +30,7 @@ def main(
     parser_path: Path,
     domain: str,
 ) -> None:
-
+    """Entrypoint to AMR parsing script."""
     amr_parser = AMRModel.from_folder(parser_path)
 
     claim_ds = ClaimDataset.load_from_dir(input_dir)

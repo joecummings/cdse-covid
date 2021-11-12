@@ -1,3 +1,4 @@
+"""Claim module."""
 from dataclasses import dataclass, field
 from typing import Any, List, MutableMapping, Optional, Tuple, Union
 
@@ -6,6 +7,8 @@ from cdse_covid.semantic_extraction.entities import Claimer, WikidataQnode, XVar
 
 @dataclass
 class Claim:
+    """A claim as documented by GAIA Nov 12, 2021."""
+
     claim_id: int
     doc_id: str
     claim_text: str
@@ -27,15 +30,18 @@ class Claim:
     theories: MutableMapping[str, Any] = field(default_factory=dict)
 
     def add_theory(self, name: str, theory: Any) -> None:
+        """Add a theory to the claim obj."""
         self.theories[name] = theory
 
     def get_theory(self, name: str) -> Optional[Any]:
+        """Get an existing theory by *name*."""
         return self.theories.get(name)
 
     @staticmethod
     def to_json(
         obj: Any, classkey: Optional[str] = None
     ) -> Union[List[MutableMapping[str, Any]], MutableMapping[str, Any], Any]:
+        """Convert claim obj into a JSON mapping."""
         if isinstance(obj, dict):
             data = {k: Claim.to_json(v, classkey) for (k, v) in obj.items()}
             return data

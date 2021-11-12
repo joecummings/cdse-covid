@@ -1,3 +1,4 @@
+"""Run E2E Pegasus claim pipeline."""
 import logging
 from pathlib import Path
 
@@ -23,11 +24,13 @@ logger.setLevel(logging.INFO)
 def load_and_serialize_spacy_model(
     path_to_saved_model: Path, model: str = "en_core_web_sm"
 ) -> None:
+    """Load a saved SpaCy model and serialized it."""
     spacy_model = spacy.load(model)
     spacy_model.to_disk(path_to_saved_model)
 
 
 def main(params: Parameters) -> None:
+    """Entrypoint to claims pipeline."""
     initialize_vista_pegasus_wrapper(params)
 
     # Base info

@@ -1,3 +1,4 @@
+"""Collection of AMR extraction utils."""
 from collections import defaultdict
 import re
 import string
@@ -14,6 +15,7 @@ PROPBANK_PATTERN = r"[a-z]*-[0-9]{2}"
 def get_full_name_value(
     amr_dict: Dict[str, Dict[str, List[str]]], nodes_to_strings: Dict[str, str], named_node: str
 ) -> Optional[str]:
+    """Get the full name of a named_node."""
     name_nodes = amr_dict[named_node].get(":name")
     if name_nodes:
         name_strings = [nodes_to_strings[name_node] for name_node in name_nodes]
@@ -28,8 +30,7 @@ def get_full_description(
     focus_node: str,
     ignore_focus_node: bool = False,
 ) -> str:
-    """
-    Returns the 'focus' node text along with any modifiers
+    """Returns the 'focus' node text along with any modifiers.
 
     If `ignore_focus_node` is True, it will not count the original token(s)
     associated with that node; useful in cases where we only care about the modifiers.
@@ -97,9 +98,7 @@ def get_full_description(
 
 
 def create_node_to_token_dict(amr: AMR, alignments: List[AMR_Alignment]) -> Dict[str, str]:
-    """
-    Creates a MutableMapping between AMR graph nodes and tokens from the source sentence
-    """
+    """Creates a MutableMapping between AMR graph nodes and tokens from the source sentence."""
     amr_tokens = amr.tokens
     # Use this dict to get the list of tokens first
     nodes_to_token_lists = defaultdict(list)
@@ -120,9 +119,7 @@ def create_node_to_token_dict(amr: AMR, alignments: List[AMR_Alignment]) -> Dict
 def identify_x_variable_covid(
     amr: AMR, alignments: List[AMR_Alignment], claim_template: Optional[str]
 ) -> Optional[XVariable]:
-    """
-    Use the AMR graph of the claim to identify the X variable given the template
-    """
+    """Use the AMR graph of the claim to identify the X variable given the template."""
     if not claim_template:
         return None
 
@@ -300,36 +297,37 @@ def identify_x_variable_covid(
 def treatment_is_approved(
     nodes_to_labels: MutableMapping[str, Any], parent: str, role: str
 ) -> bool:
+    """If treatment is in the ARG1 spot."""
     return nodes_to_labels[parent] == "approve-01" and role == ":ARG1"
 
 
 def prevents_death(nodes_to_labels: MutableMapping[str, Any], parent: str, role: str) -> bool:
+    """If treatment is in ARG0 spot."""
     return nodes_to_labels[parent] == "prevent-01" and role == ":ARG0"
 
 
 def shortens_infection(nodes_to_labels: MutableMapping[str, Any], parent: str, role: str) -> bool:
+    """If treatment is in ARG) and verb is shorten."""
     return nodes_to_labels[parent] == "shorten-01" and role == ":ARG0"
 
 
 def treatment_in_arg3(nodes_to_labels: MutableMapping[str, Any], parent: str, role: str) -> bool:
+    """If treatment is in ARG3 spot."""
     return nodes_to_labels[parent] == "treat-03" and role == ":ARG3"
 
 
 def mislablled_treatment(nodes_to_labels: MutableMapping[str, Any], parent: str, role: str) -> bool:
-    """Often the system mislabels treatments as ARG1 (which is
-    supposed to be the "patient"), so we'll check it anyway.
-    """
+    """Often the system mislabels treatments as ARG1 (which is supposed to be the "patient"), so we'll check it anyway."""
     return nodes_to_labels[parent] == "treat-03" and role == ":ARG1"
 
 
 def identify_x_variable(
     amr: AMR, alignments: List[AMR_Alignment], claim_ents: Dict[str, str], claim_pos: Dict[str, str]
 ) -> Optional[XVariable]:
-    """
-    Use the AMR graph of the claim to identify the X variable given the claim text
+    """Use the AMR graph of the claim to identify the X variable given the claim text.
 
     An alternative to `identify_x_variable_covid` that doesn't rely on the templates
-    of our COVID-19 domain
+    of our COVID-19 domain.
     """
     place_types = {"city", "state", "country", "continent"}
     amr_dict = amr.edge_MutableMapping()

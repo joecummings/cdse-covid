@@ -1,3 +1,4 @@
+"""Run WikiData over claim semantics."""
 import argparse
 import logging
 from pathlib import Path
@@ -14,6 +15,7 @@ def _find_links(span: str, tokens: Sequence[str]) -> Any:
 
 
 def main(claim_input: Path, srl_input: Path, amr_input: Path, output: Path) -> None:
+    """Entry point to linking script."""
     ds1 = ClaimDataset.load_from_dir(claim_input)
     ds2 = ClaimDataset.load_from_dir(srl_input)
     ds3 = ClaimDataset.load_from_dir(amr_input)
@@ -57,6 +59,7 @@ def main(claim_input: Path, srl_input: Path, amr_input: Path, output: Path) -> N
 
 
 def create_wikidata_qnodes(links: List[Any]) -> List[WikidataQnode]:
+    """Create WikiData Qnodes from links."""
     all_qnodes = []
     for link in links:
         if not link["options"]:

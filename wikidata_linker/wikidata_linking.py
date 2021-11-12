@@ -1,3 +1,4 @@
+"""Collection of Wikidata linking utils."""
 import argparse
 import json
 from pathlib import Path
@@ -240,7 +241,6 @@ def disambiguate_kgtk(
     Returns:
         A JSON response.
     """
-
     kgtk_json = []
     cache_file = make_cache_path(KGTK_CACHE, query)
     kgtk_json += get_request_kgtk(query, cache_file, filter_results=False)

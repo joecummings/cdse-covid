@@ -1,3 +1,4 @@
+"""Classes to ingest raw AIDA docs."""
 import logging
 from pathlib import Path
 from typing import List, Sequence, Tuple
@@ -9,12 +10,16 @@ from spacy.vocab import Vocab  # pylint: disable=no-name-in-module
 
 
 class AIDADataset:
+    """Dataset of AIDA documents."""
+
     def __init__(self, documents: Sequence[Tuple[str, Doc]]) -> None:
+        """Initialize AIDADataset."""
         self.documents = documents
         self.templates: List[str] = []
 
     @classmethod
     def from_text_files(cls, path_to_text_files: Path, *, nlp: Language) -> "AIDADataset":
+        """Create dataset from collection of rsd.txt files."""
         all_docs = []
         for txt_file in path_to_text_files.glob("*.txt"):
             with open(txt_file, "r", encoding="utf-8") as handle:
@@ -25,6 +30,7 @@ class AIDADataset:
 
     @classmethod
     def from_serialized_docs(cls, path_to_docs: Path) -> "AIDADataset":
+        """Create dataset from serialized documents."""
         all_docs = []
         for doc in path_to_docs.glob("*.spacy"):
             try:
@@ -36,6 +42,7 @@ class AIDADataset:
         return cls(all_docs)
 
     def load_templates(self, templates_file: Path) -> None:
+        """Load domain templates."""
         templates = []
         with open(templates_file, "r", encoding="utf-8") as handle:
             for i, line in enumerate(handle):

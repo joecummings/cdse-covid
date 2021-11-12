@@ -8,6 +8,7 @@ from spacy.language import Language
 
 
 def load_aida_txt_docs(docs_to_load: Path, output_dir: Path, *, spacy_model: Language) -> None:
+    """Load AIDA docs in rsd.txt format and encode with SpaCy."""
     for txt_file in docs_to_load.glob("*.txt"):
         with open(txt_file, "r", encoding="utf-8") as handle:
             doc_text = handle.read()

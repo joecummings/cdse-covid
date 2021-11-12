@@ -1,3 +1,4 @@
+"""Classes related to AMR Model."""
 from dataclasses import dataclass
 import logging
 from os import chdir, getcwd
@@ -11,6 +12,8 @@ from transition_amr_parser.parse import AMRParser  # pylint: disable=import-erro
 
 @dataclass
 class AMROutput:
+    """Class to hold AMR Output."""
+
     label_id: int
     graph: Any
     alignments: Any
@@ -18,17 +21,19 @@ class AMROutput:
 
 
 class AMRModel(object):
+    """IBM's Transition AMR Parser (Action Pointer)."""
+
     def __init__(self, parser: AMRParser) -> None:
+        """Initialize AMRModel."""
         self.parser = parser
 
     @classmethod
     def from_folder(cls, folder: Path) -> "AMRModel":
-        """
-        Return an AMRModel object using an AMRParser created from the model data
+        """Return an AMRModel object using an AMRParser created from the model data \
         saved in your copy of transition-amr-parser.
 
-        For some reason, the program isn't able to detect the model data
-        if the working directory is not the amr-parser root, even if you provide
+        For some reason, the program isn't able to detect the model data \
+        if the working directory is not the amr-parser root, even if you provide \
         an absolute path, hence why we change working dirs in this method.
         """
         cdse_path = getcwd()
@@ -47,6 +52,7 @@ class AMRModel(object):
     def amr_parse_sentences(
         self, sentences: List[List[str]], output_alignments: bool = False
     ) -> AMROutput:
+        """Parse sentences in AMR graph and alignments."""
         logging.info(output_alignments)
         annotations = self.parser.parse_sentences(sentences)
         metadata, graph_metadata = Metadata_Parser().readlines(annotations[0][0])

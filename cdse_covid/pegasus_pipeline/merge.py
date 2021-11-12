@@ -1,3 +1,4 @@
+"""Merge all annotated claims into one JSON file."""
 import argparse
 import json
 import logging
@@ -11,12 +12,14 @@ from cdse_covid.claim_detection.run_claim_detection import ClaimDataset
 def structure_claim(
     claim: Claim,
 ) -> Union[List[MutableMapping[str, Any]], MutableMapping[str, Any], Any]:
+    """Convert claim to JSON format."""
     if claim.theories:
         claim.theories = {}  # Hack for now b/c we don't want to see theories
     return Claim.to_json(claim)
 
 
 def main(input_dir: Path, output: Path) -> None:
+    """Entrypoint to merge script."""
     claims = ClaimDataset.load_from_dir(input_dir)
     structured_claims = [structure_claim(claim) for claim in claims]
 

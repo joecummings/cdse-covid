@@ -1,3 +1,4 @@
+"""Run SRL over claims to get X Variable."""
 import argparse
 import logging
 from pathlib import Path
@@ -25,6 +26,7 @@ def reformat_x_variable_in_claim_template(claim_template: str, reference_word: s
 
 
 def main(inputs: Path, output: Path, *, spacy_model: Language) -> None:
+    """Entrypoint to srl script."""
     srl_model = SRLModel.from_hub("structured-prediction-srl", spacy_model)
     claim_ds = ClaimDataset.load_from_dir(inputs)
 

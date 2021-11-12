@@ -1,5 +1,4 @@
-"""
-Takes the corpus files and creates AMR graphs for each sentence.
+"""Takes the corpus files and creates AMR graphs for each sentence.
 
 You will need to run this in your transition-amr virtual environment.
 """
@@ -21,6 +20,7 @@ STOP_PUNCTUATION = "!?.:;—,"
 def tokenize_sentences(
     corpus_file: Path, max_tokens: int, spacy_tokenizer: Any
 ) -> Tuple[List[str], List[List[str]]]:
+    """Tokenize multiple sentences from documents."""
     tokenized_sentences = []
     doc_sentences_to_include = []
     if corpus_file.suffix == ".txt":
@@ -36,17 +36,18 @@ def tokenize_sentences(
 
 
 def tokenize_sentence(text: str, spacy_tokenizer: Any, max_tokens: int) -> List[str]:
+    """Tokenize a single sentence using provided SpaCy tokenizer."""
     tokens = spacy_tokenizer(text.strip())
     tokenized_sentence = [token.text for token in tokens]
     return refine_sentence(tokenized_sentence, max_tokens)
 
 
 def refine_sentence(tokenized_sentence: List[str], max_tokens: int) -> List[str]:
-    """
-    If a sentence exceeds the token limit, split the sentence into clauses
-    based on punctuation and keep all tokens within a clause that passes
+    """If a sentence exceeds the token limit, split the sentence into clauses \
+    based on punctuation and keep all tokens within a clause that passes \
     the threshold.
-    Additionally, take any token with a format like
+
+    Additionally, take any token with a format like \
     "X)Y" and separate it ("X", ")", "Y") to avoid parser errors.
     """
     refined_sentence = []
@@ -59,9 +60,9 @@ def refine_sentence(tokenized_sentence: List[str], max_tokens: int) -> List[str]
 
 
 def load_amr_from_text_file(amr_file: Path, output_alignments: bool = False) -> Any:
-    """
-    Reads a document of AMR graphs and returns an AMR graph.
-    If `output_alignments` is True, it will also return
+    """Reads a document of AMR graphs and returns an AMR graph.
+
+    If `output_alignments` is True, it will also return \
     the alignment data of that graph.
     """
     if output_alignments:
@@ -72,6 +73,7 @@ def load_amr_from_text_file(amr_file: Path, output_alignments: bool = False) -> 
 def main(
     corpus_dir: Path, output_dir: Path, max_tokens: int, spacy_model: Language, parser_path: Path
 ) -> None:
+    """Entrypoint to AMR parsing over entire document."""
     amr_parser = AMRModel.from_folder(parser_path)
 
     for input_file in corpus_dir.iterdir():

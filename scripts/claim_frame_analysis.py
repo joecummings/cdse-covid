@@ -1,3 +1,4 @@
+"""Analyze the claims and semantics being produced."""
 import argparse
 from collections import defaultdict
 import csv
@@ -6,6 +7,7 @@ from typing import Any, MutableMapping, Set
 
 
 def main() -> None:
+    """Entrypoint into analysis."""
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("--input", help="JSON input file")
     p.add_argument(
