@@ -5,7 +5,7 @@ from typing import List, Optional
 from nltk.stem import WordNetLemmatizer
 import re
 
-from cdse_covid.semantic_extraction.amr_extraction_utils import get_full_name_value, get_full_description, \
+from cdse_covid.semantic_extraction.utils.amr_extraction_utils import get_full_name_value, get_full_description, \
     create_node_to_token_dict
 
 LEMMATIZER = WordNetLemmatizer()
@@ -109,7 +109,7 @@ def get_argument_node(
         if claimer_nodes:
             claimer_node = claimer_nodes[0]  # only get one
             claimer_label = nodes.get(claimer_node)
-            if claimer_label == "person" or claimer_label == "organization":
+            if claimer_label in ["person", "organization"]:
                 return get_full_name_value(amr_dict, nodes_to_strings, claimer_node)
             return get_full_description(
                 amr_dict, nodes, nodes_to_strings, claimer_node

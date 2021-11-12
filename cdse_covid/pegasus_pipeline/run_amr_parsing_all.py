@@ -5,7 +5,6 @@ You will need to run this in your transition-amr virtual environment.
 """
 import argparse
 import re
-from os import getcwd, makedirs, chdir
 from pathlib import Path
 from typing import List, Tuple, Union, Dict, Optional
 
@@ -13,7 +12,7 @@ import spacy
 from amr_utils.alignments import AMR_Alignment
 from amr_utils.amr import AMR
 from amr_utils.amr_readers import AMR_Reader
-from transition_amr_parser.parse import AMRParser  # pylint: disable=import-error
+from cdse_covid.semantic_extraction.models.amr import AMRModel
 
 ALIGNMENTS_TYPE = Dict[Union[List[str], str], Union[List[AMR_Alignment], list]]
 AMR_READER = AMR_Reader()
@@ -33,7 +32,7 @@ def tokenize_sentences(
                 sentence, spacy_tokenizer, max_tokens
             )
             # Filter for blank lines
-            if 1 <= len(tokenized_sentence):
+            if len(tokenized_sentence) >= 1:
                 tokenized_sentences.append(tokenized_sentence)
                 doc_sentences_to_include.append(sentence)
     return doc_sentences_to_include, tokenized_sentences
@@ -76,24 +75,7 @@ def load_amr_from_text_file(
 
 
 def main(corpus_dir, output_dir, max_tokens: int, spacy_model, parser_path):
-    cdse_path = getcwd()
-
-    # We assume that the checkpoint is in this location within the repo
-    in_checkpoint = f"{parser_path}/DATA/AMR2.0/models" \
-                    "/exp_cofill_o8.3_act-states_RoBERTa-large-top24" \
-                    "/_act-pos-grh_vmask1_shiftpos1_ptr-lay6-h1_grh-lay123-h2-allprev" \
-                    "_1in1out_cam-layall-h2-abuf/ep120-seed42/checkpoint_best.pt"
-
-    if not Path(in_checkpoint).exists():
-        raise RuntimeError(f"Could not find checkpoint file {in_checkpoint}!")
-    if not corpus_dir.exists():
-        raise RuntimeError(f"Input directory {corpus_dir} could not be found!")
-    if not Path(output_dir).exists():
-        makedirs(output_dir)
-
-    chdir(parser_path)
-    amr_parser = AMRParser.from_checkpoint(in_checkpoint)
-    chdir(cdse_path)
+    amr_parser = AMRModel.from_folder(parser_path)
 
     for input_file in corpus_dir.iterdir():
         original_sentences, tokenized_sentences = tokenize_sentences(
@@ -102,12 +84,12 @@ def main(corpus_dir, output_dir, max_tokens: int, spacy_model, parser_path):
         # Attempting to AMR-parse an empty list yields an error
         if not tokenized_sentences:
             continue
-        annotations = amr_parser.parse_sentences(tokenized_sentences)
+        amr_parse = amr_parser.amr_parse_sentences(tokenized_sentences)
 
         output_file = f"{output_dir}/{input_file.stem}.amr"
         with open(output_file, 'w+', encoding="utf-8") as outfile:
             # PENMAN notation is at index 0
-            for anno_number, annotation in enumerate(annotations[0]):
+            for anno_number, annotation in enumerate(amr_parse.annotations[0]):
                 # Append an id to each graph so that
                 # it can be loaded by amr-utils later
                 outfile.write(f"# ::id {input_file.stem}_{anno_number}\n")

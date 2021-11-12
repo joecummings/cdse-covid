@@ -117,13 +117,10 @@ def create_node_to_token_dict(
                 # ignore punctuation
                 if token_text not in string.punctuation:
                     nodes_to_token_lists[node].append(token_text)
-    # Then map from nodes to token strings
-    nodes_to_strings = {
+    return {
         node: " ".join(token_list)
         for node, token_list in nodes_to_token_lists.items()
     }
-
-    return nodes_to_strings
 
 
 def identify_x_variable_covid(
@@ -147,7 +144,7 @@ def identify_x_variable_covid(
                 location_name = get_full_name_value(
                     amr_dict, nodes_to_source_strings, child
                 )
-                return location_name if location_name else get_full_description(
+                return location_name or get_full_description(
                     amr_dict, nodes_to_labels, nodes_to_source_strings, child
                 )
     # For "person-X" templates, locate a person
@@ -158,7 +155,7 @@ def identify_x_variable_covid(
                 person_name = get_full_name_value(
                     amr_dict, nodes_to_source_strings, child
                 )
-                return person_name if person_name else child_label
+                return person_name or child_label
     if claim_template.endswith("is X"):
         # In such cases, X is usually the root of the claim graph.
         return get_full_description(
@@ -172,7 +169,7 @@ def identify_x_variable_covid(
                 target_name = get_full_name_value(
                     amr_dict, nodes_to_source_strings, child
                 )
-                return target_name if target_name else get_full_description(
+                return target_name or get_full_description(
                     amr_dict,
                     nodes_to_labels,
                     nodes_to_source_strings,
@@ -194,7 +191,7 @@ def identify_x_variable_covid(
     if "Government-X" in claim_template:
         # In these graphs, the GPE of "government" is not a mod,
         # so we append the GPE with "government" if it is a token in the sentence.
-        add_gov_token = True if "government" in amr.tokens else False
+        add_gov_token = "government" in amr.tokens
         for parent, role, child in amr.edges:
             if nodes_to_labels[parent] == "government-organization":
                 # try up to two steps down
@@ -268,10 +265,7 @@ def identify_x_variable_covid(
     # If X is the first in the template, it implies that it serves the agent role
     if claim_template[0] == "X":
         # The "agent" of cure-01 is ARG3
-        if claim_template == "X cures COVID-19":
-            agent_role = ":ARG3"
-        else:
-            agent_role = ":ARG0"
+        agent_role = ":ARG3" if claim_template == "X cures COVID-19" else ":ARG0"
         for parent, role, child in amr.edges:
             if parent == amr.root and role == agent_role:
                 agent_name = get_full_name_value(
@@ -323,7 +317,7 @@ def identify_x_variable(
                 child_label = nodes_to_labels.get(child)
                 # Check if it's a government organization
                 if parent_label == "government-organization":
-                    add_gov_token = True if "government" in amr.tokens else False
+                    add_gov_token = "government" in amr.tokens
                     # try up to two steps down
                     full_name = None
                     if child_label in place_types:
@@ -355,15 +349,15 @@ def identify_x_variable(
                         return get_full_description(
                             amr_dict, nodes_to_labels, nodes_to_source_strings, child
                         )
-        if label == "PERSON" or label == "ORG":
+        if label in ["PERSON", "ORG"]:
             # If a PERSON/ORG is detected, get the full name
             for parent, role, child in amr.edges:
                 child_label = nodes_to_labels.get(child)
-                if child_label == "person" or child_label == "organization":
+                if child_label in ["person", "organization"]:
                     person_name = get_full_name_value(
                         amr_dict, nodes_to_source_strings, child
                     )
-                    return person_name if person_name else child_label
+                    return person_name or child_label
 
     # Next, simply look for a location
     for parent, role, child in amr.edges:
@@ -374,7 +368,7 @@ def identify_x_variable(
             location_name = get_full_name_value(
                 amr_dict, nodes_to_source_strings, child
             )
-            return location_name if location_name else get_full_description(
+            return location_name or get_full_description(
                 amr_dict, nodes_to_labels, nodes_to_source_strings, child
             )
         # If there is a date-entity in the AMR graph, that may be the X-variable
