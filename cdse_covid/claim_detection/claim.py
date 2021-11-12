@@ -1,6 +1,6 @@
 from dataclasses import dataclass, field
 from typing import Any, Mapping, Optional, Tuple
-from cdse_covid.semantic_extraction.models import WikidataQnode
+from cdse_covid.semantic_extraction.entities import WikidataQnode, Claimer, XVariable
 
 
 @dataclass
@@ -13,9 +13,9 @@ class Claim:
     claim_template: Optional[str] = None
     topic: Optional[str] = None
     subtopic: Optional[str] = None
-    x_variable: Optional[str] = None
+    x_variable: Optional[XVariable] = None
     x_variable_qnode: Optional[WikidataQnode] = None
-    claimer: Optional[str] = None
+    claimer: Optional[Claimer] = None
     claimer_qnode: Optional[WikidataQnode] = None
     claim_date_time: Optional[str] = None
     claim_location: Optional[str] = None

@@ -5,7 +5,9 @@ from typing import Any, Mapping
 
 
 import argparse
-from cdse_covid.claim_detection.run_claim_detection import Claim, ClaimDataset
+from cdse_covid.claim_detection.run_claim_detection import ClaimDataset
+from cdse_covid.claim_detection.claim import Claim
+
 
 def structure_claim(claim: Claim) -> Mapping[str, Any]:
     claim.theories = None # Hack for now b/c we don't want to see theories

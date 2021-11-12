@@ -6,7 +6,7 @@ from typing import Sequence
 from cdse_covid.claim_detection.run_claim_detection import ClaimDataset
 from wikidata_linker.wikidata_linking import disambiguate_kgtk
 
-from cdse_covid.semantic_extraction.models import WikidataQnode
+from cdse_covid.semantic_extraction.entities import WikidataQnode
 
 
 def _find_links(span, tokens: Sequence[str]):

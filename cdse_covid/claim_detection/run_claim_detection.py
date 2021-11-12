@@ -14,7 +14,7 @@ from spacy.tokens import Span
 import uuid
 from collections import defaultdict
 import csv
-from cdse_covid.claim_detection.models import Claim
+from cdse_covid.claim_detection.claim import Claim
 from dataclasses import replace
 
 CORONA_NAME_VARIATIONS = [
