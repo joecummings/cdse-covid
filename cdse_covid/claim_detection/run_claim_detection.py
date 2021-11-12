@@ -1,21 +1,23 @@
 """Run claim detection over corpus of SpaCy encoded documents."""
 import abc
 import argparse
+from collections import defaultdict
+import csv
+from dataclasses import replace
 import json
 import logging
 from pathlib import Path
-from typing import Any, Mapping, Optional, Sequence
 import pickle
+from typing import Any, Dict, List
+import uuid
+
 import spacy
 from spacy.language import Language
 from spacy.matcher import Matcher
-from cdse_covid.dataset import AIDADataset
 from spacy.tokens import Span
-import uuid
-from collections import defaultdict
-import csv
+
 from cdse_covid.claim_detection.claim import Claim
-from dataclasses import replace
+from cdse_covid.dataset import AIDADataset
 
 CORONA_NAME_VARIATIONS = [
     "COVID-19",
@@ -28,19 +30,19 @@ CORONA_NAME_VARIATIONS = [
 ]
 
 
-RegexPattern = Sequence[Mapping[str, Any]]
+RegexPattern = Dict[str, Any]
 
 
 class ClaimDataset:
-    def __init__(self, claims: Sequence[Claim] = []) -> None:
+    def __init__(self, claims: List[Claim] = []) -> None:
         self.claims = claims
 
-    def add_claim(self, claim: Claim):
+    def add_claim(self, claim: Claim) -> None:
         if not self.claims:
             self.claims = []
         self.claims.append(claim)
 
-    def __iter__(self):
+    def __iter__(self) -> Any:
         return iter(self.claims)
 
     @staticmethod
@@ -56,14 +58,15 @@ class ClaimDataset:
                 if i == 0:
                     new_claim = claim
                 else:
-                    all_non_none_attrs = {k:v for k,v in claim.__dict__.items() if v != None and k != "theories"}
-                    new_claim: Claim = replace(new_claim, **all_non_none_attrs)
+                    all_non_none_attrs = {
+                        k: v for k, v in claim.__dict__.items() if v is not None and k != "theories"
+                    }
+                    new_claim = replace(new_claim, **all_non_none_attrs)
                     for k, v in claim.theories.items():
                         if not new_claim.get_theory(k):
                             new_claim.add_theory(k, v)
             all_claims.append(new_claim)
         return ClaimDataset(all_claims)
-
 
     @staticmethod
     def load_from_dir(path: Path) -> "ClaimDataset":
@@ -74,7 +77,7 @@ class ClaimDataset:
                 claims.append(claim)
         return ClaimDataset(claims)
 
-    def save_to_dir(self, path: Path):
+    def save_to_dir(self, path: Path) -> None:
         if not self.claims:
             logging.warning("No claims found.")
         path.mkdir(exist_ok=True)
@@ -82,29 +85,28 @@ class ClaimDataset:
             with open(f"{path / str(claim.claim_id)}.claim", "wb+") as handle:
                 pickle.dump(claim, handle, pickle.HIGHEST_PROTOCOL)
 
-    def print_out_claim_sentences(self, path: Path):
+    def print_out_claim_sentences(self, path: Path) -> None:
         if not self.claims:
             logging.warning("No claims found.")
-        with open(path, "w+") as handle:
+        with open(path, "w+", encoding="utf-8") as handle:
             writer = csv.writer(handle)
             for claim in self.claims:
                 writer.writerow([claim.claim_text])
 
 
-
 class ClaimDetector:
     @abc.abstractmethod
-    def generate_candidates(self, corpus: AIDADataset):
+    def generate_candidates(self, corpus: AIDADataset, *args: Any) -> ClaimDataset:
         pass
 
 
-class RegexClaimDetector(ClaimDetector, Matcher):
+class RegexClaimDetector(ClaimDetector, Matcher):  # type: ignore
     """Detect claims using Regex patterns."""
 
-    def __init__(self, spacy_model) -> None:
+    def __init__(self, spacy_model: Language) -> None:
         Matcher.__init__(self, spacy_model.vocab, validate=True)
 
-    def add_patterns(self, patterns: Optional[Sequence[RegexPattern]] = None):
+    def add_patterns(self, patterns: RegexPattern) -> None:
         """Add Regex patterns to the SpaCy Matcher."""
         for pattern, regexes in patterns.items():
             for regex in regexes:
@@ -116,9 +118,10 @@ class RegexClaimDetector(ClaimDetector, Matcher):
                         row["TEXT"]["IN"] = CORONA_NAME_VARIATIONS
             self.add(pattern, regexes)
 
-    def generate_candidates(self, corpus: AIDADataset, vocab) -> ClaimDataset:
+    def generate_candidates(self, corpus: AIDADataset, *args: Any) -> ClaimDataset:
         """Generate claim candidates from corpus based on Regex matches."""
         claim_dataset = ClaimDataset()
+        vocab = args[0]
 
         for doc in corpus.documents:
             matches = self.__call__(doc[1])
@@ -140,10 +143,10 @@ class RegexClaimDetector(ClaimDetector, Matcher):
         return claim_dataset
 
 
-def main(input_corpus: Path, patterns: Path, out_dir: Path, *, spacy_model: Language):
+def main(input_corpus: Path, patterns: Path, out_dir: Path, *, spacy_model: Language) -> None:
 
     regex_model = RegexClaimDetector(spacy_model)
-    with open(patterns, "r") as handle:
+    with open(patterns, "r", encoding="utf-8") as handle:
         patterns_json = json.load(handle)
     regex_model.add_patterns(patterns_json)
 
@@ -151,17 +154,17 @@ def main(input_corpus: Path, patterns: Path, out_dir: Path, *, spacy_model: Lang
     matches = regex_model.generate_candidates(dataset, spacy_model.vocab)
 
     topics_info = {}
-    with open(Path(__file__).parent / "topic_list.txt", "r") as handle:
+    with open(Path(__file__).parent / "topic_list.txt", "r", encoding="utf-8") as handle:
         reader = csv.reader(handle, delimiter="\t")
         for row in reader:
             key = row[3]
             topics_info[key] = {"topic": row[2], "subtopic": row[1]}
-    
+
     for claim in matches:
         template = topics_info[claim.claim_template]
         claim.topic = template["topic"]
         claim.subtopic = template["subtopic"]
-                
+
     matches.save_to_dir(out_dir)
 
     logging.info("Saved matches to %s", out_dir)
@@ -170,13 +173,11 @@ def main(input_corpus: Path, patterns: Path, out_dir: Path, *, spacy_model: Lang
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--input", help="Input docs", type=Path)
-    parser.add_argument(
-        "--patterns", help="Patterns for Regex", type=Path, default=None
-    )
+    parser.add_argument("--patterns", help="Patterns for Regex", type=Path, default=None)
     parser.add_argument("--out", help="Out file", type=Path)
     parser.add_argument("--spacy-model", type=Path)
-    args = parser.parse_args()
+    pargs = parser.parse_args()
 
-    model = spacy.load(args.spacy_model)
+    model = spacy.load(pargs.spacy_model)
 
-    main(args.input, args.patterns, args.out, spacy_model=model)
+    main(pargs.input, pargs.patterns, pargs.out, spacy_model=model)

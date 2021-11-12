@@ -1,17 +1,17 @@
-from pathlib import Path
-from pegasus_wrapper.artifact import ValueArtifact
-from pegasus_wrapper.resource_request import SlurmResourceRequest
-from saga_tools.conda import CondaConfiguration
-import spacy
 import logging
+from pathlib import Path
 
 from pegasus_wrapper import (
     directory_for,
     initialize_vista_pegasus_wrapper,
-    write_workflow_description,
     run_python_on_args,
+    write_workflow_description,
 )
+from pegasus_wrapper.artifact import ValueArtifact
 from pegasus_wrapper.locator import Locator
+from pegasus_wrapper.resource_request import SlurmResourceRequest
+from saga_tools.conda import CondaConfiguration  # pylint: disable=import-error
+import spacy
 from vistautils.memory_amount import MemoryAmount
 from vistautils.parameters import Parameters
 from vistautils.parameters_only_entrypoint import parameters_only_entry_point
@@ -21,13 +21,13 @@ logger.setLevel(logging.INFO)
 
 
 def load_and_serialize_spacy_model(
-    path_to_saved_model: Path, model="en_core_web_sm"
+    path_to_saved_model: Path, model: str = "en_core_web_sm"
 ) -> None:
     spacy_model = spacy.load(model)
     spacy_model.to_disk(path_to_saved_model)
 
 
-def main(params: Parameters):
+def main(params: Parameters) -> None:
     initialize_vista_pegasus_wrapper(params)
 
     # Base info
@@ -47,9 +47,7 @@ def main(params: Parameters):
         f"--corpus {input_corpus_dir} --output {spacified_output_dir} --spacy-model {model_path}",
         depends_on=[],
     )
-    preprocessed_docs = ValueArtifact(
-        value=spacified_output_dir, depends_on=[preprocess_job]
-    )
+    preprocessed_docs = ValueArtifact(value=spacified_output_dir, depends_on=[preprocess_job])
 
     # AMR parsing over the entirety of each document
     amr_params = params.namespace("amr")
@@ -58,10 +56,7 @@ def main(params: Parameters):
     amr_all_output_dir = directory_for(amr_all_loc) / "documents"
     amr_max_tokens = amr_params.integer("max_tokens", default=50)
     if params.string("site") == "saga":
-        larger_resource = SlurmResourceRequest(
-            memory=MemoryAmount.parse("8G"),
-            num_gpus=1
-        )
+        larger_resource = SlurmResourceRequest(memory=MemoryAmount.parse("8G"), num_gpus=1)
     else:
         larger_resource = None
     amr_all_job = run_python_on_args(
@@ -75,14 +70,13 @@ def main(params: Parameters):
         """,
         override_conda_config=CondaConfiguration(
             conda_base_path=params.existing_directory("conda_base_path"),
-            conda_environment="transition-amr-parser"
+            conda_environment="transition-amr-parser",
         ),
         resource_request=larger_resource,
-        depends_on=[]
+        depends_on=[],
     )
-    amr_all_output = ValueArtifact(
-        value=amr_all_output_dir, depends_on=[amr_all_job]
-    )
+    amr_all_output = ValueArtifact(value=amr_all_output_dir, depends_on=[amr_all_job])
+    logging.info("Printing this to avoid unused-variable: %s", amr_all_output)
 
     # Claim detection
     claim_params = params.namespace("claim_detection")
@@ -99,11 +93,9 @@ def main(params: Parameters):
         --out {claim_output_dir} \
         --spacy-model {model_path}
         """,
-        depends_on=[preprocessed_docs]
+        depends_on=[preprocessed_docs],
     )
-    claim_detection_output = ValueArtifact(
-        value=claim_output_dir, depends_on=[claim_detection_job]
-    )
+    claim_detection_output = ValueArtifact(value=claim_output_dir, depends_on=[claim_detection_job])
 
     # AMR parsing for claims
     amr_loc = base_locator / "amr"
@@ -121,14 +113,12 @@ def main(params: Parameters):
         """,
         override_conda_config=CondaConfiguration(
             conda_base_path=params.existing_directory("conda_base_path"),
-            conda_environment="transition-amr-parser"
+            conda_environment="transition-amr-parser",
         ),
         resource_request=larger_resource,
-        depends_on=[claim_detection_output]
+        depends_on=[claim_detection_output],
     )
-    amr_output = ValueArtifact(
-        value=amr_output_dir, depends_on=[amr_job]
-    )
+    amr_output = ValueArtifact(value=amr_output_dir, depends_on=[amr_job])
 
     # SRL
     srl_params = params.namespace("srl")
@@ -143,11 +133,9 @@ def main(params: Parameters):
         --output {srl_output_dir} \
         --spacy-model {model_path} \
         """,
-        depends_on=[amr_output]
+        depends_on=[amr_output],
     )
-    srl_output = ValueArtifact(
-        value=srl_output_dir, depends_on=[srl_job]
-    )
+    srl_output = ValueArtifact(value=srl_output_dir, depends_on=[srl_job])
 
     # Wikidata
     wikidata_params = params.namespace("wikidata")
@@ -163,11 +151,9 @@ def main(params: Parameters):
         --amr-input {amr_output.value} \
         --output {wikidata_output_dir} \
         """,
-        depends_on=[srl_output, amr_output]
+        depends_on=[srl_output, amr_output],
     )
-    wikidata_output = ValueArtifact(
-        value=wikidata_output_dir, depends_on=[wikidata_job]
-    )
+    wikidata_output = ValueArtifact(value=wikidata_output_dir, depends_on=[wikidata_job])
 
     # Unify
     unify_params = params.namespace("unify")
@@ -181,7 +167,7 @@ def main(params: Parameters):
         --input {wikidata_output.value} \
         --output {output_file} \
         """,
-        depends_on=[wikidata_output]
+        depends_on=[wikidata_output],
     )
 
     write_workflow_description()

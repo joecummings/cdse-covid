@@ -1,18 +1,15 @@
 """Ingest AIDA English TXT files and run SpaCy tokenization."""
 import argparse
+import logging
 from pathlib import Path
 
-import logging
 from spacy import load
-
 from spacy.language import Language
 
 
-def load_aida_txt_docs(
-    docs_to_load: Path, output_dir: Path, *, spacy_model: Language
-) -> None:
+def load_aida_txt_docs(docs_to_load: Path, output_dir: Path, *, spacy_model: Language) -> None:
     for txt_file in docs_to_load.glob("*.txt"):
-        with open(txt_file, "r") as handle:
+        with open(txt_file, "r", encoding="utf-8") as handle:
             doc_text = handle.read()
             doc_id = txt_file.stem
             doc = spacy_model(doc_text)

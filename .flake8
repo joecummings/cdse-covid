@@ -18,5 +18,9 @@ ignore =
     E402
     # already covered by PyLint and gives false positives for typing.overload
     F811
+    # not applicable
+    W605
+    # let pylint handle this
+    F841
 # Let Black handle line length
 max-line-length = 300

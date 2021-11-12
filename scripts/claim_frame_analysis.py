@@ -1,37 +1,42 @@
-import json
-
 import argparse
 from collections import defaultdict
 import csv
+import json
+from typing import Any, MutableMapping, Set
 
 
-def main():
+def main() -> None:
     p = argparse.ArgumentParser(description=__doc__)
-    p.add_argument('--input', help='JSON input file')
-    p.add_argument("--wikidata", action="store_true", help="Evaluate accuracy of WikiData Qnodes.", default=False)
+    p.add_argument("--input", help="JSON input file")
+    p.add_argument(
+        "--wikidata",
+        action="store_true",
+        help="Evaluate accuracy of WikiData Qnodes.",
+        default=False,
+    )
     args = p.parse_args()
 
-    with open(args.input, "r") as handle:
+    with open(args.input, "r", encoding="utf-8") as handle:
         claims = json.load(handle)
-    
+
     # distributions
-    num_of_each_topic = defaultdict(int)
-    num_of_each_subtopic = defaultdict(int)
-    
+    num_of_each_topic: MutableMapping[str, int] = defaultdict(int)
+    num_of_each_subtopic: MutableMapping[str, int] = defaultdict(int)
+
     for claim in claims:
         num_of_each_topic[claim["topic"]] += 1
         num_of_each_subtopic[claim["subtopic"]] += 1
-    
-    with open("topic_distribution.csv", "w+") as handle:
+
+    with open("topic_distribution.csv", "w+", encoding="utf-8") as handle:
         writer = csv.writer(handle)
         for k, v in num_of_each_topic.items():
             writer.writerow([k, v])
-    
-    with open("subtopic_distribution.csv", "w+") as handle:
+
+    with open("subtopic_distribution.csv", "w+", encoding="utf-8") as handle:
         writer = csv.writer(handle)
         for k, v in num_of_each_subtopic.items():
             writer.writerow([k, v])
-    
+
     # claim detection accuracy
     num_of_claims = len(claims)
     print(f"Num of claims: {num_of_claims}")
@@ -67,16 +72,22 @@ def main():
         for claim in claims:
             print(claim["claim_sentence"])
             if claim["x_variable_qnode"]:
-                good = evaluate_appropriate_qnode(claim["x_variable_qnode"], prompt, valid_res, "X Variable")
+                good = evaluate_appropriate_qnode(
+                    claim["x_variable_qnode"], prompt, valid_res, "X Variable"
+                )
                 wikidata_good += good
                 wikidata_total += 1
             if claim["claimer_qnode"]:
-                good = evaluate_appropriate_qnode(claim["claimer_qnode"], prompt, valid_res, "claimer")
+                good = evaluate_appropriate_qnode(
+                    claim["claimer_qnode"], prompt, valid_res, "claimer"
+                )
                 wikidata_good += good
                 wikidata_total += 1
             if claim["claim_semantics"]:
                 if claim["claim_semantics"]["event"]:
-                    good = evaluate_appropriate_qnode(claim["claim_semantics"]["event"], prompt, valid_res, "event")
+                    good = evaluate_appropriate_qnode(
+                        claim["claim_semantics"]["event"], prompt, valid_res, "event"
+                    )
                     wikidata_good += good
                     wikidata_total += 1
                 if claim["claim_semantics"]["args"]:
@@ -86,7 +97,10 @@ def main():
                         wikidata_total += 1
         print(f"% of accurate qnode selections: {wikidata_good / wikidata_total}")
 
-def evaluate_appropriate_qnode(qnode, prompt, valid_res, type_of_qnode):
+
+def evaluate_appropriate_qnode(
+    qnode: MutableMapping[str, Any], prompt: str, valid_res: Set[int], type_of_qnode: str
+) -> int:
     """Loop to evaluate if qnode is appropriate."""
     good = -1
     prompt = prompt.replace("QNODE_TYPE", type_of_qnode)
@@ -96,5 +110,6 @@ def evaluate_appropriate_qnode(qnode, prompt, valid_res, type_of_qnode):
             print(f"Invalid input: {good}. Please only input a 1 for yes or a 0 for no.\n")
     return good
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     main()

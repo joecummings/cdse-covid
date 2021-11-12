@@ -4,9 +4,9 @@ from typing import Optional, Tuple
 
 @dataclass
 class Entity:
-    ent_id: str
-    span: Tuple[int, int]
-    text: str
+    text: Optional[str] = ""
+    ent_id: Optional[int] = None
+    span: Optional[Tuple[int, int]] = None
 
 
 @dataclass
