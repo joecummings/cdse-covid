@@ -117,7 +117,7 @@ fi
 cd ..
 echo "Kevin installed (4/5)"
 
-MODEL_BASE="/nas/gaia/curated-training/repos/transition-amr-parser/DATA/"
+MODEL_BASE="repos/transition-amr-parser/DATA/"
 MODEL_DIR="AMR2.0/models/exp_cofill_o8.3_act-states_RoBERTa-large-top24"
 MODEL_DIR+="/_act-pos-grh_vmask1_shiftpos1_ptr-lay6-h1_grh-lay123-h2-allprev_1in1out_cam-layall-h2-abuf/ep120-seed42/"
 MODEL_PATH=MODEL_BASE+MODEL_DIR+"{checkpoint_best.pt,config.sh,dict.actions_nopos.txt,dict.en.txt,entity_rules.json,train.rules.json}"

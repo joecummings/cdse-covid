@@ -1,15 +1,15 @@
 from pathlib import Path
-from typing import List
+from typing import Any, List, Optional
 
 from amr_utils.amr import AMR
-from cdse_covid.semantic_extraction.utils.amr_extraction_utils import ALIGNMENTS_TYPE, load_amr_from_text_file
+from cdse_covid.semantic_extraction.utils.amr_extraction_utils import load_amr_from_text_file
 
 from transition_amr_parser.parse import AMRParser  # pylint: disable=import-error
 
-from amr_utils.amr_readers import AMR_Reader, Matedata_Parser
+from amr_utils.amr_readers import AMR_Reader, Metadata_Parser
 
 
-class AMRModel:
+class AMRModel(object):
 
     def __init__(self, parser) -> None:
         self.parser = parser
@@ -24,16 +24,16 @@ class AMRModel:
         parser = AMRParser.from_checkpoint(in_checkpoint)
         return cls(parser)
     
-    def amr_parse_sentences(self, sentences: List[str], output_alignments=False):
+    def amr_parse_sentences(self, sentences: List[List[str]], output_alignments=False):
         annotations = self.parser.parse_sentences(sentences)
-        metadata, graph_metadata = Matedata_Parser().readlines(annotations[0][0])
+        metadata, graph_metadata = Metadata_Parser().readlines(annotations[0][0])
         amr, alignments = AMR_Reader._parse_amr_from_metadata(metadata["tok"], graph_metadata)
         return amr, alignments
 
 
-class AMRFinder:
+class AMRFinder(object):
 
-    def __init__(self, *, model: AMRModel = None, amr_graph: AMR = None, amr_alignments: ALIGNMENTS_TYPE = None) -> None:
+    def __init__(self, model = None, amr_graph = None, amr_alignments = None):
         self.model = model
         self.amr_graph = amr_graph
         self.amr_alignments = amr_alignments
@@ -45,5 +45,5 @@ class AMRFinder:
     
     @classmethod
     def from_amr_model(cls, path_to_model: Path) -> "AMRFinder":
-        model = AMRModel.from_folder(path_to_model)
-        return cls(model=model)
+        roberta_model = AMRModel.from_folder(path_to_model)
+        return cls(model=roberta_model)

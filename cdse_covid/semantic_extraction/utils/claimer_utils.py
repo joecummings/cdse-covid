@@ -109,7 +109,7 @@ def get_argument_node(
         if claimer_nodes:
             claimer_node = claimer_nodes[0]  # only get one
             claimer_label = nodes.get(claimer_node)
-            if claimer_label == "person" or claimer_label == "organization":
+            if claimer_label in ["person", "organization"]:
                 return get_full_name_value(amr_dict, nodes_to_strings, claimer_node)
             return get_full_description(
                 amr_dict, nodes, nodes_to_strings, claimer_node

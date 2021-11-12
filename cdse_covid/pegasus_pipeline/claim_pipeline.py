@@ -33,6 +33,10 @@ def main(params: Parameters):
     # Base info
     base_locator = Locator(("claims",))
     input_corpus_dir = params.existing_directory("corpus")
+    if params.string("site") == "saga":
+        larger_resource = SlurmResourceRequest(memory=MemoryAmount.parse("8G"))
+    else:
+        larger_resource = None
 
     # Preprocessing
     spacy_params = params.namespace("spacy")
@@ -52,14 +56,16 @@ def main(params: Parameters):
     )
 
     # AMR parsing over the entirety of each document
+    # If AMR is being used for the rest of the identification, it is
+    # prudent to run AMR parsing over the documents to be used later.
     amr_params = params.namespace("amr")
     amr_all_loc = base_locator / "amr_all"
     amr_all_python_file = amr_params.existing_file("python_file_all")
     amr_all_output_dir = directory_for(amr_all_loc) / "documents"
-    if params.string("site") == "saga":
-        larger_resource = SlurmResourceRequest(memory=MemoryAmount.parse("8G"))
-    else:
-        larger_resource = None
+    amr_conda_config = CondaConfiguration(
+            conda_base_path=params.existing_directory("conda_base_path"),
+            conda_environment="transition-amr-parser"
+        )
     amr_all_job = run_python_on_args(
         amr_all_loc,
         amr_all_python_file,
@@ -68,10 +74,7 @@ def main(params: Parameters):
         --output {amr_all_output_dir}
         --amr-parser-model {amr_params.existing_directory("model_path")}
         """,
-        override_conda_config=CondaConfiguration(
-            conda_base_path=params.existing_directory("conda_base_path"),
-            conda_environment="transition-amr-parser"
-        ),
+        override_conda_config=amr_conda_config,
         resource_request=larger_resource,
         depends_on=[]
     )
@@ -113,9 +116,10 @@ def main(params: Parameters):
         f"""
         --input {claim_detection_output.value} \
         --output {x_var_output_dir} \
-        --amr-parser-model {amr_params.existing_directory("model_path")} \
+        --amr-model {amr_params.existing_directory("model_path")} \
         --domain {amr_params.string("domain")}
         """,
+        override_conda_config=amr_conda_config,
         depends_on=[claim_detection_output]
     )
     x_var_output = ValueArtifact(
@@ -135,13 +139,14 @@ def main(params: Parameters):
         --ouptut {claimer_output_dir} \
         --amr-model {amr_model}
         """,
+        override_conda_config=amr_conda_config,
         depends_on=[claim_detection_output]
     )
     claimer_output = ValueArtifact(
         value=claimer_output_dir, depends_on=[claimer_job]
     )
     
-    # Link DWD for important objects
+    # Link DWD for important KEs
     wikidata_params = params.namespace("wikidata")
     wikidata_job_loc = base_locator / "wikidata"
     wikidata_python_file = wikidata_params.existing_file("python_file")

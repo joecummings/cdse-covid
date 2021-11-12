@@ -22,6 +22,9 @@ amr:
 claimer:
     python_file: "%project_root%/cdse_covid/semantic_extraction/find_claimer.py"
 
+x_variable:
+    python_file: "%project_root%/cdse_covid/semantic_extraction/find_x_variable.py"
+
 wikidata:
     python_file: "%project_root%/cdse_covid/semantic_extraction/link_wikidata.py"
     model_path: /Users/jcummings/Desktop/projects/GAIA/cdse-covid/wikidata_linker

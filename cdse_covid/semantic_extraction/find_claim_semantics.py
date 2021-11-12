@@ -2,16 +2,15 @@
 import argparse
 from pathlib import Path
 from cdse_covid.claim_detection.run_claim_detection import ClaimDataset
-from cdse_covid.semantic_extraction.utils.amr_extraction_utils import load_amr_from_text_file
-from cdse_covid.semantic_extraction.entities import AMRLabel
+from cdse_covid.semantic_extraction.entities import AMREntity
 from wikidata_linker.disambiguate_with_amr_v2 import disambiguate_with_amr_v2
-from cdse_covid.semantic_extraction.run_wikidata_linking import WikidataQnode
+from cdse_covid.semantic_extraction.entities import WikidataQnode
 
 def main(claims_input: Path, output: Path):
     claims = ClaimDataset.load_from_dir(claims_input)
 
     for claim in claims:
-        amr_theory: AMRLabel = claim.get_theory("amr")
+        amr_theory: AMREntity = claim.get_theory("amr")
         qnode = disambiguate_with_amr_v2(claim.doc_id, 0, amr_theory.graph)
         if claim.doc_id == qnode.doc_id:
             if not claim.claim_semantics:

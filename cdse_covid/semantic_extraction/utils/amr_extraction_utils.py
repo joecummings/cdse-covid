@@ -3,7 +3,7 @@ from pathlib import Path
 import re
 import string
 from collections import defaultdict
-from typing import List, Optional, Dict, Tuple, Union
+from typing import List, Optional, Dict, Union
 
 from amr_utils.alignments import AMR_Alignment
 from amr_utils.amr import AMR

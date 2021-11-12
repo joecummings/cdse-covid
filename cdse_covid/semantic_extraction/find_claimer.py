@@ -16,8 +16,9 @@ class AMRClaimerFinder(AMRFinder):
         super().__init__(model=model, amr_graph=amr_graph, amr_alignments=amr_alignments)
 
     def find_claimer(self, claim: Claim) -> Claimer:
-        claimer = identify_claimer(claim.claim_sentence, self.amr_graph, self.amr_alignments)
-        return claimer
+        return identify_claimer(
+            claim.claim_sentence, self.amr_graph, self.amr_alignments
+        )
 
 
 def main(input, output, amr_model, amr_documents):

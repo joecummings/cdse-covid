@@ -1,21 +1,21 @@
 from abc import abstractmethod
 import argparse
 from pathlib import Path
-from typing import Optional
+from typing import List, Optional
 
 from cdse_covid.claim_detection.models import Claim
 from cdse_covid.claim_detection.run_claim_detection import ClaimDataset
-from cdse_covid.semantic_extraction.models.amr import AMRFinder, AMRModel
-from cdse_covid.semantic_extraction.utils.amr_extraction_utils import (
-    ALIGNMENTS_TYPE, identify_x_variable, load_amr_from_text_file)
+from cdse_covid.semantic_extraction.models.amr import AMRFinder
+from cdse_covid.semantic_extraction.utils.amr_extraction_utils import identify_x_variable
 from cdse_covid.semantic_extraction.models.srl import SRLModel
 from cdse_covid.semantic_extraction.entities import XVariable
+import spacy
 
 SRL = "srl"
 AMR = "amr"
 
 
-class XVariableFinder:
+class XVariableFinder(object):
     """ABC for finding the X Variable of a claim."""
     def __init__(self) -> None:
         pass
@@ -25,14 +25,20 @@ class XVariableFinder:
         pass
 
 
-class AMRXVariableFinder(XVariableFinder, AMRFinder):
+class AMRXVariableFinder(AMRFinder, XVariableFinder):
     """Finds X Variable from the AMR graph and alignments."""
-    def __init__(self) -> None:
-        super().__init__()
+    def __init__(self, **kwargs) -> None:
+        super().__init__(**kwargs)
+    
+    def tokenize_sentence(self, text, spacy_tokenizer) -> List[str]:
+        tokens = spacy_tokenizer(text.strip())
+        return [token.text for token in tokens]
     
     def find_x_variable(self, claim: Claim) -> Optional[XVariable]:
         if not self.amr_graph or not self.amr_alignments:
-            self.amr_graph, self.amr_alignments = self.model.amr_parse_sentences([claim.claim_sentence])
+            sentence = self.tokenize_sentence(claim.claim_sentence, spacy.load("en_core_web_sm").tokenizer)
+            breakpoint()
+            self.amr_graph, self.amr_alignments = self.model.amr_parse_sentences([sentence])
         return identify_x_variable(self.amr_graph, self.amr_alignments, claim.claim_template)
     
 
@@ -67,7 +73,7 @@ def main(input, output, model_type, amr_model, amr_documents):
     claims = ClaimDataset.load_from_dir(input)
 
     if model_type == SRL:
-        model = SRLModel.from_hub("structured-prediction-srl")
+        model = SRLModel.from_hub("structured-prediction-srl", None)
         finder = SRLXVariableFinder(model)
     elif model_type == AMR:
         if amr_documents:
@@ -79,21 +85,23 @@ def main(input, output, model_type, amr_model, amr_documents):
     
     for claim in claims:
         x_variable = finder.find_x_variable(claim)
-        claim.x_variable = x_variable
+        if x_variable and not claim.x_variable: # If x_variable is not set already, set it
+            claim.x_variable = x_variable
 
     claims.save_to_dir(output)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--claim-input", type=Path)
+    parser.add_argument("--input", type=Path)
     parser.add_argument("--output", type=Path)
-    parser.add_argument("--model-type", choices=[SRL, AMR], default=SRL, type=str)
+    parser.add_argument("--model-type", choices=[SRL, AMR], default=AMR, type=str)
     parser.add_argument("--amr-model", type=Path, default=None)
     parser.add_argument("--amr-documents", type=Path, default=None)
+    parser.add_argument("--domain", type=str, default="covid")
     args = parser.parse_args()
 
     main(
-        args.claim_input,
+        args.input,
         args.output,
         args.model_type,
         args.amr_model, 

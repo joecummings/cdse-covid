@@ -4,25 +4,25 @@ from typing import Any, Mapping, Optional, Tuple
 
 @dataclass
 class Entity:
-    _id: str
+    ent_id: str
+    span: Tuple[int, int]
+    text: str
 
 
 @dataclass
-class AMRLabel(Entity):
+class AMREntity(Entity):
     graph: Any
     alignments: Any
 
 
 @dataclass
 class XVariable(Entity):
-    span: Tuple[int, int]
-    text: str
+    pass
 
 
 @dataclass
 class Claimer(Entity):
-    span: Tuple[int, int]
-    text: str
+    pass
 
 
 @dataclass
