@@ -11,7 +11,7 @@ from spacy.language import Language
 
 from cdse_covid.semantic_extraction.models import SRLabel
 
-from cdse_covid.semantic_extraction.claimer_utils import LEMMATIZER
+from cdse_covid.semantic_extraction.utils.claimer_utils import LEMMATIZER
 
 
 class SRLModel:

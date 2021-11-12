@@ -19,8 +19,8 @@ from amr_utils.amr_readers import AMR_Reader, Metadata_Parser
 from cdse_covid.claim_detection.run_claim_detection import ClaimDataset
 from cdse_covid.pegasus_pipeline.run_amr_parsing_all import refine_sentence, tokenize_sentence
 from cdse_covid.semantic_extraction.models import AMRLabel
-from cdse_covid.semantic_extraction.claimer_utils import identify_claimer
-from cdse_covid.semantic_extraction.amr_extraction_utils import identify_x_variable_covid, identify_x_variable
+from cdse_covid.semantic_extraction.utils.claimer_utils import identify_claimer
+from cdse_covid.semantic_extraction.utils.amr_extraction_utils import identify_x_variable_covid, identify_x_variable
 
 COVID_DOMAIN = "covid"
 
