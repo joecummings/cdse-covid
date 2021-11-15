@@ -43,11 +43,13 @@ def tokenize_sentence(text: str, spacy_tokenizer: Any, max_tokens: int) -> List[
 
 
 def refine_sentence(tokenized_sentence: List[str], max_tokens: int) -> List[str]:
-    """If a sentence exceeds the token limit, split the sentence into clauses \
-    based on punctuation and keep all tokens within a clause that passes \
+    """Refine a tokenized sentence.
+
+    If a sentence exceeds the token limit, split the sentence into clauses
+    based on punctuation and keep all tokens within a clause that passes
     the threshold.
 
-    Additionally, take any token with a format like \
+    Additionally, take any token with a format like
     "X)Y" and separate it ("X", ")", "Y") to avoid parser errors.
     """
     refined_sentence = []
@@ -62,7 +64,7 @@ def refine_sentence(tokenized_sentence: List[str], max_tokens: int) -> List[str]
 def load_amr_from_text_file(amr_file: Path, output_alignments: bool = False) -> Any:
     """Reads a document of AMR graphs and returns an AMR graph.
 
-    If `output_alignments` is True, it will also return \
+    If `output_alignments` is True, it will also return
     the alignment data of that graph.
     """
     if output_alignments:

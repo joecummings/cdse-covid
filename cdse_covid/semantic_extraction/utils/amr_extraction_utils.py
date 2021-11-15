@@ -330,7 +330,7 @@ def identify_x_variable(
     of our COVID-19 domain.
     """
     place_types = {"city", "state", "country", "continent"}
-    amr_dict = amr.edge_MutableMapping()
+    amr_dict = amr.edge_mapping()
     nodes_to_labels = amr.nodes
     nodes_to_source_strings = create_node_to_token_dict(amr, alignments)
 
