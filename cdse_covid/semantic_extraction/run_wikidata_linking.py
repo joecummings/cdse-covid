@@ -1,20 +1,21 @@
+"""Run WikiData over claim semantics."""
 import argparse
 import logging
 from pathlib import Path
-from typing import Sequence
+from typing import Any, List, Sequence
 
 from cdse_covid.claim_detection.run_claim_detection import ClaimDataset
+from cdse_covid.semantic_extraction.entities import WikidataQnode
 from wikidata_linker.wikidata_linking import disambiguate_kgtk
 
-from cdse_covid.semantic_extraction.entities import WikidataQnode
 
-
-def _find_links(span, tokens: Sequence[str]):
+def _find_links(span: str, tokens: Sequence[str]) -> Any:
     """Find WikiData links for a set of tokens."""
     return (disambiguate_kgtk(span, token, k=1) for token in tokens)
 
 
-def main(claim_input, srl_input, amr_input, output):
+def main(claim_input: Path, srl_input: Path, amr_input: Path, output: Path) -> None:
+    """Entry point to linking script."""
     ds1 = ClaimDataset.load_from_dir(claim_input)
     ds2 = ClaimDataset.load_from_dir(srl_input)
     ds3 = ClaimDataset.load_from_dir(amr_input)
@@ -57,7 +58,8 @@ def main(claim_input, srl_input, amr_input, output):
     logging.info("Saved claims with Wikidata to %s", output)
 
 
-def create_wikidata_qnodes(links):
+def create_wikidata_qnodes(links: List[Any]) -> List[WikidataQnode]:
+    """Create WikiData Qnodes from links."""
     all_qnodes = []
     for link in links:
         if not link["options"]:

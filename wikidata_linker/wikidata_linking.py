@@ -1,21 +1,22 @@
+"""Collection of Wikidata linking utils."""
 import argparse
 import json
 from pathlib import Path
-from typing import Any, Callable, List, Mapping, MutableMapping, Sequence, Union
+from typing import Any, Callable, List, MutableMapping, Sequence, Tuple, Union
+
 from nltk.stem.snowball import SnowballStemmer
 import numpy as np
 import requests
 from sentence_transformers import SentenceTransformer, util as ss_util
 import torch
 
-
 STEMMER = SnowballStemmer("english")
 
 BASE = Path(__file__).parent
 PRETRAINED_MODEL = BASE / "sent_model"
-STEM_MAP_PATH = BASE / "stem_mapping.json"
+STEM_MAP_PATH = BASE / "stem_MutableMapping.json"
 KGTK_CACHE = BASE / "kgtk_cache"
-with open(STEM_MAP_PATH) as f:
+with open(STEM_MAP_PATH, "r", encoding="utf-8") as f:
     STEM_MAP = json.load(f)
 SS_MODEL = SentenceTransformer(str(PRETRAINED_MODEL))
 
@@ -54,7 +55,7 @@ def expand_query_nltk_stem(query: str) -> Sequence[str]:
     return stem_set
 
 
-def make_kgtk_candidates_filter(source_str: str) -> Callable[[Mapping[str, Any]], bool]:
+def make_kgtk_candidates_filter(source_str: str) -> Callable[[MutableMapping[str, Any]], bool]:
     """Generates filter function for filtering out unwanted candidates for particular string.
 
     Args:
@@ -64,7 +65,7 @@ def make_kgtk_candidates_filter(source_str: str) -> Callable[[Mapping[str, Any]]
         A filter function particular to source_str.
     """
 
-    def kgtk_candidate_filter(candidate: Mapping[str, Any]) -> bool:
+    def kgtk_candidate_filter(candidate: MutableMapping[str, Any]) -> bool:
         str_found = source_str in candidate["label"][0]
         str_found = str_found or any(source_str in alias for alias in candidate["alias"])
         description_and_casematch = candidate["description"] and candidate["label"][0].islower()
@@ -74,7 +75,7 @@ def make_kgtk_candidates_filter(source_str: str) -> Callable[[Mapping[str, Any]]
 
 
 def get_ss_model_similarity(
-    ss_model: SentenceTransformer, source_str: str, candidates: List[Mapping[str, Any]]
+    ss_model: SentenceTransformer, source_str: str, candidates: List[MutableMapping[str, Any]]
 ) -> Any:
     """Computes cosine similarity between source string (event description or refvar) and candidate descriptions.
 
@@ -103,7 +104,7 @@ def get_request_kgtk(
     query_item: str = "qnode",
     filter_results: bool = True,
     num_results: int = 20,
-) -> List[Mapping[str, Any]]:
+) -> List[MutableMapping[str, Any]]:
     """Submits a GET request to KGTK's API.
 
     Args:
@@ -117,7 +118,7 @@ def get_request_kgtk(
         A list of candidates, or an empty list.
     """
     if cache_file.is_file():
-        with open(cache_file) as file:
+        with open(cache_file, "r", encoding="utf-8") as file:
             candidates: List[Any] = json.load(file)
             return candidates
     kgtk_request_url = "https://kgtk.isi.edu/api"
@@ -141,7 +142,7 @@ def get_request_kgtk(
             candidate["label"] = [""]
     if filter_results:
         candidates = list(filter(make_kgtk_candidates_filter(query), candidates))
-    with open(cache_file, "w") as file:
+    with open(cache_file, "w", encoding="utf-8") as file:
         json.dump(candidates, file, ensure_ascii=False, indent=2)
         file.write("\n")
     return candidates
@@ -150,10 +151,10 @@ def get_request_kgtk(
 def wikidata_topk(
     ss_model: Union[SentenceTransformer, None],
     source_str: str,
-    candidates: List[Mapping[str, Any]],
+    candidates: List[MutableMapping[str, Any]],
     k: int,
     thresh: float = 0.15,
-) -> Sequence[Mapping[str, Any]]:
+) -> Sequence[MutableMapping[str, Any]]:
     """Returns top k candidates for string according to scoring function.
 
     Args:
@@ -176,7 +177,9 @@ def wikidata_topk(
     return top_k
 
 
-def filter_duplicate_candidates(candidates: List[Mapping[str, Any]]) -> List[Mapping[str, Any]]:
+def filter_duplicate_candidates(
+    candidates: List[MutableMapping[str, Any]]
+) -> List[MutableMapping[str, Any]]:
     """Filters duplicate candidates from concatenated list of KGTK queries.
 
     Args:
@@ -188,12 +191,13 @@ def filter_duplicate_candidates(candidates: List[Mapping[str, Any]]) -> List[Map
     label_description_set = set()
     unique_candidates = []
     for candidate in candidates:
-        label_description_tuple = ()
         if candidate["description"]:
-            label_description_tuple = (candidate["label"][0], candidate["description"][0])
-        if label_description_tuple not in label_description_set:
-            unique_candidates.append(candidate)
-            label_description_set.add(label_description_tuple)
+            label_description_tuple: Tuple[Any, ...] = tuple(
+                (candidate["label"][0], candidate["description"][0])
+            )
+            if label_description_tuple not in label_description_set:
+                unique_candidates.append(candidate)
+                label_description_set.add(label_description_tuple)
     return unique_candidates
 
 
@@ -202,7 +206,7 @@ def request_top_n_qnodes(
     *,
     n: int,
     ss_model: SentenceTransformer,
-    embeddings: torch.FloatTensor, # pylint: disable=no-member
+    embeddings: torch.FloatTensor,  # pylint: disable=no-member
     qnodes: Sequence[MutableMapping[str, Any]],
 ) -> Sequence[MutableMapping[str, Any]]:
     """Get the top *n* predicted qnodes from the *ss_model* provided.
@@ -224,13 +228,19 @@ def request_top_n_qnodes(
     return [qnodes[idx] for idx in sorted_indices[0][:n]]
 
 
-def disambiguate_kgtk(context, query, no_ss_model=False, no_expansion=False, k=3, thresh=0.15) -> Any:
+def disambiguate_kgtk(
+    context: str,
+    query: str,
+    no_ss_model: bool = False,
+    no_expansion: bool = False,
+    k: int = 3,
+    thresh: float = 0.15,
+) -> MutableMapping[str, Any]:
     """Disambiguates verbs from event description and return candidate qnodes.
 
     Returns:
         A JSON response.
     """
-
     kgtk_json = []
     cache_file = make_cache_path(KGTK_CACHE, query)
     kgtk_json += get_request_kgtk(query, cache_file, filter_results=False)
@@ -263,11 +273,35 @@ def disambiguate_kgtk(context, query, no_ss_model=False, no_expansion=False, k=3
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--no_expansion", action="store_true", help="If specified, no query expansion will be performed (expansion is querying all terms that share stem with query term)")
-    parser.add_argument("--no_ss_model", action="store_true", help="If specified, will use score from KGTK rather than cosine similarity (withing MASC, this is often useful when dealing with refvars (like common nouns), but not for event verbs)")
+    parser.add_argument(
+        "--no_expansion",
+        action="store_true",
+        help="If specified, no query expansion will be performed (expansion is querying all terms that share stem with query term)",
+    )
+    parser.add_argument(
+        "--no_ss_model",
+        action="store_true",
+        help="If specified, will use score from KGTK rather than cosine similarity (withing MASC, this is often useful when dealing with refvars (like common nouns), but not for event verbs)",
+    )
     parser.add_argument("--k", type=int, default=3, help="Number of options to be returned")
-    parser.add_argument("--thresh", type=float, default=0.15, help="Threshold score to be used to filter out unlikely scores. We use 0.15 in MACS. If using no_ss_model, scale will be different and harder to tune")
+    parser.add_argument(
+        "--thresh",
+        type=float,
+        default=0.15,
+        help="Threshold score to be used to filter out unlikely scores. We use 0.15 in MACS. If using no_ss_model, scale will be different and harder to tune",
+    )
     parser.add_argument("--query", type=str, help="Term to be queried for")
-    parser.add_argument("--context", type=str, help="Surrounding context for query (context isn't used if no_ss_model specified")
+    parser.add_argument(
+        "--context",
+        type=str,
+        help="Surrounding context for query (context isn't used if no_ss_model specified",
+    )
     args = parser.parse_args()
-    print(json.dumps(disambiguate_kgtk(args.context, args.query, args.no_ss_model, args.no_expansion, args.k, args.thresh)["options"], indent=4))
+    print(
+        json.dumps(
+            disambiguate_kgtk(
+                args.context, args.query, args.no_ss_model, args.no_expansion, args.k, args.thresh
+            )["options"],
+            indent=4,
+        )
+    )

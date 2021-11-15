@@ -1,12 +1,18 @@
-from amr_utils.alignments import AMR_Alignment
-from amr_utils.amr import AMR
-from nltk.corpus import framenet
-from typing import List, Optional
-from nltk.stem import WordNetLemmatizer
+"""Collection of Claimer utils."""
 import re
+from typing import Any, List, MutableMapping, Optional
 
-from cdse_covid.semantic_extraction.utils.amr_extraction_utils import get_full_name_value, get_full_description, \
-    create_node_to_token_dict
+from amr_utils.alignments import AMR_Alignment  # pylint: disable=import-error
+from amr_utils.amr import AMR  # pylint: disable=import-error
+from nltk.corpus import framenet
+from nltk.stem import WordNetLemmatizer
+
+from cdse_covid.semantic_extraction.entities import Claimer
+from cdse_covid.semantic_extraction.utils.amr_extraction_utils import (
+    create_node_to_token_dict,
+    get_full_description,
+    get_full_name_value,
+)
 
 LEMMATIZER = WordNetLemmatizer()
 
@@ -23,7 +29,9 @@ for concept in framenet_concepts:
             FRAMENET_VERBS.add(word)
 
 
-def identify_claimer(claim_tokens, amr: AMR, alignments: List[AMR_Alignment]) -> str:
+def identify_claimer(
+    claim_tokens: List[str], amr: AMR, alignments: List[AMR_Alignment]
+) -> Optional[Claimer]:
     """Identify the claimer of the span.
 
     Finding claim node:
@@ -36,20 +44,23 @@ def identify_claimer(claim_tokens, amr: AMR, alignments: List[AMR_Alignment]) ->
         Once claim node is found, get the claimer argument of the node.
     """
     if not amr:
-        return ""
+        return None
 
     claim_node = get_claim_node(claim_tokens, amr)
-    return get_argument_node(amr, alignments, claim_node)
+    arg_node = get_argument_node(amr, alignments, claim_node)
+    if arg_node:
+        return Claimer(text=arg_node)  # Stubbed out Claimer with just the text for now
+    return None
 
 
 def get_claim_node(claim_tokens: List[str], amr: AMR) -> Optional[str]:
     """Get the head node of the claim."""
     graph_nodes = amr.nodes
-    
+
     for token in claim_tokens:
-        token = token.lower() # Make sure the token is lowercased
+        token = token.lower()  # Make sure the token is lowercased
         for node, label in graph_nodes.items():
-            label = re.sub("(-\d*)", "", label)  # Remove any PropBank numbering
+            label = re.sub(r"(-\d*)", "", label)  # Remove any PropBank numbering
             # We're hoping that at least one nominal/verbial lemma is found
             if (
                 LEMMATIZER.lemmatize(token, pos="n") == label
@@ -64,14 +75,12 @@ def get_claim_node(claim_tokens: List[str], amr: AMR) -> Optional[str]:
 
 def is_desired_framenet_node(node_label: str) -> bool:
     """Determine if the node under investigation represents a statement or reasoning event."""
-    verb = node_label.rsplit("-", 1)[0]  # E.g. origin from origin-01
-    return verb in FRAMENET_VERBS
+    pot_verb = node_label.rsplit("-", 1)[0]  # E.g. origin from origin-01
+    return pot_verb in FRAMENET_VERBS
 
 
-def get_claim_node_from_token(amr, node, checked_nodes=None) -> Optional[str]:
-    """
-    Fetch the claim node by traveling up from a child node within the claim.
-    """
+def get_claim_node_from_token(amr: AMR, node: str, checked_nodes: Any = None) -> Optional[str]:
+    """Fetch the claim node by traveling up from a child node within the claim."""
     if checked_nodes is None:
         checked_nodes = set()
     nodes_to_labels = amr.nodes
@@ -80,29 +89,29 @@ def get_claim_node_from_token(amr, node, checked_nodes=None) -> Optional[str]:
         if parent_node in checked_nodes:
             continue
         if is_desired_framenet_node(nodes_to_labels[parent_node]):
-            return parent_node
+            return str(parent_node) or None
         checked_nodes.add(parent_node)
         next_check = get_claim_node_from_token(amr, parent_node, checked_nodes)
         if next_check:
             return next_check
+    return None
 
 
-def search_for_claim_node(graph_nodes) -> Optional[str]:
-    """Rule #2: try finding the statement node by reading through all nodes
-    and returning the first match.
-    """
+def search_for_claim_node(graph_nodes: MutableMapping[str, Any]) -> Optional[str]:
+    """Rule #2: Try finding the statement node by reading through all nodes and returning the first match."""
     for node, label in graph_nodes.items():
         if is_desired_framenet_node(label):
             return node
+    return None
 
 
 def get_argument_node(
-        amr: AMR, alignments: List[AMR_Alignment], claim_node: Optional[str]
+    amr: AMR, alignments: List[AMR_Alignment], claim_node: Optional[str]
 ) -> Optional[str]:
-    """Get all argument (claimer) nodes of the claim node"""
+    """Get all argument (claimer) nodes of the claim node."""
     nodes = amr.nodes
     nodes_to_strings = create_node_to_token_dict(amr, alignments)
-    amr_dict = amr.edge_mapping()
+    amr_dict = amr.edge_MutableMapping()
     node_args = amr_dict.get(claim_node)
     if node_args:
         claimer_nodes = node_args.get(":ARG0")
@@ -111,6 +120,5 @@ def get_argument_node(
             claimer_label = nodes.get(claimer_node)
             if claimer_label in ["person", "organization"]:
                 return get_full_name_value(amr_dict, nodes_to_strings, claimer_node)
-            return get_full_description(
-                amr_dict, nodes, nodes_to_strings, claimer_node
-            )
+            return get_full_description(amr_dict, nodes, nodes_to_strings, claimer_node)
+    return None

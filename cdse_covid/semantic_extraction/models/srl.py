@@ -1,9 +1,10 @@
+"""Classes related to SRL Models."""
 from dataclasses import dataclass
 import logging
-from typing import Any, Mapping
+from typing import Any, List, MutableMapping
 import uuid
 
-from allennlp_models.pretrained import load_predictor
+from allennlp_models.pretrained import load_predictor  # pylint: disable=import-error
 from spacy.language import Language
 
 from cdse_covid.semantic_extraction.utils.claimer_utils import LEMMATIZER
@@ -11,18 +12,24 @@ from cdse_covid.semantic_extraction.utils.claimer_utils import LEMMATIZER
 
 @dataclass
 class SRLOutput:
+    """Class to hold SRL Output."""
+
     label_id: int
     verb: str
-    args: Mapping[str, str]
+    args: MutableMapping[str, str]
 
 
 class SRLModel:
-    def __init__(self, predictor, *, spacy_model) -> None:
+    """AllenNLP's Semantic Role Labeller."""
+
+    def __init__(self, predictor: Any, *, spacy_model: Language) -> None:
+        """Initialize SRLModel."""
         self.predictor = predictor
         self.spacy_model = spacy_model
 
     @classmethod
     def from_hub(cls, filename: str, spacy_model: Language) -> "SRLModel":
+        """Load SRL from AllenNLP hub."""
         return cls(load_predictor(filename), spacy_model=spacy_model)
 
     def _remove_leading_trailing_stopwords(self, string: str) -> str:
@@ -48,7 +55,7 @@ class SRLModel:
             return ""
         return str(clipped_doc)
 
-    def _clean_srl_output(self, srl_output: Mapping[str, Any]) -> Mapping[str, str]:
+    def _clean_srl_output(self, srl_output: MutableMapping[str, Any]) -> MutableMapping[str, str]:
         """Takes AllenNLP SRL output and returns list of ARGN strings.
 
         Args:
@@ -62,7 +69,7 @@ class SRLModel:
 
         cleaned_output = []
         for verb in srl_output["verbs"]:
-            tag_sequences: Mapping[str, str] = {}
+            tag_sequences: MutableMapping[str, str] = {}
             if "tags" in verb and len(verb["tags"]) > 0:
                 tags_words = zip(
                     [tag.split("-", 1)[-1] for tag in verb["tags"]], srl_output["words"]
@@ -80,14 +87,15 @@ class SRLModel:
                         tag_sequences[tag] = cleaned_sequence
         return tag_sequences
 
-    def _stem_verb(self, verbs):
+    def _stem_verb(self, verbs: List[MutableMapping[str, Any]]) -> str:
+        """Stem verb from list of verbs."""
         verb_word = verbs[0]["verb"]
-        return LEMMATIZER.lemmatize(verb_word, pos="v")
+        return str(LEMMATIZER.lemmatize(verb_word, pos="v"))
 
     def predict(self, sentence: str) -> SRLOutput:
         """Predict SRL over a sentence."""
         roles = self.predictor.predict(sentence)
-        verb = None
+        verb = ""
         if len(roles["verbs"]) > 1:
             logging.warning("More than one main verb in instance: %s", sentence)
         elif len(roles["verbs"]) < 1:

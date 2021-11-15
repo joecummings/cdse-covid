@@ -1,0 +1,14 @@
+black
+flake8
+isort
+mypy
+pydocstyle
+pylint
+types-certifi
+types-filelock
+types-protobuf
+types-python-dateutil
+types-requests
+types-setuptools
+types-six
+types-toml
