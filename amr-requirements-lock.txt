@@ -1,4 +1,4 @@
-amr-utils @ git+https://github.com/elizlee/amr-utils.git@10bc9ca825a9f726e021109869655e8d0c7776b0#egg=amr_utils
+amr-utils @ git+https://github.com/elizlee/amr-utils.git@c6af87d4a95cb0b9564f56b5cc00ca8c590522c5#egg=amr_utils
 antlr4-python3-runtime==4.8
 attrs==21.2.0
 backcall==0.2.0
