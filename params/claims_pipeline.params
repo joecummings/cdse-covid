@@ -25,6 +25,7 @@ srl:
 wikidata:
     python_file: "%project_root%/cdse_covid/semantic_extraction/run_wikidata_linking.py"
     model_path: /Users/jcummings/Desktop/projects/GAIA/cdse-covid/wikidata_linker
+    overlay_python_file: "%project_root%/cdse_covid/semantic_extraction/run_amr_dwd_overlay.py"
 
 unify:
     output: "%experiments_root%/output.json"
