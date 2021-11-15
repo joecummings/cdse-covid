@@ -2,7 +2,12 @@
 from dataclasses import dataclass, field
 from typing import Any, List, MutableMapping, Optional, Tuple, Union
 
-from cdse_covid.semantic_extraction.entities import Claimer, WikidataQnode, XVariable
+from cdse_covid.semantic_extraction.entities import (
+    Claimer,
+    ClaimSemantics,
+    WikidataQnode,
+    XVariable,
+)
 
 
 @dataclass
@@ -24,7 +29,7 @@ class Claim:
     claim_date_time: Optional[str] = None
     claim_location: Optional[str] = None
     claim_location_qnode: Optional[WikidataQnode] = None
-    claim_semantics: Optional[MutableMapping[str, Any]] = None
+    claim_semantics: Optional[ClaimSemantics] = None
     epistemic_status: Optional[bool] = None
     sentiment_status: Optional[str] = None
     theories: MutableMapping[str, Any] = field(default_factory=dict)
