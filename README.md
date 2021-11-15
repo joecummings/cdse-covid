@@ -30,6 +30,16 @@ bash setup.sh
 pegasus-status PEGASUS/RUN/DIR -w 60
 ```
 
+### Via Shell Script
+We provide a simple way to run the whole pipeline without needing Pegasus WMS.
+1. Create a parameter file with your own values for the parameters in
+   `params/run_pipeline_params.params`
+2. Make sure that your cdse-covid conda environment is active.
+3. Run
+   ```
+   bash ./run_pipeline.sh your/params/file
+   ```
+
 ### Via Individual Scripts
 
 1. Create the AMR files
