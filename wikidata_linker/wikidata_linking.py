@@ -1,24 +1,28 @@
 """Collection of Wikidata linking utils."""
 import argparse
 import json
+import logging
 from pathlib import Path
 from typing import Any, Callable, List, MutableMapping, Sequence, Tuple, Union
 
 from nltk.stem.snowball import SnowballStemmer
 import numpy as np
 import requests
-from sentence_transformers import SentenceTransformer, util as ss_util
+
+try:
+    from sentence_transformers import SentenceTransformer, util as ss_util
+except ModuleNotFoundError:
+    logging.warning("Cannot load sentence transformers in this env.")
 import torch
 
 STEMMER = SnowballStemmer("english")
 
 BASE = Path(__file__).parent
 PRETRAINED_MODEL = BASE / "sent_model"
-STEM_MAP_PATH = BASE / "stem_MutableMapping.json"
+STEM_MAP_PATH = BASE / "stem_mapping.json"
 KGTK_CACHE = BASE / "kgtk_cache"
 with open(STEM_MAP_PATH, "r", encoding="utf-8") as f:
     STEM_MAP = json.load(f)
-SS_MODEL = SentenceTransformer(str(PRETRAINED_MODEL))
 
 
 def make_cache_path(directory: Path, filename: str) -> Path:
@@ -257,7 +261,8 @@ def disambiguate_kgtk(
     if no_ss_model:
         top3 = wikidata_topk(None, context, unique_candidates, k, thresh=thresh)
     else:
-        top3 = wikidata_topk(SS_MODEL, context, unique_candidates, k, thresh=thresh)
+        ss_model = SentenceTransformer(str(PRETRAINED_MODEL))
+        top3 = wikidata_topk(ss_model, context, unique_candidates, k, thresh=thresh)
     for candidate in top3:
         option = {
             "qnode": candidate["qnode"],
