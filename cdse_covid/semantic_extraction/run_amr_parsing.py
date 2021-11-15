@@ -62,6 +62,8 @@ def main(
         if possible_x_variable:
             claim.x_variable = possible_x_variable
 
+        claim.add_theory("amr", sentence_amr.graph)
+
     claim_ds.save_to_dir(output)
 
     logging.info("AMR output saved to %s", output)
