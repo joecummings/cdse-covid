@@ -5,20 +5,19 @@
 1. Clone repo
 2. Create Python virtual environment
 3. Make sure that your current Java environment is **Java 8**.
-   1. If the setup fails at the JAMR step, check that Java 8 is configured
+   - If the setup fails at the JAMR step, check that Java 8 is configured
       for the newly downloaded `transition-amr-parser` project.
 4. Make sure `cuda` is enabled if you are on a machine with a GPU.
-4. Run `bash setup.sh [$isi_username]`
-   1. This assumes that your conda installation is within `~/miniconda3`. If it is not, replace Line 27 of `setup.sh` with: `source ~/PATH_TO_MINICONDA_INSTALL`.
-   2. If you provide `isi_username`, it will assume that you can access
-      the `minlp-dev-01` server and that you are working from a local system.
+5. Run `make install [$isi_username]`
+   - This assumes that your conda installation is within `~/miniconda3`. If it is not, replace Line 27 of `setup.sh` with: `source ~/PATH_TO_MINICONDA_INSTALL`.
+   - If you provide `isi_username`, it will assume that you can access the `minlp-dev-01` server and that you are working from a local system.
       In that case, you will be prompted for a password after you see
       `"Downloading model..."`
       If not, it will assume that you are working from a `/nas`-mounted server.
 
 ## Usage
 
-### Via Pegasus
+### Via Pegasus WFMS
 
 1. Generate workflow
 ```
@@ -31,7 +30,7 @@ bash setup.sh
 pegasus-status PEGASUS/RUN/DIR -w 60
 ```
 
-### Via Individually
+### Via Individual Scripts
 
 1. Create the AMR files
    
@@ -93,3 +92,10 @@ pegasus-status PEGASUS/RUN/DIR -w 60
        --input WIKIDATA_OUT \
        --output OUTPUT_FILE
    ```
+
+## Contributing
+
+1. Before pushing, first run `make precommit` to run all precommit checks.
+   - You can run these checks individually if you so desire. Please see (./Makefile)[Makefile] for a list of all commands.
+2. After ensuring all linting requirements are met, rebase the new branch against master.
+3. Create a new PR, requesting review from at least one collaborator.
