@@ -171,8 +171,9 @@ def wikidata_topk(
         scores = np.array([candidate["score"] for candidate in candidates])
     else:
         scores = get_ss_model_similarity(ss_model, source_str, candidates)
-    if isinstance(scores, torch.Tensor):
-        scores = scores.cpu().numpy()
+    # Without this block, wikidata linking crashes if running on a GPU
+    if isinstance(scores, torch.Tensor):  # type: ignore
+        scores = scores.cpu().numpy()  # type: ignore
     top_k_idx = np.argsort(-scores)[:k]
     top_k_scores = list(zip(top_k_idx, scores[top_k_idx]))
     top_k = [candidates[idx] for idx, score in top_k_scores if score >= thresh]
