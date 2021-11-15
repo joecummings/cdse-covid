@@ -35,9 +35,9 @@ def identify_claimer(
     """Identify the claimer of the span.
 
     Finding claim node:
-        1. Try to match the claim tokens to a token in the AMR graph \
+        1. Try to match the claim tokens to a token in the AMR graph
             then work up to find the 'statement' node
-        2. If 1 fails, find the first 'statement' node in the graph and \
+        2. If 1 fails, find the first 'statement' node in the graph and
             select that as the claim node
 
     Finding claimer:

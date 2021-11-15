@@ -11,7 +11,7 @@ lint:
 	pylint $(PYTHON_FILES)
 
 docstyle:
-	pydocstyle $(PYTHON_FILES)
+	pydocstyle --convention=google $(PYTHON_FILES)
 
 mypy:
 	mypy $(PYTHON_FILES)

@@ -29,11 +29,10 @@ class AMRModel(object):
 
     @classmethod
     def from_folder(cls, folder: Path) -> "AMRModel":
-        """Return an AMRModel object using an AMRParser created from the model data \
-        saved in your copy of transition-amr-parser.
+        """Return an AMRModel object using an AMRParser created from the model data saved in your copy of transition-amr-parser.
 
-        For some reason, the program isn't able to detect the model data \
-        if the working directory is not the amr-parser root, even if you provide \
+        For some reason, the program isn't able to detect the model data
+        if the working directory is not the amr-parser root, even if you provide
         an absolute path, hence why we change working dirs in this method.
         """
         cdse_path = getcwd()
