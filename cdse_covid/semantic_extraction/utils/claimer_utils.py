@@ -111,7 +111,7 @@ def get_argument_node(
     """Get all argument (claimer) nodes of the claim node."""
     nodes = amr.nodes
     nodes_to_strings = create_node_to_token_dict(amr, alignments)
-    amr_dict = amr.edge_MutableMapping()
+    amr_dict = amr.edge_mapping()
     node_args = amr_dict.get(claim_node)
     if node_args:
         claimer_nodes = node_args.get(":ARG0")
