@@ -32,19 +32,6 @@ def is_valid_arg_type(arg_type: str) -> bool:
     )
 
 
-# Currently pushing X-of to X
-pb_args_to_framenet_args = {
-    "ARG0": "A0",
-    "ARG1": "A1",
-    "ARG2": "A2",
-    "ARG3": "A3",
-    "ARG4": "A4",
-    "location": "loc",
-    "time": "time",
-    "direction": "dir",
-}
-
-
 def get_all_labeled_args(
     amr: AMR, node: str, qnode_args: MutableMapping[str, Any]
 ) -> MutableMapping[str, Any]:
@@ -65,7 +52,15 @@ def get_all_labeled_args(
             else:
                 continue
             formatted_arg_type = arg[1].replace(":", "").replace("-of", "")
-            framenet_arg = pb_args_to_framenet_args[formatted_arg_type]
+            if formatted_arg_type[0] == "A":
+                # e.g. ARG1 --> A1
+                framenet_arg = formatted_arg_type.replace("RG", "")
+            elif formatted_arg_type in {"location", "direction"}:
+                # e.g. location --> loc
+                framenet_arg = formatted_arg_type[:3]
+            else:
+                # time doesn't change
+                framenet_arg = formatted_arg_type
             if qnode_args.get(framenet_arg):
                 role = qnode_args[framenet_arg]["text_role"]
                 labeled_args[role] = amr.nodes[arg_node]
