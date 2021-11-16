@@ -4,7 +4,7 @@ import logging
 from pathlib import Path
 
 from cdse_covid.claim_detection.run_claim_detection import ClaimDataset
-from wikidata_linker.disambiguate_with_amr_v2 import disambiguate_with_amr_v2
+from wikidata_linker.disambiguate_with_amr import disambiguate_with_amr
 
 
 def main(claim_input: Path, output: Path) -> None:
@@ -14,7 +14,7 @@ def main(claim_input: Path, output: Path) -> None:
     for claim in claim_dataset:
         amr_sentence = claim.get_theory("amr")
         if amr_sentence:
-            semantics = disambiguate_with_amr_v2(amr_sentence)
+            semantics = disambiguate_with_amr(amr_sentence)
             claim.claim_semantics = semantics
 
     claim_dataset.save_to_dir(output)

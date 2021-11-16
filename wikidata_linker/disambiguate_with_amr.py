@@ -87,7 +87,7 @@ def get_wikidata_for_labeled_args(
     return args_to_qnodes
 
 
-def disambiguate_with_amr_v2(amr_sentence: AMR) -> Optional[ClaimSemantics]:
+def disambiguate_with_amr(amr_sentence: AMR) -> Optional[ClaimSemantics]:
     """Disambiguate AMR sentence according to DWD overlay."""
     # Make both tables
     master_table_path = PARENT_DIR / "resources" / "pb_to_qnode_master.json"
