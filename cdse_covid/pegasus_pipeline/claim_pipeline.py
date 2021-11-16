@@ -158,6 +158,25 @@ def main(params: Parameters) -> None:
     )
     wikidata_output = ValueArtifact(value=wikidata_output_dir, depends_on=[wikidata_job])
 
+    # Overlay
+    overlay_loc = base_locator / "overlay"
+    overlay_python_file = wikidata_params.existing_file("overlay_python_file")
+    overlay_output_dir = directory_for(overlay_loc) / "documents"
+    overlay_job = run_python_on_args(
+        overlay_loc,
+        overlay_python_file,
+        f"""
+        --claim-input {wikidata_output.value} \
+        --output {overlay_output_dir} \
+        """,
+        override_conda_config=CondaConfiguration(
+            conda_base_path=params.existing_directory("conda_base_path"),
+            conda_environment="transition-amr-parser",
+        ),
+        depends_on=[wikidata_output],
+    )
+    overlay_output = ValueArtifact(value=overlay_output_dir, depends_on=[overlay_job])
+
     # Unify
     unify_params = params.namespace("unify")
     unify_loc = base_locator / "unify"
@@ -167,10 +186,10 @@ def main(params: Parameters) -> None:
         unify_loc,
         unify_python_job,
         f"""
-        --input {wikidata_output.value} \
+        --input {overlay_output.value} \
         --output {output_file} \
         """,
-        depends_on=[wikidata_output],
+        depends_on=[overlay_output],
     )
 
     write_workflow_description()

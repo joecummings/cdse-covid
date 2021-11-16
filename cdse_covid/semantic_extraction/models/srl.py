@@ -4,7 +4,10 @@ import logging
 from typing import Any, List, MutableMapping
 import uuid
 
-from allennlp_models.pretrained import load_predictor  # pylint: disable=import-error
+try:
+    from allennlp_models.pretrained import load_predictor  # pylint: disable=import-error
+except ModuleNotFoundError:
+    logging.warning("Cannot load AllenNLP models from this env.")
 from spacy.language import Language
 
 from cdse_covid.semantic_extraction.utils.claimer_utils import LEMMATIZER

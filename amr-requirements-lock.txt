@@ -52,6 +52,7 @@ PyYAML==6.0
 regex==2018.1.10
 requests==2.26.0
 sacrebleu==2.0.0
+sentence-transformers==0.3.8
 six==1.16.0
 smatch==1.0.4
 sortedcontainers==2.4.0

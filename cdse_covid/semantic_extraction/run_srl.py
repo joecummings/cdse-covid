@@ -33,9 +33,6 @@ def main(inputs: Path, output: Path, *, spacy_model: Language) -> None:
     for claim in claim_ds.claims:
         srl_out = srl_model.predict(claim.claim_text)
 
-        # Add claim semantics
-        claim.claim_semantics = {"event": srl_out.verb, "args": srl_out.args}
-
         # Find X variable if it wasn't found in the AMR step
         if claim.x_variable is None and claim.claim_template:
             claim_template = reformat_x_variable_in_claim_template(claim.claim_template)
