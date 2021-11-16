@@ -111,11 +111,8 @@ def disambiguate_with_amr_v2(amr_sentence: AMR) -> Optional[ClaimSemantics]:
     # Gather propbank nodes from resulting graph
     frame_label_pattern = r"[a-z-]+-[0-9]{2}"  # e.g. have-name-91
 
-    # We're only dealing with one sentence here
     label_list_all = amr_sentence.get_ordered_node_labels()
-
     pb_label_list = [label for label in label_list_all if re.match(frame_label_pattern, label)]
-
     if not pb_label_list:
         logging.warning("No PropBank labels in the graph!")
         return None
