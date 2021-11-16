@@ -99,10 +99,21 @@ if [[ ! -e "$CHECKPOINT_DIR"/wikidata_ckpt ]]; then
   echo "Output from Wikidata linking is now in $WIKIDATA_OUTPUT"
 fi
 
+# AMR-overlay
+if [[ ! -e "$CHECKPOINT_DIR"/amr_overlay_ckpt ]]; then
+  echo "Starting AMR for DWD/overlay..."
+  mkdir -p "$OVERLAY_OUTPUT"
+  python "$PROJECT_DIR"/cdse_covid/semantic_extraction/run_amr_dwd_overlay.py \
+      --claim-input "$WIKIDATA_OUTPUT" \
+      --output "$OVERLAY_OUTPUT"
+  touch "$CHECKPOINT_DIR"/amr_overlay_ckpt
+  echo "Output from DWD/Overlay is now in $OVERLAY_OUTPUT"
+fi
+
 # Postprocessing
 echo "Merging output..."
 python "$PROJECT_DIR"/cdse_covid/pegasus_pipeline/merge.py \
-    --input "$WIKIDATA_OUTPUT" \
+    --input "$OVERLAY_OUTPUT" \
     --output "$FINAL_OUTPUT_FILE"
 echo "Final output has been saved to $FINAL_OUTPUT_FILE"
 
