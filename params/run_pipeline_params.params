@@ -18,6 +18,8 @@ AMR_OUTPUT="$PROJECT_DIR/cdse_covid/semantic_extraction/amr_out"
 
 SRL_OUTPUT="$PROJECT_DIR/cdse_covid/semantic_extraction/srl_out"
 
-WIKIDATA_OUTPUT="$PROJECT_DIR/cdse_covid/sematnic_extraction/wikidata_out"
+WIKIDATA_OUTPUT="$PROJECT_DIR/cdse_covid/semantic_extraction/wikidata_out"
+
+OVERLAY_OUTPUT="$PROJECT_DIR/cdse_covid/semantic_extraction/overlay_out"
 
 FINAL_OUTPUT_FILE="$PROJECT_DIR/cdse_covid/output.json"
