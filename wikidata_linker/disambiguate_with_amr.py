@@ -35,21 +35,13 @@ def is_valid_arg_type(arg_type: str) -> bool:
 # Currently pushing X-of to X
 pb_args_to_framenet_args = {
     "ARG0": "A0",
-    "ARG0-of": "A0",
     "ARG1": "A1",
-    "ARG1-of": "A1",
     "ARG2": "A2",
-    "ARG2-of": "A2",
     "ARG3": "A3",
-    "ARG3-of": "A3",
     "ARG4": "A4",
-    "ARG4-of": "A4",
     "location": "loc",
-    "location-of": "loc",
     "time": "time",
-    "time-of": "time",
     "direction": "dir",
-    "direction-of": "dir",
 }
 
 
@@ -62,11 +54,21 @@ def get_all_labeled_args(
 
     for arg in potential_args:
         if is_valid_arg_type(arg[1]):
-            formatted_arg_type = arg[1].replace(":", "")
+            # If the argument role has the suffix "-of" and the node is in the child
+            # position, the argument is the parent node.
+            # Vice versa if it is a regular argument role and the node is the parent.
+            # Otherwise, a node -> argument relation is not in this edge.
+            if arg[2] == node and arg[1].endswith("-of"):
+                arg_node = arg[0]
+            elif arg[0] == node:
+                arg_node = arg[2]
+            else:
+                continue
+            formatted_arg_type = arg[1].replace(":", "").replace("-of", "")
             framenet_arg = pb_args_to_framenet_args[formatted_arg_type]
             if qnode_args.get(framenet_arg):
                 role = qnode_args[framenet_arg]["text_role"]
-                labeled_args[role] = amr.nodes[arg[2]]
+                labeled_args[role] = amr.nodes[arg_node]
     return labeled_args
 
 
