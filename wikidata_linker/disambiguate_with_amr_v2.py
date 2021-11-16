@@ -303,13 +303,40 @@ def generate_master_dict(master_table_path: Path, pb_master: Path) -> None:
         qnode_mapping = json.load(in_json)
     pbs_to_qnodes = defaultdict(list)
     for qnode_dict in qnode_mapping:
-        abridged_qdict = {
-            "qnode": qnode_dict.get("id"),
-            "name": qnode_dict.get("name").split("_Q")[0],
-            "definition": qnode_dict.get("def"),
+        qnode = qnode_dict.get("id")
+        qname = qnode_dict.get("name").split("_Q")[0]
+        qdescr = qnode_dict.get("def")
+
+        args = qnode_dict.get("roles")
+        final_args = {}
+        for arg_role, constraints in args.items():
+
+            formatted_constraints = []
+            for constraint in constraints:
+                constraint_string = constraint.pop()
+                if constraint_string != "None":
+                    string_split = constraint_string.split("_")
+                    arg_qnode = string_split[-1]
+                    arg_qname = "_".join(string_split[0 : len(string_split) - 1])
+                    arg_qname = arg_qname.replace("+", "")  # Remove weird '+' sign
+                    formatted_constraint = {"name": arg_qname, "wd_node": arg_qnode}
+                    formatted_constraints.append(formatted_constraint)
+
+            arg_parts = arg_role.split("-")
+            final_args[arg_parts[0]] = {
+                "constraints": formatted_constraints,
+                "text_role": "-".join(arg_parts[1:]),
+            }
+
+        qnode_summary = {
+            "qnode": qnode,
+            "name": qname,
+            "definition": qdescr,
+            "args": final_args,
         }
+
         pb = str(qnode_dict["pb"]).replace(".", "-")
-        pbs_to_qnodes[pb].append(abridged_qdict)
+        pbs_to_qnodes[pb].append(qnode_summary)
     with open(pb_master, "w+", encoding="utf-8") as out_json:
         json.dump(pbs_to_qnodes, out_json, indent=4)
 
