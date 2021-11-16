@@ -47,7 +47,7 @@ def get_all_labeled_args(
             # Otherwise, a node -> argument relation is not in this edge.
             if arg[2] == node and arg[1].endswith("-of"):
                 arg_node = arg[0]
-            elif arg[0] == node:
+            elif arg[0] == node and not arg[1].endswith("-of"):
                 arg_node = arg[2]
             else:
                 continue
