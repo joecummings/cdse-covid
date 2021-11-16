@@ -1,5 +1,4 @@
 """You will need to run this in the transition-amr-parser env."""
-import argparse
 from collections import defaultdict
 import json
 import logging
@@ -357,10 +356,3 @@ def generate_overlay_dict(overlay_path: Path, pb_overlay: Path) -> None:
                     pbs_to_qnodes[pb].append(qnode_summary)
     with open(pb_overlay, "w+", encoding="utf-8") as out_json:
         json.dump(pbs_to_qnodes, out_json, indent=4)
-
-
-if __name__ == "__main__":
-    arg_parser = argparse.ArgumentParser()
-    arg_parser.add_argument("--amr-graphs", type=str, help="Sentence to get qnodes for")
-    pargs = arg_parser.parse_args()
-    disambiguate_with_amr_v2(pargs.amr_graphs)
