@@ -100,6 +100,7 @@ if [[ ! -e "$CHECKPOINT_DIR"/wikidata_ckpt ]]; then
 fi
 
 # AMR-overlay
+conda activate transition-amr-parser
 if [[ ! -e "$CHECKPOINT_DIR"/amr_overlay_ckpt ]]; then
   echo "Starting AMR for DWD/overlay..."
   mkdir -p "$OVERLAY_OUTPUT"
@@ -111,6 +112,7 @@ if [[ ! -e "$CHECKPOINT_DIR"/amr_overlay_ckpt ]]; then
 fi
 
 # Postprocessing
+conda activate $CDSE_COVID_ENV_NAME
 echo "Merging output..."
 python "$PROJECT_DIR"/cdse_covid/pegasus_pipeline/merge.py \
     --input "$OVERLAY_OUTPUT" \
