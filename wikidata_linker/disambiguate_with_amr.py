@@ -74,7 +74,7 @@ def get_wikidata_for_labeled_args(
     args_to_qnodes = {}
     for role, arg in args.items():
         if "-" not in arg:
-            qnode_info = disambiguate_kgtk(amr.tokens, arg, no_ss_model=True, k=1)
+            qnode_info = disambiguate_kgtk(" ".join(amr.tokens), arg, no_ss_model=True, k=1)
             if qnode_info["options"]:
                 args_to_qnodes[role] = qnode_info["options"][0]
             elif qnode_info["all_options"]:
@@ -185,8 +185,6 @@ def get_master_result(
     root_label: str,
 ) -> Tuple[Dict[str, Any], bool]:
     """Get Qnode from master JSON."""
-    for label in pb_label_list:
-        qnode_dicts = pb_mapping.get(label)
     for label in pb_label_list:
         is_root = label == root_label
         appended_qnode_data = {"pb": label}
