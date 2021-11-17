@@ -169,10 +169,10 @@ def identify_x_variable_covid(
                 )
     if claim_template.endswith("is X"):
         # In such cases, X is usually the root of the claim graph.
-        description = get_full_description(
-            amr_dict, nodes_to_labels, nodes_to_source_strings, amr.root
+        return create_x_variable(
+            get_full_description(amr_dict, nodes_to_labels, nodes_to_source_strings, amr.root),
+            claim,
         )
-        return create_x_variable(description, claim)
     if claim_template.startswith("X was the target"):
         # For the template concerning the target of the coronavirus,
         # find the ARG1 of "target-01"
@@ -233,8 +233,9 @@ def identify_x_variable_covid(
             # government. We assume that in most cases, the first ARG0 that is also a
             # GPE will be the government in question.
             elif role == ":ARG0" and nodes_to_labels[child] in place_types:
-                full_name = get_full_name_value(amr_dict, nodes_to_source_strings, child)
-                return create_x_variable(full_name, claim)
+                return create_x_variable(
+                    get_full_name_value(amr_dict, nodes_to_source_strings, child), claim
+                )
     # For "date-X" templates, return the date-entity
     if "date-X" in claim_template:
         for node, node_label in nodes_to_labels.items():
