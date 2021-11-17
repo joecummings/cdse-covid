@@ -7,6 +7,7 @@ from amr_utils.amr import AMR  # pylint: disable=import-error
 from nltk.corpus import framenet
 from nltk.stem import WordNetLemmatizer
 
+from cdse_covid.claim_detection.claim import Claim
 from cdse_covid.semantic_extraction.entities import Claimer
 from cdse_covid.semantic_extraction.utils.amr_extraction_utils import (
     create_node_to_token_dict,
@@ -30,7 +31,7 @@ for concept in framenet_concepts:
 
 
 def identify_claimer(
-    claim_tokens: List[str], amr: AMR, alignments: List[AMR_Alignment]
+    claim: Claim, claim_tokens: List[str], amr: AMR, alignments: List[AMR_Alignment]
 ) -> Optional[Claimer]:
     """Identify the claimer of the span.
 
@@ -49,7 +50,7 @@ def identify_claimer(
     claim_node = get_claim_node(claim_tokens, amr)
     arg_node = get_argument_node(amr, alignments, claim_node)
     if arg_node:
-        return Claimer(text=arg_node)  # Stubbed out Claimer with just the text for now
+        return Claimer(text=arg_node, span=claim.get_offsets_for_text(arg_node))
     return None
 
 

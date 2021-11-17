@@ -42,7 +42,7 @@ def main(
         sentence_amr = amr_parser.amr_parse_sentences([tokenized_sentence])
         tokenized_claim = tokenize_sentence(claim.claim_text, spacy_model.tokenizer, max_tokens)
         possible_claimer = identify_claimer(
-            tokenized_claim, sentence_amr.graph, sentence_amr.alignments
+            claim, tokenized_claim, sentence_amr.graph, sentence_amr.alignments
         )
         if possible_claimer:
             claim.claimer = possible_claimer
@@ -55,7 +55,7 @@ def main(
             claim_ents = {ent.text: ent.label_ for ent in spacy_model(claim.claim_text).ents}
             claim_pos = {token.text: token.pos_ for token in spacy_model(claim.claim_text).doc}
             possible_x_variable = identify_x_variable(
-                claim_amr.graph, claim_amr.alignments, claim_ents, claim_pos
+                claim_amr.graph, claim_amr.alignments, claim, claim_ents, claim_pos
             )
         if possible_x_variable:
             claim.x_variable = possible_x_variable

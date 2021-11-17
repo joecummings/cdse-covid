@@ -137,15 +137,13 @@ def identify_x_variable_covid(amr: AMR, alignments: List[AMR_Alignment], claim: 
             # Not all locations get the :location role label
             if role == ":location" or role == ":source" or child_label in place_types:
                 location_name = get_full_name_value(amr_dict, nodes_to_source_strings, child)
-                return (
-                    XVariable(text=location_name, span=claim.get_offsets_for_text(location_name))
-                    if location_name
-                    else XVariable(
-                        text=get_full_description(
-                            amr_dict, nodes_to_labels, nodes_to_source_strings, child
-                        )
+                if location_name:
+                    return XVariable(text=location_name, span=claim.get_offsets_for_text(location_name))
+                else:
+                    description = get_full_description(
+                        amr_dict, nodes_to_labels, nodes_to_source_strings, child
                     )
-                )
+                    return XVariable(text=description, span=claim.get_offsets_for_text(description))
     # For "person-X" templates, locate a person
     if "person-X" in claim_template:
         for parent, role, child in amr.edges:
@@ -169,19 +167,21 @@ def identify_x_variable_covid(amr: AMR, alignments: List[AMR_Alignment], claim: 
         for parent, role, child in amr.edges:
             if nodes_to_labels[parent] == "target-01" and role == ":ARG1":
                 target_name = get_full_name_value(amr_dict, nodes_to_source_strings, child)
-                return (
-                    XVariable(text=target_name, span=claim.get_offsets_for_text(target_name))
-                    if target_name
-                    else XVariable(
-                        text=get_full_description(
-                            amr_dict,
-                            nodes_to_labels,
-                            nodes_to_source_strings,
-                            child,
-                            ignore_focus_node=True,
-                        )
+                if target_name:
+                    return (
+                        XVariable(text=target_name, span=claim.get_offsets_for_text(target_name))
                     )
-                )
+                else:
+                    description = get_full_description(
+                        amr_dict,
+                        nodes_to_labels,
+                        nodes_to_source_strings,
+                        child,
+                        ignore_focus_node=True,
+                    )
+                    return (
+                        XVariable(text=description, span=claim.get_offsets_for_text(description))
+                    )
     if "X negative effect" in claim_template:
         # This concerns negative effects of wearing masks;
         # Find the mod(s) of affect-01
@@ -245,21 +245,19 @@ def identify_x_variable_covid(amr: AMR, alignments: List[AMR_Alignment], claim: 
                 or (prevents_death(nodes_to_labels, parent, role))
                 or (treatment_is_approved(nodes_to_labels, parent, role))
             ):
-                return XVariable(
-                    text=get_full_description(
-                        amr_dict, nodes_to_labels, nodes_to_source_strings, child
-                    )
+                description = get_full_description(
+                    amr_dict, nodes_to_labels, nodes_to_source_strings, child
                 )
+                return XVariable(text=description, span=claim.get_offsets_for_text(description))
     if "medication X" in claim_template:
         # Concerns safe medication being unsafe for COVID-19 patients;
         # look for safe-01
         for parent, role, child in amr.edges:
             if nodes_to_labels[parent] == "safe-01" and role == ":ARG1":
-                return XVariable(
-                    text=get_full_description(
-                        amr_dict, nodes_to_labels, nodes_to_source_strings, child
-                    )
+                description = get_full_description(
+                    amr_dict, nodes_to_labels, nodes_to_source_strings, child
                 )
+                return XVariable(text=description, span=claim.get_offsets_for_text(description))
     if "Animal-X" in claim_template:
         # We're going to look at the root arguments for this.
         # The only "animal" template describes an animal "being involved"
@@ -268,11 +266,10 @@ def identify_x_variable_covid(amr: AMR, alignments: List[AMR_Alignment], claim: 
         arg1_values = root_args.get(":ARG1")
         if arg1_values:
             # Get only one
-            return XVariable(
-                text=get_full_description(
-                    amr_dict, nodes_to_labels, nodes_to_source_strings, arg1_values[0]
-                )
+            description = get_full_description(
+                amr_dict, nodes_to_labels, nodes_to_source_strings, arg1_values[0]
             )
+            return XVariable(text=description, span=claim.get_offsets_for_text(description))
     # The next two conditions are meant to cover all other templates.
     # If X is the first in the template, it implies that it serves the agent role
     if claim_template[0] == "X":
@@ -282,12 +279,11 @@ def identify_x_variable_covid(amr: AMR, alignments: List[AMR_Alignment], claim: 
             if parent == amr.root and role == agent_role:
                 agent_name = get_full_name_value(amr_dict, nodes_to_source_strings, child)
                 if agent_name:
-                    return XVariable(text=agent_name)
-                return XVariable(
-                    text=get_full_description(
-                        amr_dict, nodes_to_labels, nodes_to_source_strings, child
-                    )
+                    return XVariable(text=agent_name, span=claim.get_offsets_for_text(agent_name))
+                description = get_full_description(
+                    amr_dict, nodes_to_labels, nodes_to_source_strings, child
                 )
+                return XVariable(text=description, span=claim.get_offsets_for_text(description))
     # Likewise, if X is the last item in the template,
     # it implies a patient role
     if claim_template[-1] == "X":
@@ -295,12 +291,11 @@ def identify_x_variable_covid(amr: AMR, alignments: List[AMR_Alignment], claim: 
             if parent == amr.root and role == ":ARG1":
                 patient_name = get_full_name_value(amr_dict, nodes_to_source_strings, child)
                 if patient_name:
-                    return XVariable(text=patient_name)
-                return XVariable(
-                    text=get_full_description(
+                    return XVariable(text=patient_name, span=claim.get_offsets_for_text(patient_name))
+                description = get_full_description(
                         amr_dict, nodes_to_labels, nodes_to_source_strings, child
                     )
-                )
+                return XVariable(text=description, span=claim.get_offsets_for_text(description))
     return None
 
 
@@ -332,7 +327,7 @@ def mislablled_treatment(nodes_to_labels: MutableMapping[str, Any], parent: str,
 
 
 def identify_x_variable(
-    amr: AMR, alignments: List[AMR_Alignment], claim_ents: Dict[str, str], claim_pos: Dict[str, str]
+    amr: AMR, alignments: List[AMR_Alignment], claim: Claim, claim_ents: Dict[str, str], claim_pos: Dict[str, str]
 ) -> Optional[XVariable]:
     """Use the AMR graph of the claim to identify the X variable given the claim text.
 
@@ -343,6 +338,8 @@ def identify_x_variable(
     amr_dict = amr.edge_mapping()
     nodes_to_labels = amr.nodes
     nodes_to_source_strings = create_node_to_token_dict(amr, alignments)
+
+    x_description = None
 
     # First use entity labels as clues for what the X-variable is
     for _, label in claim_ents.items():
@@ -367,28 +364,25 @@ def identify_x_variable(
                                         amr_dict, nodes_to_source_strings, value
                                     )
                     if full_name and add_gov_token:
-                        return XVariable(text=full_name + " government")
-                    return XVariable(text=full_name)
+                        full_gov_name = full_name + " government"
+                        return XVariable(text=full_gov_name, span=claim.get_offsets_for_text(full_gov_name))
+                    return XVariable(text=full_name, span=claim.get_offsets_for_text(full_name))
                 if parent_label in place_types:
-                    return XVariable(
-                        text=get_full_description(
-                            amr_dict, nodes_to_labels, nodes_to_source_strings, parent
-                        )
+                    x_description = get_full_description(
+                        amr_dict, nodes_to_labels, nodes_to_source_strings, parent
                     )
-                if child_label in place_types:
+                elif child_label in place_types:
                     # If the nationality is a mod, check the parent
                     if claim_pos.get(nodes_to_source_strings[child]) == "ADJ":
-                        return XVariable(
-                            text=get_full_description(
-                                amr_dict, nodes_to_labels, nodes_to_source_strings, parent
-                            )
+                        x_description = get_full_description(
+                            amr_dict, nodes_to_labels, nodes_to_source_strings, parent
                         )
                     else:
-                        return XVariable(
-                            text=get_full_description(
-                                amr_dict, nodes_to_labels, nodes_to_source_strings, child
-                            )
+                        x_description = get_full_description(
+                            amr_dict, nodes_to_labels, nodes_to_source_strings, child
                         )
+                if x_description:
+                    return XVariable(text=x_description, span=claim.get_offsets_for_text(x_description))
         if label in ["PERSON", "ORG"]:
             # If a PERSON/ORG is detected, get the full name
             for parent, role, child in amr.edges:
@@ -396,7 +390,9 @@ def identify_x_variable(
                 if child_label in ["person", "organization"]:
                     person_name = get_full_name_value(amr_dict, nodes_to_source_strings, child)
                     return (
-                        XVariable(text=person_name) if person_name else XVariable(text=child_label)
+                        XVariable(text=person_name, span=claim.get_offsets_for_text(person_name))
+                        if person_name else
+                        XVariable(text=child_label, span=claim.get_offsets_for_text(child_label))
                     )
 
     # Next, simply look for a location
@@ -406,20 +402,17 @@ def identify_x_variable(
         # Not all locations get the :location role label
         if role == ":location" or role == ":source" or child_label in place_types:
             location_name = get_full_name_value(amr_dict, nodes_to_source_strings, child)
-            return (
-                XVariable(text=location_name)
-                if location_name
-                else XVariable(
-                    text=get_full_description(
-                        amr_dict, nodes_to_labels, nodes_to_source_strings, child
-                    )
+            if location_name:
+                return XVariable(text=location_name, span=claim.get_offsets_for_text(location_name))
+            else:
+                x_description = get_full_description(
+                    amr_dict, nodes_to_labels, nodes_to_source_strings, child
                 )
-            )
         # If there is a date-entity in the AMR graph, that may be the X-variable
-        if parent_label == "date-entity":
-            return XVariable(
-                text=get_full_description(
-                    amr_dict, nodes_to_labels, nodes_to_source_strings, parent
-                )
+        elif parent_label == "date-entity":
+            x_description = get_full_description(
+                amr_dict, nodes_to_labels, nodes_to_source_strings, parent
             )
+        if x_description:
+            return XVariable(text=x_description, span=claim.get_offsets_for_text(x_description))
     return None
