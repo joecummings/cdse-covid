@@ -1,25 +1,13 @@
 """Classes related to SRL Models."""
-from dataclasses import dataclass
 import logging
 from typing import Any, List, MutableMapping
 import uuid
 
-try:
-    from allennlp_models.pretrained import load_predictor  # pylint: disable=import-error
-except ModuleNotFoundError:
-    logging.warning("Cannot load AllenNLP models from this env.")
+from allennlp_models.pretrained import load_predictor  # pylint: disable=import-error
 from spacy.language import Language
 
+from cdse_covid.semantic_extraction.models.output_formats import SRLOutput
 from cdse_covid.semantic_extraction.utils.claimer_utils import LEMMATIZER
-
-
-@dataclass
-class SRLOutput:
-    """Class to hold SRL Output."""
-
-    label_id: int
-    verb: str
-    args: MutableMapping[str, str]
 
 
 class SRLModel:
