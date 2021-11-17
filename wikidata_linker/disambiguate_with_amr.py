@@ -32,25 +32,33 @@ def is_valid_arg_type(arg_type: str) -> bool:
     )
 
 
-# Currently pushing X-of to X
-pb_args_to_framenet_args = {
-    "ARG0": "A0",
-    "ARG0-of": "A0",
-    "ARG1": "A1",
-    "ARG1-of": "A1",
-    "ARG2": "A2",
-    "ARG2-of": "A2",
-    "ARG3": "A3",
-    "ARG3-of": "A3",
-    "ARG4": "A4",
-    "ARG4-of": "A4",
-    "location": "loc",
-    "location-of": "loc",
-    "time": "time",
-    "time-of": "time",
-    "direction": "dir",
-    "direction-of": "dir",
-}
+def determine_argument_from_edge(event_node: str, edge: Tuple[str, str, str]) -> Optional[str]:
+    """Determine which node in an edge serves as the argument.
+
+    If the argument role has the suffix "-of" and the node is in the child
+    position, the argument is the parent node.
+    Vice versa if it is a regular argument role and the node is the parent.
+    Otherwise, a node -> argument relation is not in this edge.
+    """
+    if edge[2] == event_node and edge[1].endswith("-of"):
+        return edge[0]
+    elif edge[0] == event_node and not edge[1].endswith("-of"):
+        return edge[2]
+    return None
+
+
+def get_framenet_arg_role(pb_arg_role_label: str) -> str:
+    """From a PropBank argument role label, return the corresponding FrameNet one."""
+    formatted_arg_type = pb_arg_role_label.replace(":", "").replace("-of", "")
+    if formatted_arg_type[0] == "A":
+        # e.g. ARG1 --> A1
+        return formatted_arg_type.replace("RG", "")
+    elif formatted_arg_type in {"location", "direction"}:
+        # e.g. location --> loc
+        return formatted_arg_type[:3]
+    else:
+        # time doesn't change
+        return formatted_arg_type
 
 
 def get_all_labeled_args(
@@ -62,11 +70,12 @@ def get_all_labeled_args(
 
     for arg in potential_args:
         if is_valid_arg_type(arg[1]):
-            formatted_arg_type = arg[1].replace(":", "")
-            framenet_arg = pb_args_to_framenet_args[formatted_arg_type]
-            if qnode_args.get(framenet_arg):
-                role = qnode_args[framenet_arg]["text_role"]
-                labeled_args[role] = amr.nodes[arg[2]]
+            arg_node = determine_argument_from_edge(node, arg)
+            if arg_node:
+                framenet_arg = get_framenet_arg_role(arg[1])
+                if qnode_args.get(framenet_arg):
+                    role = qnode_args[framenet_arg]["text_role"]
+                    labeled_args[role] = amr.nodes[arg_node]
     return labeled_args
 
 
@@ -77,7 +86,7 @@ def get_wikidata_for_labeled_args(
     args_to_qnodes = {}
     for role, arg in args.items():
         if "-" not in arg:
-            qnode_info = disambiguate_kgtk(amr.tokens, arg, no_ss_model=True, k=1)
+            qnode_info = disambiguate_kgtk(" ".join(amr.tokens), arg, no_ss_model=True, k=1)
             if qnode_info["options"]:
                 args_to_qnodes[role] = qnode_info["options"][0]
             elif qnode_info["all_options"]:
@@ -188,8 +197,6 @@ def get_master_result(
     root_label: str,
 ) -> Tuple[Dict[str, Any], bool]:
     """Get Qnode from master JSON."""
-    for label in pb_label_list:
-        qnode_dicts = pb_mapping.get(label)
     for label in pb_label_list:
         is_root = label == root_label
         appended_qnode_data = {"pb": label}
