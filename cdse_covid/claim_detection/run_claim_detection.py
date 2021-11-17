@@ -137,16 +137,18 @@ class RegexClaimDetector(ClaimDetector, Matcher):  # type: ignore
 
         for doc in corpus.documents:
             matches = self.__call__(doc[1])
-            for (match_id, start, end) in matches:
+            for match_id, start, end in matches:
                 rule_id: str = vocab.strings[match_id]
                 span: Span = doc[1][start:end]
+                span_offset_start = doc[1].text.index(span.text)
+                span_offset_end = span_offset_start + len(span.text)
 
                 new_claim = Claim(
                     claim_id=int(uuid.uuid1()),
                     doc_id=doc[0],
                     claim_text=span.text,
                     claim_sentence=span.sent.text,
-                    claim_span=(start, end),
+                    claim_span=(span_offset_start, span_offset_end),
                     claim_template=rule_id,
                 )
 
