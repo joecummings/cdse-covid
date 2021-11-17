@@ -1,12 +1,14 @@
 """Collection of AMR extraction utils."""
+import logging
 from collections import defaultdict
 import re
 import string
-from typing import Any, Dict, List, MutableMapping, Optional
+from typing import Any, Dict, List, MutableMapping, Optional, Tuple
 
 from amr_utils.alignments import AMR_Alignment  # pylint: disable=import-error
 from amr_utils.amr import AMR  # pylint: disable=import-error
 
+from cdse_covid.claim_detection.claim import Claim
 from cdse_covid.semantic_extraction.entities import XVariable
 
 PROPBANK_PATTERN = r"[a-z]*-[0-9]{2}"
@@ -116,10 +118,9 @@ def create_node_to_token_dict(amr: AMR, alignments: List[AMR_Alignment]) -> Dict
     return {node: " ".join(token_list) for node, token_list in nodes_to_token_lists.items()}
 
 
-def identify_x_variable_covid(
-    amr: AMR, alignments: List[AMR_Alignment], claim_template: Optional[str]
-) -> Optional[XVariable]:
+def identify_x_variable_covid(amr: AMR, alignments: List[AMR_Alignment], claim: Claim) -> Optional[XVariable]:
     """Use the AMR graph of the claim to identify the X variable given the template."""
+    claim_template = claim.claim_template
     if not claim_template:
         return None
 
@@ -137,7 +138,7 @@ def identify_x_variable_covid(
             if role == ":location" or role == ":source" or child_label in place_types:
                 location_name = get_full_name_value(amr_dict, nodes_to_source_strings, child)
                 return (
-                    XVariable(text=location_name)
+                    XVariable(text=location_name, span=claim.get_offsets_for_text(location_name))
                     if location_name
                     else XVariable(
                         text=get_full_description(
@@ -151,11 +152,16 @@ def identify_x_variable_covid(
             child_label = nodes_to_labels.get(child)
             if child_label == "person":
                 person_name = get_full_name_value(amr_dict, nodes_to_source_strings, child)
-                return XVariable(text=person_name) if person_name else XVariable(text=child_label)
+                return (
+                    XVariable(text=person_name, span=claim.get_offsets_for_text(person_name))
+                    if person_name else
+                    XVariable(text=child_label, span=claim.get_offsets_for_text(child_label))
+                )
     if claim_template.endswith("is X"):
         # In such cases, X is usually the root of the claim graph.
+        description = get_full_description(amr_dict, nodes_to_labels, nodes_to_source_strings, amr.root)
         return XVariable(
-            text=get_full_description(amr_dict, nodes_to_labels, nodes_to_source_strings, amr.root)
+            text=description, span=claim.get_offsets_for_text(description)
         )
     if claim_template.startswith("X was the target"):
         # For the template concerning the target of the coronavirus,
@@ -164,7 +170,7 @@ def identify_x_variable_covid(
             if nodes_to_labels[parent] == "target-01" and role == ":ARG1":
                 target_name = get_full_name_value(amr_dict, nodes_to_source_strings, child)
                 return (
-                    XVariable(text=target_name)
+                    XVariable(text=target_name, span=claim.get_offsets_for_text(target_name))
                     if target_name
                     else XVariable(
                         text=get_full_description(
@@ -181,14 +187,15 @@ def identify_x_variable_covid(
         # Find the mod(s) of affect-01
         for parent, role, child in amr.edges:
             if nodes_to_labels[parent] == "affect-01":
+                description = get_full_description(
+                    amr_dict,
+                    nodes_to_labels,
+                    nodes_to_source_strings,
+                    parent,
+                    ignore_focus_node=True,
+                )
                 return XVariable(
-                    text=get_full_description(
-                        amr_dict,
-                        nodes_to_labels,
-                        nodes_to_source_strings,
-                        parent,
-                        ignore_focus_node=True,
-                    )
+                    text=description, span=claim.get_offsets_for_text(description)
                 )
     if "Government-X" in claim_template:
         # In these graphs, the GPE of "government" is not a mod,
@@ -209,21 +216,24 @@ def identify_x_variable_covid(
                                     amr_dict, nodes_to_source_strings, value
                                 )
                 if full_name and add_gov_token:
-                    return XVariable(text=full_name + " government")
-                return XVariable(text=full_name)
+                    full_gov_name = full_name + " government"
+                    return XVariable(text=full_gov_name, span=claim.get_offsets_for_text(full_gov_name))
+                return XVariable(text=full_name, span=claim.get_offsets_for_text(full_name))
             # Cover the case where the location name is used to represent its
             # government. We assume that in most cases, the first ARG0 that is also a
             # GPE will be the government in question.
             elif role == ":ARG0" and nodes_to_labels[child] in place_types:
-                return XVariable(text=get_full_name_value(amr_dict, nodes_to_source_strings, child))
+                full_name = get_full_name_value(amr_dict, nodes_to_source_strings, child)
+                return XVariable(text=full_name, span=claim.get_offsets_for_text(full_name))
     # For "date-X" templates, return the date-entity
     if "date-X" in claim_template:
         for node, node_label in nodes_to_labels.items():
             if node_label == "date-entity":
+                full_date = get_full_description(
+                    amr_dict, nodes_to_labels, nodes_to_source_strings, node
+                )
                 return XVariable(
-                    text=get_full_description(
-                        amr_dict, nodes_to_labels, nodes_to_source_strings, node
-                    )
+                    text=full_date, span=claim.get_offsets_for_text(full_date)
                 )
     # This covers "treatment-X" template cases
     if "Treatment-X" in claim_template or "effective treatment" in claim_template:
