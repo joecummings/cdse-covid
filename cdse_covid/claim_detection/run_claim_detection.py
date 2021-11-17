@@ -147,7 +147,10 @@ class RegexClaimDetector(ClaimDetector, Matcher):  # type: ignore
                 claim_sentence_tokens_to_offsets = {}
                 idx = span.sent.start_char
                 for sentence_token in span.sent:
-                    claim_sentence_tokens_to_offsets[sentence_token.text] = (idx, idx + len(sentence_token.text))
+                    claim_sentence_tokens_to_offsets[sentence_token.text] = (
+                        idx,
+                        idx + len(sentence_token.text),
+                    )
                     idx += len(sentence_token.text_with_ws)
 
                 new_claim = Claim(

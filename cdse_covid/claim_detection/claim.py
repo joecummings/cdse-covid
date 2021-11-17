@@ -1,7 +1,7 @@
 """Claim module."""
-import logging
 from dataclasses import dataclass, field
-from typing import Any, List, MutableMapping, Optional, Tuple, Union, Dict
+import logging
+from typing import Any, Dict, List, MutableMapping, Optional, Tuple, Union
 
 from cdse_covid.semantic_extraction.entities import (
     Claimer,
@@ -44,40 +44,39 @@ class Claim:
         """Get an existing theory by *name*."""
         return self.theories.get(name)
 
-    def get_offsets_for_text(self, text: str) -> Optional[Tuple[int, int]]:
+    def get_offsets_for_text(self, text: Optional[str]) -> Optional[Tuple[int, int]]:
         """Get the character offsets of the given string based on its claim span."""
+        if not text:
+            return None
         tokens_to_offsets = self.claim_sentence_tokens_to_offsets
-        item_split = text.split(" ")
-        first_token = item_split[0]
-        print(f"First token: {first_token}, {tokens_to_offsets.get(first_token)}")
-        last_token = item_split[-1]
-        print(f"Last token: {last_token}, {tokens_to_offsets.get(last_token)}")
+        text_split = text.split(" ")
+        first_token = text_split[0]
+        last_token = text_split[-1]
         first_offsets = tokens_to_offsets.get(first_token)
         if not first_offsets:
             logging.warning(
-                f"Could not find char offset info for token '%s' in claim sentence `%s`",
+                "Could not find char offset info for token '%s' in claim sentence `%s`",
                 first_token,
-                self.claim_sentence
+                self.claim_sentence,
             )
             return None
         span_start = first_offsets[0]
         last_offsets = tokens_to_offsets.get(last_token)
         if not last_offsets:
             logging.warning(
-                f"Could not find char offset info for token '%s' in claim sentence`%s`",
+                "Could not find char offset info for token '%s' in claim sentence`%s`",
                 last_token,
-                self.claim_sentence
+                self.claim_sentence,
             )
             return None
         span_end = last_offsets[1]
         if span_end <= span_start:
             logging.warning(
-                f"Encountered an error while finding char offsets for string '%s' in claim sentence `%s`",
+                "Impossible char offsets found for string '%s' in claim sentence `%s`",
                 text,
-                self.claim_sentence
+                self.claim_sentence,
             )
             return None
-        print(f"Span for {text} in {self.claim_sentence}: [{span_start}:{span_end})")
         return span_start, span_end
 
     @staticmethod

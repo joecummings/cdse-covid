@@ -50,7 +50,9 @@ def identify_claimer(
     claim_node = get_claim_node(claim_tokens, amr)
     arg_node = get_argument_node(amr, alignments, claim_node)
     if arg_node:
-        return Claimer(text=arg_node, span=claim.get_offsets_for_text(arg_node))
+        return Claimer(
+            text=arg_node, doc_id=claim.doc_id, span=claim.get_offsets_for_text(arg_node)
+        )
     return None
 
 

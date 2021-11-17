@@ -50,7 +50,9 @@ def main(
         claim_amr = amr_parser.amr_parse_sentences([tokenized_claim])
 
         if domain == COVID_DOMAIN:
-            possible_x_variable = identify_x_variable_covid(claim_amr.graph, claim_amr.alignments, claim)
+            possible_x_variable = identify_x_variable_covid(
+                claim_amr.graph, claim_amr.alignments, claim
+            )
         else:
             claim_ents = {ent.text: ent.label_ for ent in spacy_model(claim.claim_text).ents}
             claim_pos = {token.text: token.pos_ for token in spacy_model(claim.claim_text).doc}
