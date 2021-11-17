@@ -32,6 +32,35 @@ def is_valid_arg_type(arg_type: str) -> bool:
     )
 
 
+def determine_argument_from_edge(event_node: str, edge: Tuple[str, str, str]) -> Optional[str]:
+    """Determine which node in an edge serves as the argument.
+
+    If the argument role has the suffix "-of" and the node is in the child
+    position, the argument is the parent node.
+    Vice versa if it is a regular argument role and the node is the parent.
+    Otherwise, a node -> argument relation is not in this edge.
+    """
+    if edge[2] == event_node and edge[1].endswith("-of"):
+        return edge[0]
+    elif edge[0] == event_node and not edge[1].endswith("-of"):
+        return edge[2]
+    return None
+
+
+def get_framenet_arg_role(pb_arg_role_label: str) -> str:
+    """From a PropBank argument role label, return the corresponding FrameNet one."""
+    formatted_arg_type = pb_arg_role_label.replace(":", "").replace("-of", "")
+    if formatted_arg_type[0] == "A":
+        # e.g. ARG1 --> A1
+        return formatted_arg_type.replace("RG", "")
+    elif formatted_arg_type in {"location", "direction"}:
+        # e.g. location --> loc
+        return formatted_arg_type[:3]
+    else:
+        # time doesn't change
+        return formatted_arg_type
+
+
 def get_all_labeled_args(
     amr: AMR, node: str, qnode_args: MutableMapping[str, Any]
 ) -> MutableMapping[str, Any]:
@@ -41,29 +70,12 @@ def get_all_labeled_args(
 
     for arg in potential_args:
         if is_valid_arg_type(arg[1]):
-            # If the argument role has the suffix "-of" and the node is in the child
-            # position, the argument is the parent node.
-            # Vice versa if it is a regular argument role and the node is the parent.
-            # Otherwise, a node -> argument relation is not in this edge.
-            if arg[2] == node and arg[1].endswith("-of"):
-                arg_node = arg[0]
-            elif arg[0] == node and not arg[1].endswith("-of"):
-                arg_node = arg[2]
-            else:
-                continue
-            formatted_arg_type = arg[1].replace(":", "").replace("-of", "")
-            if formatted_arg_type[0] == "A":
-                # e.g. ARG1 --> A1
-                framenet_arg = formatted_arg_type.replace("RG", "")
-            elif formatted_arg_type in {"location", "direction"}:
-                # e.g. location --> loc
-                framenet_arg = formatted_arg_type[:3]
-            else:
-                # time doesn't change
-                framenet_arg = formatted_arg_type
-            if qnode_args.get(framenet_arg):
-                role = qnode_args[framenet_arg]["text_role"]
-                labeled_args[role] = amr.nodes[arg_node]
+            arg_node = determine_argument_from_edge(node, arg)
+            if arg_node:
+                framenet_arg = get_framenet_arg_role(arg[1])
+                if qnode_args.get(framenet_arg):
+                    role = qnode_args[framenet_arg]["text_role"]
+                    labeled_args[role] = amr.nodes[arg_node]
     return labeled_args
 
 
