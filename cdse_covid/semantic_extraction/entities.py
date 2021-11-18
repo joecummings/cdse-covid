@@ -1,31 +1,32 @@
-"""Collection of Entities."""
+"""Collection of Mentions."""
 from dataclasses import dataclass
 from typing import Mapping, Optional, Tuple
 
 
 @dataclass
-class Entity:
-    """Base entity."""
+class Mention:
+    """Base mention."""
 
     text: Optional[str] = ""
-    ent_id: Optional[int] = None
+    mention_id: Optional[int] = None
+    ent_id: Optional[str] = None
     doc_id: Optional[str] = None
     span: Optional[Tuple[int, int]] = None
 
 
 @dataclass
-class XVariable(Entity):
-    """XVariable entity."""
+class XVariable(Mention):
+    """XVariable mention."""
 
 
 @dataclass
-class Claimer(Entity):
-    """Claimer entity."""
+class Claimer(Mention):
+    """Claimer mention."""
 
 
 @dataclass
-class WikidataQnode(Entity):
-    """Qnode entity."""
+class WikidataQnode(Mention):
+    """Qnode mention."""
 
     qnode_id: Optional[str] = None
     description: Optional[str] = None
@@ -34,17 +35,17 @@ class WikidataQnode(Entity):
 
 @dataclass
 class ClaimEvent(WikidataQnode):
-    """Claim event entity."""
+    """Claim event mention."""
 
 
 @dataclass
 class ClaimArg(WikidataQnode):
-    """Claim arg entity."""
+    """Claim arg mention."""
 
 
 @dataclass
 class ClaimSemantics:
-    """Claim Semantics entity."""
+    """Claim Semantics mention."""
 
     event: Optional[ClaimEvent] = None
     args: Optional[Mapping[str, ClaimArg]] = None
