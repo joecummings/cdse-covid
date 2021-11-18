@@ -63,6 +63,7 @@ def main(
             claim.x_variable = possible_x_variable
 
         claim.add_theory("amr", sentence_amr.graph)
+        claim.add_theory("alignments", sentence_amr.alignments)
 
     claim_ds.save_to_dir(output)
 
