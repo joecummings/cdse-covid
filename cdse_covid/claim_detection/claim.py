@@ -10,6 +10,8 @@ from cdse_covid.semantic_extraction.entities import (
     XVariable,
 )
 
+TOKEN_OFFSET_THEORY = "token_offset"
+
 
 @dataclass
 class Claim:
@@ -20,7 +22,6 @@ class Claim:
     claim_text: str
     claim_sentence: str
     claim_span: Tuple[str, str]
-    claim_sentence_tokens_to_offsets: Dict[str, Tuple[int, int]]
     claim_template: Optional[str] = None
     topic: Optional[str] = None
     subtopic: Optional[str] = None
@@ -48,7 +49,9 @@ class Claim:
         """Get the character offsets of the given string based on its claim span."""
         if not text:
             return None
-        tokens_to_offsets = self.claim_sentence_tokens_to_offsets
+        tokens_to_offsets: Dict[str, Tuple[int, int]] = self.get_theory(  # type: ignore
+            TOKEN_OFFSET_THEORY
+        )
         text_split = text.split(" ")
         first_token = text_split[0]
         last_token = text_split[-1]

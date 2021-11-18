@@ -7,8 +7,8 @@ import spacy
 from spacy.language import Language
 
 from cdse_covid.claim_detection.run_claim_detection import ClaimDataset
-from cdse_covid.semantic_extraction.entities import XVariable
 from cdse_covid.semantic_extraction.models.srl import SRLModel
+from cdse_covid.semantic_extraction.utils.amr_extraction_utils import create_x_variable
 
 
 def reformat_x_variable_in_claim_template(claim_template: str, reference_word: str = "this") -> str:
@@ -44,11 +44,7 @@ def main(inputs: Path, output: Path, *, spacy_model: Language) -> None:
                 label = arg_label_for_x_variable[0]  # Should only be one
                 x_variable = srl_out.args.get(label)
                 if x_variable:
-                    claim.x_variable = XVariable(
-                        text=x_variable,
-                        doc_id=claim.doc_id,
-                        span=claim.get_offsets_for_text(x_variable),
-                    )
+                    claim.x_variable = create_x_variable(x_variable, claim)
 
         claim.add_theory("srl", srl_out)
     claim_ds.save_to_dir(output)
