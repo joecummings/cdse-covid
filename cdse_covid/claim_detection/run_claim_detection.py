@@ -16,7 +16,7 @@ from spacy.language import Language
 from spacy.matcher import Matcher
 from spacy.tokens import Span
 
-from cdse_covid.claim_detection.claim import Claim
+from cdse_covid.claim_detection.claim import TOKEN_OFFSET_THEORY, Claim
 from cdse_covid.dataset import AIDADataset
 
 CORONA_NAME_VARIATIONS = [
@@ -140,8 +140,18 @@ class RegexClaimDetector(ClaimDetector, Matcher):  # type: ignore
             for match_id, start, end in matches:
                 rule_id: str = vocab.strings[match_id]
                 span: Span = doc[1][start:end]
-                span_offset_start = doc[1].text.index(span.text)
-                span_offset_end = span_offset_start + len(span.text)
+                span_offset_start = span.start_char
+                span_offset_end = span.end_char
+
+                # Get offsets from tokens in the claim's sentence
+                claim_sentence_tokens_to_offsets = {}
+                idx = span.sent.start_char
+                for sentence_token in span.sent:
+                    claim_sentence_tokens_to_offsets[sentence_token.text] = (
+                        idx,
+                        idx + len(sentence_token.text),
+                    )
+                    idx += len(sentence_token.text_with_ws)
 
                 new_claim = Claim(
                     claim_id=int(uuid.uuid1()),
@@ -151,6 +161,7 @@ class RegexClaimDetector(ClaimDetector, Matcher):  # type: ignore
                     claim_span=(span_offset_start, span_offset_end),
                     claim_template=rule_id,
                 )
+                new_claim.add_theory(TOKEN_OFFSET_THEORY, claim_sentence_tokens_to_offsets)
 
                 claim_dataset.add_claim(new_claim)
 

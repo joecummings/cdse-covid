@@ -1,6 +1,7 @@
 """Claim module."""
 from dataclasses import dataclass, field
-from typing import Any, List, MutableMapping, Optional, Tuple, Union
+import logging
+from typing import Any, Dict, List, MutableMapping, Optional, Tuple, Union
 
 from cdse_covid.semantic_extraction.entities import (
     Claimer,
@@ -8,6 +9,8 @@ from cdse_covid.semantic_extraction.entities import (
     WikidataQnode,
     XVariable,
 )
+
+TOKEN_OFFSET_THEORY = "token_offset"
 
 
 @dataclass
@@ -41,6 +44,43 @@ class Claim:
     def get_theory(self, name: str) -> Optional[Any]:
         """Get an existing theory by *name*."""
         return self.theories.get(name)
+
+    def get_offsets_for_text(self, text: Optional[str]) -> Optional[Tuple[int, int]]:
+        """Get the character offsets of the given string based on its claim span."""
+        if not text:
+            return None
+        tokens_to_offsets: Dict[str, Tuple[int, int]] = self.get_theory(  # type: ignore
+            TOKEN_OFFSET_THEORY
+        )
+        text_split = text.split(" ")
+        first_token = text_split[0]
+        last_token = text_split[-1]
+        first_offsets = tokens_to_offsets.get(first_token)
+        if not first_offsets:
+            logging.warning(
+                "Could not find char offset info for token '%s' in claim sentence `%s`",
+                first_token,
+                self.claim_sentence,
+            )
+            return None
+        span_start = first_offsets[0]
+        last_offsets = tokens_to_offsets.get(last_token)
+        if not last_offsets:
+            logging.warning(
+                "Could not find char offset info for token '%s' in claim sentence`%s`",
+                last_token,
+                self.claim_sentence,
+            )
+            return None
+        span_end = last_offsets[1]
+        if span_end <= span_start:
+            logging.warning(
+                "Impossible char offsets found for string '%s' in claim sentence `%s`",
+                text,
+                self.claim_sentence,
+            )
+            return None
+        return span_start, span_end
 
     @staticmethod
     def to_json(
