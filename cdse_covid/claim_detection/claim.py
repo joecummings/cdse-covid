@@ -33,8 +33,6 @@ class Claim:
     claim_location: Optional[str] = None
     claim_location_qnode: Optional[WikidataQnode] = None
     claim_semantics: Optional[ClaimSemantics] = None
-    epistemic_status: Optional[bool] = None
-    sentiment_status: Optional[str] = None
     theories: MutableMapping[str, Any] = field(default_factory=dict)
 
     def add_theory(self, name: str, theory: Any) -> None:
@@ -88,7 +86,7 @@ class Claim:
     ) -> Union[List[MutableMapping[str, Any]], MutableMapping[str, Any], Any]:
         """Convert claim obj into a JSON mapping."""
         if isinstance(obj, dict):
-            data = {k: Claim.to_json(v, classkey) for (k, v) in obj.items()}
+            data = {k: Claim.to_json(v, classkey) for (k, v) in obj.items() if k != "theories"}
             return data
         elif hasattr(obj, "_ast"):
             return Claim.to_json(obj._ast())  # pylint: disable=protected-access
@@ -99,7 +97,7 @@ class Claim:
                 [
                     (key, Claim.to_json(value, classkey))
                     for key, value in obj.__dict__.items()
-                    if not callable(value) and not key.startswith("_")
+                    if not callable(value) and not key.startswith("_") and key != "theories"
                 ]
             )
             if classkey is not None and hasattr(obj, "__class__"):
