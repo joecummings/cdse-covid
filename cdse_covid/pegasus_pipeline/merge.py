@@ -13,8 +13,6 @@ def structure_claim(
     claim: Claim,
 ) -> Union[List[MutableMapping[str, Any]], MutableMapping[str, Any], Any]:
     """Convert claim to JSON format."""
-    if claim.theories:
-        claim.theories = {}  # Hack for now b/c we don't want to see theories
     return Claim.to_json(claim)
 
 
