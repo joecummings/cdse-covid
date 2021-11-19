@@ -10,7 +10,7 @@ from amr_utils.alignments import AMR_Alignment
 from amr_utils.amr import AMR  # pylint: disable=import-error
 
 from cdse_covid.claim_detection.claim import Claim
-from cdse_covid.semantic_extraction.entities import ClaimArg, ClaimEvent, ClaimSemantics
+from cdse_covid.semantic_extraction.mentions import ClaimArg, ClaimEvent, ClaimSemantics
 from cdse_covid.semantic_extraction.utils.amr_extraction_utils import create_node_to_token_dict
 from wikidata_linker.wikidata_linking import disambiguate_kgtk
 

@@ -8,7 +8,7 @@ from amr_utils.alignments import AMR_Alignment  # pylint: disable=import-error
 from amr_utils.amr import AMR  # pylint: disable=import-error
 
 from cdse_covid.claim_detection.claim import Claim
-from cdse_covid.semantic_extraction.entities import XVariable
+from cdse_covid.semantic_extraction.mentions import XVariable
 
 PROPBANK_PATTERN = r"[a-z]*-[0-9]{2}"
 

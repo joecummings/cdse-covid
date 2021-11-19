@@ -3,7 +3,7 @@ from dataclasses import dataclass, field
 import logging
 from typing import Any, Dict, List, MutableMapping, Optional, Tuple, Union
 
-from cdse_covid.semantic_extraction.entities import (
+from cdse_covid.semantic_extraction.mentions import (
     Claimer,
     ClaimSemantics,
     WikidataQnode,

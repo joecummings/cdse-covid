@@ -6,7 +6,7 @@ from typing import Any, List, Sequence
 
 from cdse_covid.claim_detection.claim import Claim
 from cdse_covid.claim_detection.run_claim_detection import ClaimDataset
-from cdse_covid.semantic_extraction.entities import WikidataQnode
+from cdse_covid.semantic_extraction.mentions import WikidataQnode
 from wikidata_linker.wikidata_linking import disambiguate_kgtk
 
 
