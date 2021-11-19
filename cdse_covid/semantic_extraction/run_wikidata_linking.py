@@ -4,6 +4,7 @@ import logging
 from pathlib import Path
 from typing import Any, List, Sequence
 
+from cdse_covid.claim_detection.claim import Claim
 from cdse_covid.claim_detection.run_claim_detection import ClaimDataset
 from cdse_covid.semantic_extraction.entities import WikidataQnode
 from wikidata_linker.wikidata_linking import disambiguate_kgtk
@@ -24,12 +25,12 @@ def main(claim_input: Path, srl_input: Path, amr_input: Path, output: Path) -> N
     for claim in claim_dataset:
         if claim.claimer:
             claimer_links = _find_links(claim.claim_sentence, [claim.claimer.text])
-            top_link = create_wikidata_qnodes(claimer_links)
+            top_link = create_wikidata_qnodes(claimer_links, claim)
             if top_link:
                 claim.claimer_qnode = top_link[0]
         if claim.x_variable:
             srl_links = _find_links(claim.claim_sentence, [claim.x_variable.text])
-            top_link = create_wikidata_qnodes(srl_links)
+            top_link = create_wikidata_qnodes(srl_links, claim)
             if top_link:
                 claim.x_variable_qnode = top_link[0]
 
@@ -38,17 +39,19 @@ def main(claim_input: Path, srl_input: Path, amr_input: Path, output: Path) -> N
     logging.info("Saved claims with Wikidata to %s", output)
 
 
-def create_wikidata_qnodes(links: List[Any]) -> List[WikidataQnode]:
+def create_wikidata_qnodes(links: List[Any], claim: Claim) -> List[WikidataQnode]:
     """Create WikiData Qnodes from links."""
     all_qnodes = []
     for link in links:
         if not link["options"]:
             continue
         qnode = WikidataQnode(
-            link["options"][0]["qnode"],
-            link["options"][0]["rawName"],
-            link["options"][0]["definition"],
-            link["query"],
+            text=link["options"][0]["rawName"],
+            doc_id=claim.doc_id,
+            span=claim.get_offsets_for_text(link["query"]),
+            qnode_id=link["options"][0]["qnode"],
+            description=link["options"][0]["definition"],
+            from_query=link["query"],
         )
         all_qnodes.append(qnode)
     return all_qnodes

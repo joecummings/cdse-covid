@@ -6,9 +6,12 @@ from pathlib import Path
 import re
 from typing import Any, Dict, List, MutableMapping, Optional, Set, Tuple
 
+from amr_utils.alignments import AMR_Alignment
 from amr_utils.amr import AMR  # pylint: disable=import-error
 
+from cdse_covid.claim_detection.claim import Claim
 from cdse_covid.semantic_extraction.entities import ClaimArg, ClaimEvent, ClaimSemantics
+from cdse_covid.semantic_extraction.utils.amr_extraction_utils import create_node_to_token_dict
 from wikidata_linker.wikidata_linking import disambiguate_kgtk
 
 OVERLAY = "overlay"
@@ -62,10 +65,11 @@ def get_framenet_arg_role(pb_arg_role_label: str) -> str:
 
 
 def get_all_labeled_args(
-    amr: AMR, node: str, qnode_args: MutableMapping[str, Any]
+    amr: AMR, alignments: List[AMR_Alignment], node: str, qnode_args: MutableMapping[str, Any]
 ) -> MutableMapping[str, Any]:
     """Get all labeled args from AMR node."""
     potential_args = amr.get_edges_for_node(node)
+    node_labels_to_tokens = create_node_to_token_dict(amr, alignments)
     labeled_args = {}
 
     for arg in potential_args:
@@ -75,12 +79,17 @@ def get_all_labeled_args(
                 framenet_arg = get_framenet_arg_role(arg[1])
                 if qnode_args.get(framenet_arg):
                     role = qnode_args[framenet_arg]["text_role"]
-                    labeled_args[role] = amr.nodes[arg_node]
+                    node_label = amr.nodes[arg_node]
+                    token_of_node = node_labels_to_tokens.get(arg_node)
+                    if "-" in node_label or not token_of_node:
+                        labeled_args[role] = node_label
+                    else:
+                        labeled_args[role] = token_of_node
     return labeled_args
 
 
 def get_wikidata_for_labeled_args(
-    amr: AMR, args: MutableMapping[str, Any]
+    amr: AMR, claim: Claim, args: MutableMapping[str, Any]
 ) -> MutableMapping[str, Any]:
     """Get WikiData for labeled arguments."""
     args_to_qnodes = {}
@@ -88,15 +97,30 @@ def get_wikidata_for_labeled_args(
         if "-" not in arg:
             qnode_info = disambiguate_kgtk(" ".join(amr.tokens), arg, no_ss_model=True, k=1)
             if qnode_info["options"]:
-                args_to_qnodes[role] = qnode_info["options"][0]
+                qnode_selection = qnode_info["options"][0]
             elif qnode_info["all_options"]:
-                args_to_qnodes[role] = qnode_info["all_options"][0]
+                qnode_selection = qnode_info["all_options"][0]
             else:
-                args_to_qnodes[role] = None
+                qnode_selection = None
+
+            claim_arg = None
+            if qnode_selection:
+                claim_arg = ClaimArg(
+                    text=qnode_selection.get("rawName"),
+                    doc_id=claim.doc_id,
+                    span=claim.get_offsets_for_text(arg),
+                    qnode_id=qnode_selection["qnode"],
+                    description=qnode_selection.get("definition"),
+                    from_query=arg,
+                )
+
+            args_to_qnodes[role] = claim_arg
     return args_to_qnodes
 
 
-def disambiguate_with_amr(amr_sentence: AMR) -> Optional[ClaimSemantics]:
+def disambiguate_with_amr(
+    amr_sentence: AMR, amr_alignments: List[AMR_Alignment], claim: Claim
+) -> Optional[ClaimSemantics]:
     """Disambiguate AMR sentence according to DWD overlay."""
     # Make both tables
     master_table_path = PARENT_DIR / "resources" / "pb_to_qnode_master.json"
@@ -152,16 +176,17 @@ def disambiguate_with_amr(amr_sentence: AMR) -> Optional[ClaimSemantics]:
     wd: MutableMapping[str, Any] = {}
     if best_qnode and best_qnode.get("args"):
         node = get_node_from_pb(amr_sentence, best_qnode["pb"])
-        labeled_args = get_all_labeled_args(amr_sentence, node, best_qnode["args"])
-        wd = get_wikidata_for_labeled_args(amr_sentence, labeled_args)
+        labeled_args = get_all_labeled_args(amr_sentence, amr_alignments, node, best_qnode["args"])
+        wd = get_wikidata_for_labeled_args(amr_sentence, claim, labeled_args)
 
     claim_event = ClaimEvent(
         text=best_qnode.get("name"),
+        doc_id=claim.doc_id,
         description=best_qnode.get("definition"),
         from_query=best_qnode.get("pb"),
         qnode_id=best_qnode.get("qnode"),
     )
-    claim_args = {k: ClaimArg(w) for k, w in wd.items()}
+    claim_args = {k: w for k, w in wd.items()}
     return ClaimSemantics(event=claim_event, args=claim_args)
 
 
