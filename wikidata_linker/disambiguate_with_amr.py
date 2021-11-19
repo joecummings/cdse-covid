@@ -88,23 +88,6 @@ def get_all_labeled_args(
     return labeled_args
 
 
-def get_wikidata_for_labeled_args_old(
-    amr: AMR, args: MutableMapping[str, Any]
-) -> MutableMapping[str, Any]:
-    """Get WikiData for labeled arguments."""
-    args_to_qnodes = {}
-    for role, arg in args.items():
-        if "-" not in arg:
-            qnode_info = disambiguate_kgtk(" ".join(amr.tokens), arg, no_ss_model=True, k=1)
-            if qnode_info["options"]:
-                args_to_qnodes[role] = qnode_info["options"][0]
-            elif qnode_info["all_options"]:
-                args_to_qnodes[role] = qnode_info["all_options"][0]
-            else:
-                args_to_qnodes[role] = None
-    return args_to_qnodes
-
-
 def get_wikidata_for_labeled_args(
     amr: AMR, claim: Claim, args: MutableMapping[str, Any]
 ) -> MutableMapping[str, Any]:
