@@ -96,8 +96,6 @@ def get_wikidata_for_labeled_args(
     for role, arg in args.items():
         if "-" not in arg:
             qnode_info = disambiguate_kgtk(" ".join(amr.tokens), arg, no_ss_model=True, k=1)
-            qnode_info["text"] = arg
-            qnode_info["span"] = claim.get_offsets_for_text(arg)
             if qnode_info["options"]:
                 qnode_selection = qnode_info["options"][0]
             elif qnode_info["all_options"]:
