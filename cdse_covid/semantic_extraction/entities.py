@@ -2,6 +2,8 @@
 from dataclasses import dataclass
 from typing import Mapping, Optional, Tuple
 
+from cdse_covid.pegasus_pipeline.ingesters.edl_output_ingester import EDLEntity
+
 
 @dataclass
 class Mention:
@@ -9,7 +11,7 @@ class Mention:
 
     text: Optional[str] = ""
     mention_id: Optional[int] = None
-    ent_id: Optional[str] = None
+    entity: Optional[EDLEntity] = None
     doc_id: Optional[str] = None
     span: Optional[Tuple[int, int]] = None
 
