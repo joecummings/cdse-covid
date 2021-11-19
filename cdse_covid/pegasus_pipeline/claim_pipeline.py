@@ -56,15 +56,16 @@ def main(params: Parameters) -> None:
     edl_params = params.namespace("edl")
     edl_locator = base_locator / "edl"
     edl_ingester = edl_params.existing_file("ingester")
+    edl_mapping_file = directory_for(edl_locator) / "edl_mapping.pkl"
     edl_final = edl_params.existing_directory("edl_output_dir")
     edl_job = run_python_on_args(
         edl_locator,
         edl_ingester,
         f"""
         --edl-output {edl_final} \
-        --output edl_out.pkl
+        --output {edl_mapping_file}
         """,
-        depends_on=[]
+        depends_on=[],
     )
     edl_internal_file = ValueArtifact(value="edl_out.pkl", depends_on=[edl_job])
 
@@ -197,15 +198,17 @@ def main(params: Parameters) -> None:
     entity_loc = edl_locator / "edl_unified"
     ent_python_file = edl_params.existing_file("ent_unification")
     ent_output_dir = directory_for(entity_loc) / "documents"
+    include_contains = edl_params.boolean("include_contains")
     ent_unify_job = run_python_on_args(
         entity_loc,
         ent_python_file,
         f"""
         --edl {edl_internal_file.value} \
         --claims {overlay_output.value} \
-        --output {ent_output_dir}
+        --output {ent_output_dir} \
+        --include-contains {include_contains}
         """,
-        depends_on=[overlay_output]
+        depends_on=[overlay_output],
     )
     claims_with_entities = ValueArtifact(value=ent_output_dir, depends_on=[ent_unify_job])
 
