@@ -19,6 +19,8 @@ MASTER = "master"
 
 PARENT_DIR = Path(__file__).parent
 
+FRAME_LABEL_PATTERN = r"[a-z-]+-[0-9]{2}"  # e.g. have-name-91
+
 
 def get_node_from_pb(amr: AMR, pb_label: str) -> str:
     """Get an AMR node from PropBank label."""
@@ -81,8 +83,15 @@ def get_all_labeled_args(
                     role = qnode_args[framenet_arg]["text_role"]
                     node_label = amr.nodes[arg_node]
                     token_of_node = node_labels_to_tokens.get(arg_node)
-                    if "-" in node_label or not token_of_node:
-                        labeled_args[role] = node_label
+                    if not token_of_node:
+                        labeled_args[role] = node_label.rsplit("-", 1)[0]
+                    elif any(
+                        token_of_node.endswith(f" {stop_word}") for stop_word in {
+                            "and", "or", "the", "a", "is", "are", "like", "in"
+                        }
+                    ):
+                        # Sometimes the extracted token or part of it is irrelevant
+                        labeled_args[role] = token_of_node.rsplit(" ")[0]
                     else:
                         labeled_args[role] = token_of_node
     return labeled_args
@@ -142,10 +151,8 @@ def disambiguate_with_amr(
         pbs_to_qnodes_overlay = json.load(in_json_2)
 
     # Gather propbank nodes from resulting graph
-    frame_label_pattern = r"[a-z-]+-[0-9]{2}"  # e.g. have-name-91
-
     label_list_all = amr_sentence.get_ordered_node_labels()
-    pb_label_list = [label for label in label_list_all if re.match(frame_label_pattern, label)]
+    pb_label_list = [label for label in label_list_all if re.match(FRAME_LABEL_PATTERN, label)]
     if not pb_label_list:
         logging.warning("No PropBank labels in the graph!")
         return None
