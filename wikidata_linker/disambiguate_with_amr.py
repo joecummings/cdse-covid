@@ -125,7 +125,7 @@ def get_wikidata_for_labeled_args(
             claim_arg = None
             if qnode_selection:
                 claim_arg = ClaimArg(
-                    text=qnode_selection["rawName"],
+                    text=qnode_selection.get("rawName"),
                     doc_id=claim.doc_id,
                     span=claim.get_offsets_for_text(arg),
                     qnode_id=qnode_selection["qnode"],
@@ -200,6 +200,7 @@ def disambiguate_with_amr(
 
     claim_event = ClaimEvent(
         text=best_qnode.get("name"),
+        doc_id=claim.doc_id,
         description=best_qnode.get("definition"),
         from_query=best_qnode.get("pb"),
         qnode_id=best_qnode.get("qnode"),
