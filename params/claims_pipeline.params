@@ -6,11 +6,17 @@ _includes:
 workflow_directory: "%experiments_root%"
 experiment_name: claims
 
-corpus: "%project_root%/data/large_aida_english"
+corpus: "%project_root%/data/english_data_large"
 
 claim_detection:
     python_file: "%project_root%/cdse_covid/claim_detection/run_claim_detection.py"
     patterns: "%project_root%/cdse_covid/claim_detection/topics.json"
+
+edl:
+    edl_output_dir: "%project_root%/data/uiuc_edl_2021_11_11"
+    ingester: "%project_root%/cdse_covid/pegasus_pipeline/ingesters/edl_output_ingester.py"
+    ent_unification: "%project_root%/cdse_covid/semantic_extraction/run_entity_merging.py"
+    include_contains: true
 
 amr:
     python_file_all: "%project_root%/cdse_covid/pegasus_pipeline/run_amr_parsing_all.py"
