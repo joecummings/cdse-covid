@@ -52,6 +52,22 @@ def main(params: Parameters) -> None:
     )
     preprocessed_docs = ValueArtifact(value=spacified_output_dir, depends_on=[preprocess_job])
 
+    # Ingest EDL data
+    edl_params = params.namespace("edl")
+    edl_locator = base_locator / "edl"
+    edl_ingester = edl_params.existing_file("ingester")
+    edl_final = edl_params.existing_directory("edl_output_dir")
+    edl_job = run_python_on_args(
+        edl_locator,
+        edl_ingester,
+        f"""
+        --edl-output {edl_final} \
+        --output edl_out.pkl
+        """,
+        depends_on=[]
+    )
+    edl_internal_file = ValueArtifact(value="edl_out.pkl", depends_on=[edl_job])
+
     # AMR parsing over the entirety of each document
     amr_params = params.namespace("amr")
     amr_all_loc = base_locator / "amr_all"
@@ -177,6 +193,22 @@ def main(params: Parameters) -> None:
     )
     overlay_output = ValueArtifact(value=overlay_output_dir, depends_on=[overlay_job])
 
+    # Entity unification
+    entity_loc = edl_locator / "edl_unified"
+    ent_python_file = edl_params.existing_file("ent_unification")
+    ent_output_dir = directory_for(entity_loc) / "documents"
+    ent_unify_job = run_python_on_args(
+        entity_loc,
+        ent_python_file,
+        f"""
+        --edl {edl_internal_file.value} \
+        --claims {overlay_output.value} \
+        --output {ent_output_dir}
+        """,
+        depends_on=[overlay_output]
+    )
+    claims_with_entities = ValueArtifact(value=ent_output_dir, depends_on=[ent_unify_job])
+
     # Unify
     unify_params = params.namespace("unify")
     unify_loc = base_locator / "unify"
@@ -186,10 +218,10 @@ def main(params: Parameters) -> None:
         unify_loc,
         unify_python_job,
         f"""
-        --input {overlay_output.value} \
+        --input {claims_with_entities.value} \
         --output {output_file} \
         """,
-        depends_on=[overlay_output],
+        depends_on=[claims_with_entities],
     )
 
     write_workflow_description()
