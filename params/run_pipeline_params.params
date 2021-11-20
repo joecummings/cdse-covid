@@ -7,6 +7,10 @@ CHECKPOINT_DIR="$PROJECT_DIR/checkpoints"
 
 SPACIFIED_OUTPUT="$PROJECT_DIR/cdse_covid/pegasus_pipeline/spacified"
 
+EDL_FINAL="$PROJECT_DIR/data/uiuc_edl_2021_11_11"
+EDL_DIR="$PROJECT_DIR/edl
+EDL_MAPPING_FILE="$EDL_DIR/edl_mapping.pkl"
+
 MAX_TOKENS=50
 AMR_All_OUTPUT="$PROJECT_DIR/cdse_covid/pegasus_pipeline/amr_all_out"
 
@@ -21,5 +25,7 @@ SRL_OUTPUT="$PROJECT_DIR/cdse_covid/semantic_extraction/srl_out"
 WIKIDATA_OUTPUT="$PROJECT_DIR/cdse_covid/semantic_extraction/wikidata_out"
 
 OVERLAY_OUTPUT="$PROJECT_DIR/cdse_covid/semantic_extraction/overlay_out"
+
+ENTITY_OUTPUT="$PROJECT_DIR/cdse_covid/semantic_extraction/entity_out"
 
 FINAL_OUTPUT_FILE="$PROJECT_DIR/cdse_covid/output.json"

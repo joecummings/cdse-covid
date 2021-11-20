@@ -25,6 +25,18 @@ if [[ ! -e "$CHECKPOINT_DIR"/spacified_ckpt ]]; then
   echo "Spacified files are now in $SPACIFIED_OUTPUT"
 fi
 
+# EDL ingestion
+if [[ ! -e "$CHECKPOINT_DIR"/edl_ckpt ]]; then
+  echo "Starting EDL ingestion..."
+  mkdir -p "$EDL_DIR"
+  python "$PROJECT_DIR"/cdse_covid/pegasus_pipeline/ingesters/edl_output_ingester.py \
+      --edl-output "$EDL_FINAL" \
+      --output "$EDL_MAPPING_FILE"
+
+  touch "$CHECKPOINT_DIR"/edl_ckpt
+  echo "Ingested EDL is now saved to $EDL_MAPPING_FILE"
+fi
+
 # AMR-all
 conda activate transition-amr-parser
 if [[ ! -e "$CHECKPOINT_DIR"/amr_all_ckpt ]]; then
@@ -111,11 +123,24 @@ if [[ ! -e "$CHECKPOINT_DIR"/amr_overlay_ckpt ]]; then
   echo "Output from DWD/Overlay is now in $OVERLAY_OUTPUT"
 fi
 
-# Postprocessing
+# Entity unification
 conda activate $CDSE_COVID_ENV_NAME
+if [[ ! -e "$CHECKPOINT_DIR"/entity_ckpt ]]; then
+  echo "Starting entity unification..."
+  mkdir -p "$OVERLAY_OUTPUT"
+  python "$PROJECT_DIR"/cdse_covid/semantic_extraction/run_entity_merging.py \
+      --edl "$EDL_MAPPING_FILE" \
+      --claims "$OVERLAY_OUTPUT" \
+      --output "$ENTITY_OUTPUT" \
+      --include-contains
+  touch "$CHECKPOINT_DIR"/entity_ckpt
+  echo "Entity output is now in $ENTITY_OUTPUT"
+fi
+
+# Postprocessing
 echo "Merging output..."
 python "$PROJECT_DIR"/cdse_covid/pegasus_pipeline/merge.py \
-    --input "$OVERLAY_OUTPUT" \
+    --input "$ENTITY_OUTPUT" \
     --output "$FINAL_OUTPUT_FILE"
 echo "Final output has been saved to $FINAL_OUTPUT_FILE"
 
