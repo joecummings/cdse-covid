@@ -50,6 +50,9 @@ class Claim:
         tokens_to_offsets: Dict[str, Tuple[int, int]] = self.get_theory(  # type: ignore
             TOKEN_OFFSET_THEORY
         )
+        if not tokens_to_offsets:
+            logging.warning("No tokens -> offsets mapping for claim `%s`.", self.claim_sentence)
+            return None
         text_split = text.split(" ")
         first_token = text_split[0]
         last_token = text_split[-1]
