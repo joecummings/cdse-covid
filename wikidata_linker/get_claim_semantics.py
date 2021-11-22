@@ -11,7 +11,10 @@ from amr_utils.amr import AMR  # pylint: disable=import-error
 
 from cdse_covid.claim_detection.claim import Claim
 from cdse_covid.semantic_extraction.mentions import ClaimArg, ClaimEvent, ClaimSemantics
-from cdse_covid.semantic_extraction.utils.amr_extraction_utils import create_node_to_token_dict, PROPBANK_PATTERN
+from cdse_covid.semantic_extraction.utils.amr_extraction_utils import (
+    PROPBANK_PATTERN,
+    create_node_to_token_dict,
+)
 from wikidata_linker.wikidata_linking import disambiguate_kgtk
 
 OVERLAY = "overlay"
@@ -19,6 +22,8 @@ MASTER = "master"
 
 PARENT_DIR = Path(__file__).parent
 ORIGINAL_MASTER_TABLE = PARENT_DIR / "resources" / "qe_master.json"
+
+STOP_WORDS = ["and", "or", "the", "a", "is", "are", "like", "in"]
 
 
 def get_node_from_pb(amr: AMR, pb_label: str) -> str:
@@ -84,11 +89,7 @@ def get_all_labeled_args(
                     token_of_node = node_labels_to_tokens.get(arg_node)
                     if not token_of_node:
                         labeled_args[role] = node_label.rsplit("-", 1)[0]
-                    elif any(
-                        token_of_node.endswith(f" {stop_word}") for stop_word in {
-                            "and", "or", "the", "a", "is", "are", "like", "in"
-                        }
-                    ):
+                    elif any(token_of_node.endswith(f" {stop_word}") for stop_word in STOP_WORDS):
                         # Sometimes the extracted token or part of it is irrelevant
                         labeled_args[role] = token_of_node.rsplit(" ")[0]
                     else:
@@ -125,7 +126,12 @@ def get_wikidata_for_labeled_args(
     return args_to_qnodes
 
 
-def load_tables():
+def load_tables() -> Tuple[Dict[str, Any], Dict[str, Any]]:
+    """Load propbank-to-qnode mappings from files.
+
+    If they aren't found where expected, they will be generated
+    from their respective original mapping files.
+    """
     master_table_path = PARENT_DIR / "resources" / "pb_to_qnode_master.json"
     if not master_table_path.exists():
         logging.info("Could not find `pb_to_qnode_master.json`; generating it now")
@@ -160,10 +166,7 @@ def get_claim_semantics(
         return None
 
     best_qnode = determine_best_qnode(
-        pb_label_list,
-        pbs_to_qnodes_overlay,
-        pbs_to_qnodes_master,
-        amr_sentence
+        pb_label_list, pbs_to_qnodes_overlay, pbs_to_qnodes_master, amr_sentence
     )
 
     wd: MutableMapping[str, Any] = {}
@@ -184,11 +187,11 @@ def get_claim_semantics(
 
 
 def determine_best_qnode(
-        pb_label_list: List[str],
-        pbs_to_qnodes_overlay,
-        pbs_to_qnodes_master,
-        amr: AMR,
-        check_mappings_only: bool = False
+    pb_label_list: List[str],
+    pbs_to_qnodes_overlay: Dict[str, Any],
+    pbs_to_qnodes_master: Dict[str, Any],
+    amr: AMR,
+    check_mappings_only: bool = False,
 ) -> Dict[str, Any]:
     """Return list of qnode results from the overlay.
 
@@ -226,9 +229,7 @@ def determine_best_qnode(
             return ranked_qnodes[0]
     else:
         # Finally, run a KGTK lookup
-        best_kgtk_qnode, kgtk_result_from_root = get_kgtk_result_for_event(
-            pb_label_list, amr
-        )
+        best_kgtk_qnode, kgtk_result_from_root = get_kgtk_result_for_event(pb_label_list, amr)
         # Prioritize the root if there is one
         if kgtk_result_from_root or not ranked_qnodes:
             return best_kgtk_qnode
@@ -298,6 +299,7 @@ def get_master_result(
 
 
 def get_kgtk_result_for_event(pb_label_list: List[str], amr: AMR) -> Tuple[Dict[str, Any], bool]:
+    """Get the KGTK result for an event in the claim sentence."""
     for pb_label in pb_label_list:
         is_root = pb_label == amr.nodes[amr.root]
         formatted_pb = pb_label.rsplit("-", 1)[0]

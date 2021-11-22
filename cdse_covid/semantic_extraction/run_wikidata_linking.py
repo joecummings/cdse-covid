@@ -1,15 +1,15 @@
 """Run WikiData over claim semantics."""
 import argparse
 import logging
-import re
 from pathlib import Path
+import re
 from typing import Any, Optional
 
 from cdse_covid.claim_detection.claim import Claim
 from cdse_covid.claim_detection.run_claim_detection import ClaimDataset
 from cdse_covid.semantic_extraction.mentions import WikidataQnode
 from cdse_covid.semantic_extraction.utils.amr_extraction_utils import PROPBANK_PATTERN
-from wikidata_linker.get_claim_semantics import load_tables, determine_best_qnode
+from wikidata_linker.get_claim_semantics import determine_best_qnode, load_tables
 from wikidata_linker.wikidata_linking import disambiguate_kgtk
 
 
@@ -18,9 +18,7 @@ def find_links(span: str, query: str) -> Any:
     return disambiguate_kgtk(span, query, k=1)
 
 
-def get_best_qnode_for_string(
-        claim_string: str, claim: Claim
-) -> Optional[WikidataQnode]:
+def get_best_qnode_for_string(claim_string: str, claim: Claim) -> Optional[WikidataQnode]:
     """Return the best WikidataQnode for a string within the claim sentence.
 
     First, if the string comes from a propbank frame, try a DWD lookup.
@@ -31,6 +29,15 @@ def get_best_qnode_for_string(
 
     amr = claim.get_theory("amr")
     alignments = claim.get_theory("alignments")
+
+    if not amr or not alignments:
+        logging.warning(
+            "Could not load AMR or alignments for claim sentence"
+            " '%s' while finding qnode for '%s'.",
+            claim.claim_sentence,
+            claim_string,
+        )
+        return None
 
     # Find the label associated with the last token of the variable text
     # (any tokens before it are likely modifiers)
@@ -44,7 +51,7 @@ def get_best_qnode_for_string(
     if not variable_node_label:
         logging.warning(
             "DWD lookup: could not find AMR node corresponding with XVariable/Claimer '%s'",
-            claim_string
+            claim_string,
         )
 
     elif re.match(PROPBANK_PATTERN, variable_node_label):
@@ -53,7 +60,7 @@ def get_best_qnode_for_string(
             pbs_to_qnodes_overlay,
             pbs_to_qnodes_master,
             amr,
-            check_mappings_only=True
+            check_mappings_only=True,
         )
         if best_qnode:
             return WikidataQnode(
