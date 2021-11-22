@@ -67,7 +67,7 @@ def main(params: Parameters) -> None:
         """,
         depends_on=[],
     )
-    edl_internal_file = ValueArtifact(value="edl_out.pkl", depends_on=[edl_job])
+    edl_internal_file = ValueArtifact(value=edl_mapping_file, depends_on=[edl_job])
 
     # AMR parsing over the entirety of each document
     amr_params = params.namespace("amr")
@@ -206,7 +206,7 @@ def main(params: Parameters) -> None:
         --edl {edl_internal_file.value} \
         --claims {overlay_output.value} \
         --output {ent_output_dir} \
-        --include-contains {include_contains}
+        {'--include-contains' if include_contains else ''}
         """,
         depends_on=[overlay_output],
     )
