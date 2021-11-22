@@ -12,7 +12,7 @@ from spacy.language import Language
 from cdse_covid.claim_detection.run_claim_detection import ClaimDataset
 from cdse_covid.pegasus_pipeline.run_amr_parsing_all import tokenize_sentence
 from cdse_covid.semantic_extraction.models.amr import AMRModel
-from cdse_covid.semantic_extraction.run_wikidata_linking import get_best_qnode_for_string
+from cdse_covid.semantic_extraction.run_wikidata_linking import get_best_qnode_for_mention_text
 from cdse_covid.semantic_extraction.utils.amr_extraction_utils import (
     identify_x_variable,
     identify_x_variable_covid,
@@ -49,16 +49,14 @@ def main(
         if possible_claimer:
             # Add claimer data to Claim
             claim.claimer = possible_claimer
-            if possible_claimer.text:
-                best_qnode = get_best_qnode_for_string(
-                    possible_claimer.text,
-                    possible_claimer.mention_id,
-                    claim,
-                    sentence_amr.graph,
-                    sentence_amr.alignments,
-                )
-                if best_qnode:
-                    claim.claimer_qnode = best_qnode
+            best_qnode = get_best_qnode_for_mention_text(
+                possible_claimer,
+                claim,
+                sentence_amr.graph,
+                sentence_amr.alignments,
+            )
+            if best_qnode:
+                claim.claimer_qnode = best_qnode
 
         claim_amr = amr_parser.amr_parse_sentences([tokenized_claim])
 
