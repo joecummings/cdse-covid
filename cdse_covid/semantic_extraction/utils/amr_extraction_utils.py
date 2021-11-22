@@ -7,7 +7,7 @@ from typing import Any, Dict, List, MutableMapping, Optional
 from amr_utils.alignments import AMR_Alignment  # pylint: disable=import-error
 from amr_utils.amr import AMR  # pylint: disable=import-error
 
-from cdse_covid.claim_detection.claim import Claim
+from cdse_covid.claim_detection.claim import Claim, create_id
 from cdse_covid.semantic_extraction.mentions import XVariable
 
 PROPBANK_PATTERN = r"[a-z]*-[0-9]{2}"
@@ -120,7 +120,12 @@ def create_node_to_token_dict(amr: AMR, alignments: List[AMR_Alignment]) -> Dict
 def create_x_variable(text: Optional[str], claim: Claim) -> Optional[XVariable]:
     """Return an X-Variable object using the variable text and its claim data."""
     if text:
-        return XVariable(text=text, doc_id=claim.doc_id, span=claim.get_offsets_for_text(text))
+        return XVariable(
+            mention_id=create_id(),
+            text=text,
+            doc_id=claim.doc_id,
+            span=claim.get_offsets_for_text(text),
+        )
     return None
 
 

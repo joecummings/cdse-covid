@@ -9,14 +9,13 @@ import logging
 from pathlib import Path
 import pickle
 from typing import Any, Dict, List
-import uuid
 
 import spacy
 from spacy.language import Language
 from spacy.matcher import Matcher
 from spacy.tokens import Span
 
-from cdse_covid.claim_detection.claim import TOKEN_OFFSET_THEORY, Claim
+from cdse_covid.claim_detection.claim import TOKEN_OFFSET_THEORY, Claim, create_id
 from cdse_covid.dataset import AIDADataset
 
 CORONA_NAME_VARIATIONS = [
@@ -154,7 +153,7 @@ class RegexClaimDetector(ClaimDetector, Matcher):  # type: ignore
                     idx += len(sentence_token.text_with_ws)
 
                 new_claim = Claim(
-                    claim_id=int(uuid.uuid1()),
+                    claim_id=create_id(),
                     doc_id=doc[0],
                     claim_text=span.text,
                     claim_sentence=span.sent.text,

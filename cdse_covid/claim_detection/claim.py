@@ -2,6 +2,7 @@
 from dataclasses import dataclass, field
 import logging
 from typing import Any, Dict, List, MutableMapping, Optional, Tuple, Union
+from uuid import uuid4
 
 from cdse_covid.semantic_extraction.mentions import (
     Claimer,
@@ -13,11 +14,16 @@ from cdse_covid.semantic_extraction.mentions import (
 TOKEN_OFFSET_THEORY = "token_offset"
 
 
+def create_id() -> str:
+    """Create UUID id using the first 8 letters."""
+    return str(uuid4())[:8]
+
+
 @dataclass
 class Claim:
     """A claim as documented by GAIA Nov 12, 2021."""
 
-    claim_id: int
+    claim_id: str
     doc_id: str
     claim_text: str
     claim_sentence: str

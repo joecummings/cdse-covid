@@ -7,7 +7,7 @@ from amr_utils.amr import AMR  # pylint: disable=import-error
 from nltk.corpus import framenet
 from nltk.stem import WordNetLemmatizer
 
-from cdse_covid.claim_detection.claim import Claim
+from cdse_covid.claim_detection.claim import Claim, create_id
 from cdse_covid.semantic_extraction.mentions import Claimer
 from cdse_covid.semantic_extraction.utils.amr_extraction_utils import (
     create_node_to_token_dict,
@@ -51,7 +51,10 @@ def identify_claimer(
     arg_node = get_argument_node(amr, alignments, claim_node)
     if arg_node:
         return Claimer(
-            text=arg_node, doc_id=claim.doc_id, span=claim.get_offsets_for_text(arg_node)
+            mention_id=create_id(),
+            text=arg_node,
+            doc_id=claim.doc_id,
+            span=claim.get_offsets_for_text(arg_node),
         )
     return None
 

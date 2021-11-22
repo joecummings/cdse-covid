@@ -10,7 +10,7 @@ class Mention:
     """Base mention."""
 
     text: Optional[str] = ""
-    mention_id: Optional[int] = None
+    mention_id: Optional[str] = None
     entity: Optional[EDLEntity] = None
     doc_id: Optional[str] = None
     span: Optional[Tuple[int, int]] = None
