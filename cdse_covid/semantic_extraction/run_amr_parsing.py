@@ -51,7 +51,11 @@ def main(
             claim.claimer = possible_claimer
             if possible_claimer.text:
                 best_qnode = get_best_qnode_for_string(
-                    possible_claimer.text, claim, sentence_amr.graph, sentence_amr.alignments
+                    possible_claimer.text,
+                    possible_claimer.mention_id,
+                    claim,
+                    sentence_amr.graph,
+                    sentence_amr.alignments,
                 )
                 if best_qnode:
                     claim.claimer_qnode = best_qnode

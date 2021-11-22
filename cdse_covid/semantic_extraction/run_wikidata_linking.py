@@ -22,7 +22,11 @@ def find_links(span: str, query: str) -> Any:
 
 
 def get_best_qnode_for_string(
-    claim_string: str, claim: Claim, amr: AMR, alignments: List[AMR_Alignment]
+    claim_string: str,
+    mention_id: Optional[str],
+    claim: Claim,
+    amr: AMR,
+    alignments: List[AMR_Alignment],
 ) -> Optional[WikidataQnode]:
     """Return the best WikidataQnode for a string within the claim sentence.
 
@@ -58,6 +62,7 @@ def get_best_qnode_for_string(
         if best_qnode:
             return WikidataQnode(
                 text=best_qnode.get("name"),
+                mention_id=mention_id,
                 doc_id=claim.doc_id,
                 description=best_qnode.get("definition"),
                 from_query=best_qnode.get("pb"),
@@ -65,7 +70,7 @@ def get_best_qnode_for_string(
             )
     # If no Qnode was found, try KGTK
     claim_variable_links = find_links(claim.claim_sentence, claim_string)
-    top_link = create_wikidata_qnodes(claim_variable_links, claim)
+    top_link = create_wikidata_qnodes(claim_variable_links, mention_id, claim)
     if top_link:
         return top_link
     return None
@@ -84,7 +89,11 @@ def main(claim_input: Path, srl_input: Path, amr_input: Path, output: Path) -> N
         if claim_amr and claim_alignments:
             if claim.x_variable:
                 best_qnode = get_best_qnode_for_string(
-                    claim.x_variable.text, claim, claim_amr, claim_alignments
+                    claim.x_variable.text,
+                    claim.x_variable.mention_id,
+                    claim,
+                    claim_amr,
+                    claim_alignments,
                 )
                 if best_qnode:
                     claim.x_variable_qnode = best_qnode
@@ -99,7 +108,9 @@ def main(claim_input: Path, srl_input: Path, amr_input: Path, output: Path) -> N
     logging.info("Saved claims with Wikidata to %s", output)
 
 
-def create_wikidata_qnodes(link: Any, claim: Claim) -> Optional[WikidataQnode]:
+def create_wikidata_qnodes(
+    link: Any, mention_id: Optional[str], claim: Claim
+) -> Optional[WikidataQnode]:
     """Create WikiData Qnodes from links."""
     if len(link["options"]) < 1:
         if len(link["all_options"]) < 1:
@@ -116,6 +127,7 @@ def create_wikidata_qnodes(link: Any, claim: Claim) -> Optional[WikidataQnode]:
 
     return WikidataQnode(
         text=text,
+        mention_id=mention_id,
         doc_id=claim.doc_id,
         span=claim.get_offsets_for_text(link["query"]),
         qnode_id=qnode,
