@@ -98,6 +98,7 @@ if [[ ! -e "$CHECKPOINT_DIR"/srl_ckpt ]]; then
 fi
 
 # Wikidata linking
+conda activate transition-amr-parser
 if [[ ! -e "$CHECKPOINT_DIR"/wikidata_ckpt ]]; then
   echo "Starting Wikidata linking..."
   mkdir -p "$WIKIDATA_OUTPUT"
@@ -112,7 +113,6 @@ if [[ ! -e "$CHECKPOINT_DIR"/wikidata_ckpt ]]; then
 fi
 
 # AMR-overlay
-conda activate transition-amr-parser
 if [[ ! -e "$CHECKPOINT_DIR"/amr_overlay_ckpt ]]; then
   echo "Starting AMR for DWD/overlay..."
   mkdir -p "$OVERLAY_OUTPUT"

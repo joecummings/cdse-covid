@@ -171,6 +171,11 @@ def main(params: Parameters) -> None:
         --amr-input {amr_output.value} \
         --output {wikidata_output_dir} \
         """,
+        override_conda_config=CondaConfiguration(
+            conda_base_path=params.existing_directory("conda_base_path"),
+            conda_environment="transition-amr-parser",
+        ),
+        resource_request=larger_resource,
         depends_on=[srl_output, amr_output],
     )
     wikidata_output = ValueArtifact(value=wikidata_output_dir, depends_on=[wikidata_job])
