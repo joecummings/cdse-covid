@@ -8,6 +8,7 @@ from typing import Any, Dict, List, MutableMapping, Optional, Set, Tuple
 
 from amr_utils.alignments import AMR_Alignment
 from amr_utils.amr import AMR  # pylint: disable=import-error
+from nltk.corpus import stopwords
 
 from cdse_covid.claim_detection.claim import Claim
 from cdse_covid.semantic_extraction.mentions import ClaimArg, ClaimEvent, ClaimSemantics
@@ -23,7 +24,7 @@ MASTER = "master"
 PARENT_DIR = Path(__file__).parent
 ORIGINAL_MASTER_TABLE = PARENT_DIR / "resources" / "qe_master.json"
 
-STOP_WORDS = ["and", "or", "the", "a", "is", "are", "like", "in"]
+STOP_WORDS = set(stopwords.words("english")).union({"like"})
 
 
 def get_node_from_pb(amr: AMR, pb_label: str) -> str:

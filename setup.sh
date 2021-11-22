@@ -48,6 +48,7 @@ echo "Finished installing amr requirements (1/5)"
 # Download wordnet & framenet to the currently active conda env
 python -m nltk.downloader -d "$CONDA_PREFIX"/nltk_data wordnet
 python -m nltk.downloader -d "$CONDA_PREFIX"/nltk_data framenet_v17
+python -m nltk.downloader -d "$CONDA_PREFIX"/nltk_data stopwords
 
 # Transition AMR Parser installation
 echo "Installing transition-amr-parser..."
