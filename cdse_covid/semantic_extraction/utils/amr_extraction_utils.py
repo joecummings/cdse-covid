@@ -10,7 +10,7 @@ from amr_utils.amr import AMR  # pylint: disable=import-error
 from cdse_covid.claim_detection.claim import Claim, create_id
 from cdse_covid.semantic_extraction.mentions import XVariable
 
-PROPBANK_PATTERN = r"[a-z]*-[0-9]{2}"
+PROPBANK_PATTERN = r"[a-z]*-[0-9]{2}"  # e.g. have-name-91
 
 
 def get_full_name_value(
