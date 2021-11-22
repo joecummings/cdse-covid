@@ -17,6 +17,7 @@ from cdse_covid.semantic_extraction.utils.amr_extraction_utils import (
     identify_x_variable_covid,
 )
 from cdse_covid.semantic_extraction.utils.claimer_utils import identify_claimer
+from cdse_covid.semantic_extraction.run_wikidata_linking import get_best_qnode_for_string
 
 COVID_DOMAIN = "covid"
 
@@ -46,6 +47,11 @@ def main(
         )
         if possible_claimer:
             claim.claimer = possible_claimer
+            best_qnode = get_best_qnode_for_string(
+                possible_claimer.text, claim, sentence_amr.graph, sentence_amr.alignments
+            )
+            if best_qnode:
+                claim.claimer_qnode = best_qnode
 
         claim_amr = amr_parser.amr_parse_sentences([tokenized_claim])
 

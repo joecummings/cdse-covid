@@ -5,6 +5,9 @@ from pathlib import Path
 import re
 from typing import Any, Optional
 
+from amr_utils.alignments import AMR_Alignment
+from amr_utils.amr import AMR
+
 from cdse_covid.claim_detection.claim import Claim
 from cdse_covid.claim_detection.run_claim_detection import ClaimDataset
 from cdse_covid.semantic_extraction.mentions import WikidataQnode
@@ -18,7 +21,12 @@ def find_links(span: str, query: str) -> Any:
     return disambiguate_kgtk(span, query, k=1)
 
 
-def get_best_qnode_for_string(claim_string: str, claim: Claim) -> Optional[WikidataQnode]:
+def get_best_qnode_for_string(
+        claim_string: str,
+        claim: Claim,
+        amr: AMR,
+        alignments: List[AMR_Alignment]
+) -> Optional[WikidataQnode]:
     """Return the best WikidataQnode for a string within the claim sentence.
 
     First, if the string comes from a propbank frame, try a DWD lookup.
@@ -26,18 +34,6 @@ def get_best_qnode_for_string(claim_string: str, claim: Claim) -> Optional[Wikid
     """
     # Make both tables
     pbs_to_qnodes_master, pbs_to_qnodes_overlay = load_tables()
-
-    amr = claim.get_theory("amr")
-    alignments = claim.get_theory("alignments")
-
-    if not amr or not alignments:
-        logging.warning(
-            "Could not load AMR or alignments for claim sentence"
-            " '%s' while finding qnode for '%s'.",
-            claim.claim_sentence,
-            claim_string,
-        )
-        return None
 
     # Find the label associated with the last token of the variable text
     # (any tokens before it are likely modifiers)
@@ -86,14 +82,20 @@ def main(claim_input: Path, srl_input: Path, amr_input: Path, output: Path) -> N
     claim_dataset = ClaimDataset.from_multiple_claims_ds(ds1, ds2, ds3)
 
     for claim in claim_dataset:
-        if claim.claimer:
-            best_qnode = get_best_qnode_for_string(claim.claimer.text, claim)
-            if best_qnode:
-                claim.claimer_qnode = best_qnode
-        if claim.x_variable:
-            best_qnode = get_best_qnode_for_string(claim.x_variable.text, claim)
-            if best_qnode:
-                claim.x_variable_qnode = best_qnode
+        claim_amr = claim.get_theory("amr")
+        claim_alignments = claim.get_theory("alignments")
+        if claim_amr and claim_alignments:
+            if claim.x_variable:
+                best_qnode = get_best_qnode_for_string(
+                    claim.x_variable.text, claim, claim_amr, claim_alignments
+                )
+                if best_qnode:
+                    claim.x_variable_qnode = best_qnode
+        else:
+            logging.warning(
+                "Could not load AMR or alignments for claim sentence '%s'",
+                claim.claim_sentence,
+            )
 
     claim_dataset.save_to_dir(output)
 
