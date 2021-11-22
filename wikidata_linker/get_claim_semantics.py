@@ -145,7 +145,7 @@ def load_tables():
     return pbs_to_qnodes_master, pbs_to_qnodes_overlay
 
 
-def disambiguate_with_amr(
+def get_claim_semantics(
     amr_sentence: AMR, amr_alignments: List[AMR_Alignment], claim: Claim
 ) -> Optional[ClaimSemantics]:
     """Disambiguate AMR sentence according to DWD overlay."""

@@ -9,7 +9,7 @@ from cdse_covid.claim_detection.claim import Claim
 from cdse_covid.claim_detection.run_claim_detection import ClaimDataset
 from cdse_covid.semantic_extraction.mentions import WikidataQnode
 from cdse_covid.semantic_extraction.utils.amr_extraction_utils import PROPBANK_PATTERN
-from wikidata_linker.disambiguate_with_amr import load_tables, determine_best_qnode
+from wikidata_linker.get_claim_semantics import load_tables, determine_best_qnode
 from wikidata_linker.wikidata_linking import disambiguate_kgtk
 
 
@@ -18,12 +18,12 @@ def find_links(span: str, query: str) -> Any:
     return disambiguate_kgtk(span, query, k=1)
 
 
-def get_best_qnode_for_xvariable_or_claimer(
-        claim_variable: str, claim: Claim
+def get_best_qnode_for_string(
+        claim_string: str, claim: Claim
 ) -> Optional[WikidataQnode]:
-    """Return the best WikidataQnode for either an XVariable or a Claimer.
+    """Return the best WikidataQnode for a string within the claim sentence.
 
-    First, if the variable comes from a propbank frame, try a DWD lookup.
+    First, if the string comes from a propbank frame, try a DWD lookup.
     Otherwise, run KGTK.
     """
     # Make both tables
@@ -35,7 +35,7 @@ def get_best_qnode_for_xvariable_or_claimer(
     # Find the label associated with the last token of the variable text
     # (any tokens before it are likely modifiers)
     variable_node_label = None
-    claim_variable_last_token = claim_variable.rsplit(" ")[-1]
+    claim_variable_last_token = claim_string.rsplit(" ")[-1]
     for node in amr.nodes:
         token_list_for_node = amr.get_tokens_from_node(node, alignments)
         if claim_variable_last_token in token_list_for_node:
@@ -44,7 +44,7 @@ def get_best_qnode_for_xvariable_or_claimer(
     if not variable_node_label:
         logging.warning(
             "DWD lookup: could not find AMR node corresponding with XVariable/Claimer '%s'",
-            claim_variable
+            claim_string
         )
 
     elif re.match(PROPBANK_PATTERN, variable_node_label):
@@ -64,7 +64,7 @@ def get_best_qnode_for_xvariable_or_claimer(
                 qnode_id=best_qnode.get("qnode"),
             )
     # If no Qnode was found, try KGTK
-    claim_variable_links = find_links(claim.claim_sentence, claim_variable)
+    claim_variable_links = find_links(claim.claim_sentence, claim_string)
     top_link = create_wikidata_qnodes(claim_variable_links, claim)
     if top_link:
         return top_link
@@ -80,11 +80,11 @@ def main(claim_input: Path, srl_input: Path, amr_input: Path, output: Path) -> N
 
     for claim in claim_dataset:
         if claim.claimer:
-            best_qnode = get_best_qnode_for_xvariable_or_claimer(claim.claimer.text, claim)
+            best_qnode = get_best_qnode_for_string(claim.claimer.text, claim)
             if best_qnode:
                 claim.claimer_qnode = best_qnode
         if claim.x_variable:
-            best_qnode = get_best_qnode_for_xvariable_or_claimer(claim.x_variable.text, claim)
+            best_qnode = get_best_qnode_for_string(claim.x_variable.text, claim)
             if best_qnode:
                 claim.x_variable_qnode = best_qnode
 
