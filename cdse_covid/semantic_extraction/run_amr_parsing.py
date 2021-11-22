@@ -12,11 +12,13 @@ from spacy.language import Language
 from cdse_covid.claim_detection.run_claim_detection import ClaimDataset
 from cdse_covid.pegasus_pipeline.run_amr_parsing_all import tokenize_sentence
 from cdse_covid.semantic_extraction.models.amr import AMRModel
+from cdse_covid.semantic_extraction.run_wikidata_linking import get_best_qnode_for_string
 from cdse_covid.semantic_extraction.utils.amr_extraction_utils import (
     identify_x_variable,
     identify_x_variable_covid,
 )
 from cdse_covid.semantic_extraction.utils.claimer_utils import identify_claimer
+from wikidata_linker.get_claim_semantics import get_claim_semantics
 
 COVID_DOMAIN = "covid"
 
@@ -45,7 +47,14 @@ def main(
             claim, tokenized_claim, sentence_amr.graph, sentence_amr.alignments
         )
         if possible_claimer:
+            # Add claimer data to Claim
             claim.claimer = possible_claimer
+            if possible_claimer.text:
+                best_qnode = get_best_qnode_for_string(
+                    possible_claimer.text, claim, sentence_amr.graph, sentence_amr.alignments
+                )
+                if best_qnode:
+                    claim.claimer_qnode = best_qnode
 
         claim_amr = amr_parser.amr_parse_sentences([tokenized_claim])
 
@@ -61,6 +70,10 @@ def main(
             )
         if possible_x_variable:
             claim.x_variable = possible_x_variable
+
+        # Get claim semantics from AMR data
+        semantics = get_claim_semantics(sentence_amr.graph, sentence_amr.alignments, claim)
+        claim.claim_semantics = semantics
 
         claim.add_theory("amr", sentence_amr.graph)
         claim.add_theory("alignments", sentence_amr.alignments)

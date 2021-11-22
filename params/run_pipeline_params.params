@@ -24,8 +24,6 @@ SRL_OUTPUT="$PROJECT_DIR/cdse_covid/semantic_extraction/srl_out"
 
 WIKIDATA_OUTPUT="$PROJECT_DIR/cdse_covid/semantic_extraction/wikidata_out"
 
-OVERLAY_OUTPUT="$PROJECT_DIR/cdse_covid/semantic_extraction/overlay_out"
-
 ENTITY_OUTPUT="$PROJECT_DIR/cdse_covid/semantic_extraction/entity_out"
 
 FINAL_OUTPUT_FILE="$PROJECT_DIR/cdse_covid/output.json"

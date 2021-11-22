@@ -2,17 +2,73 @@
 import argparse
 import logging
 from pathlib import Path
-from typing import Any, Optional
+import re
+from typing import Any, List, Optional
+
+from amr_utils.alignments import AMR_Alignment
+from amr_utils.amr import AMR
 
 from cdse_covid.claim_detection.claim import Claim
 from cdse_covid.claim_detection.run_claim_detection import ClaimDataset
 from cdse_covid.semantic_extraction.mentions import WikidataQnode
+from cdse_covid.semantic_extraction.utils.amr_extraction_utils import PROPBANK_PATTERN
+from wikidata_linker.get_claim_semantics import determine_best_qnode, load_tables
 from wikidata_linker.wikidata_linking import disambiguate_kgtk
 
 
 def find_links(span: str, query: str) -> Any:
     """Find WikiData links for a set of tokens."""
     return disambiguate_kgtk(span, query, k=1)
+
+
+def get_best_qnode_for_string(
+    claim_string: str, claim: Claim, amr: AMR, alignments: List[AMR_Alignment]
+) -> Optional[WikidataQnode]:
+    """Return the best WikidataQnode for a string within the claim sentence.
+
+    First, if the string comes from a propbank frame, try a DWD lookup.
+    Otherwise, run KGTK.
+    """
+    # Make both tables
+    pbs_to_qnodes_master, pbs_to_qnodes_overlay = load_tables()
+
+    # Find the label associated with the last token of the variable text
+    # (any tokens before it are likely modifiers)
+    variable_node_label = None
+    claim_variable_last_token = claim_string.rsplit(" ")[-1]
+    for node in amr.nodes:
+        token_list_for_node = amr.get_tokens_from_node(node, alignments)
+        if claim_variable_last_token in token_list_for_node:
+            variable_node_label = amr.nodes[node]
+
+    if not variable_node_label:
+        logging.warning(
+            "DWD lookup: could not find AMR node corresponding with XVariable/Claimer '%s'",
+            claim_string,
+        )
+
+    elif re.match(PROPBANK_PATTERN, variable_node_label):
+        best_qnode = determine_best_qnode(
+            [variable_node_label],
+            pbs_to_qnodes_overlay,
+            pbs_to_qnodes_master,
+            amr,
+            check_mappings_only=True,
+        )
+        if best_qnode:
+            return WikidataQnode(
+                text=best_qnode.get("name"),
+                doc_id=claim.doc_id,
+                description=best_qnode.get("definition"),
+                from_query=best_qnode.get("pb"),
+                qnode_id=best_qnode.get("qnode"),
+            )
+    # If no Qnode was found, try KGTK
+    claim_variable_links = find_links(claim.claim_sentence, claim_string)
+    top_link = create_wikidata_qnodes(claim_variable_links, claim)
+    if top_link:
+        return top_link
+    return None
 
 
 def main(claim_input: Path, srl_input: Path, amr_input: Path, output: Path) -> None:
@@ -23,16 +79,20 @@ def main(claim_input: Path, srl_input: Path, amr_input: Path, output: Path) -> N
     claim_dataset = ClaimDataset.from_multiple_claims_ds(ds1, ds2, ds3)
 
     for claim in claim_dataset:
-        if claim.claimer:
-            claimer_links = find_links(claim.claim_sentence, claim.claimer.text)
-            top_link = create_wikidata_qnodes(claimer_links, claim)
-            if top_link:
-                claim.claimer_qnode = top_link
-        if claim.x_variable:
-            srl_links = find_links(claim.claim_sentence, claim.x_variable.text)
-            top_link = create_wikidata_qnodes(srl_links, claim)
-            if top_link:
-                claim.x_variable_qnode = top_link
+        claim_amr = claim.get_theory("amr")
+        claim_alignments = claim.get_theory("alignments")
+        if claim_amr and claim_alignments:
+            if claim.x_variable:
+                best_qnode = get_best_qnode_for_string(
+                    claim.x_variable.text, claim, claim_amr, claim_alignments
+                )
+                if best_qnode:
+                    claim.x_variable_qnode = best_qnode
+        else:
+            logging.warning(
+                "Could not load AMR or alignments for claim sentence '%s'",
+                claim.claim_sentence,
+            )
 
     claim_dataset.save_to_dir(output)
 
