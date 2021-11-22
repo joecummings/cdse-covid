@@ -22,10 +22,7 @@ def find_links(span: str, query: str) -> Any:
 
 
 def get_best_qnode_for_string(
-        claim_string: str,
-        claim: Claim,
-        amr: AMR,
-        alignments: List[AMR_Alignment]
+    claim_string: str, claim: Claim, amr: AMR, alignments: List[AMR_Alignment]
 ) -> Optional[WikidataQnode]:
     """Return the best WikidataQnode for a string within the claim sentence.
 

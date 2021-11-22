@@ -180,25 +180,6 @@ def main(params: Parameters) -> None:
     )
     wikidata_output = ValueArtifact(value=wikidata_output_dir, depends_on=[wikidata_job])
 
-    # Overlay
-    overlay_loc = base_locator / "overlay"
-    overlay_python_file = wikidata_params.existing_file("overlay_python_file")
-    overlay_output_dir = directory_for(overlay_loc) / "documents"
-    overlay_job = run_python_on_args(
-        overlay_loc,
-        overlay_python_file,
-        f"""
-        --claim-input {wikidata_output.value} \
-        --output {overlay_output_dir} \
-        """,
-        override_conda_config=CondaConfiguration(
-            conda_base_path=params.existing_directory("conda_base_path"),
-            conda_environment="transition-amr-parser",
-        ),
-        depends_on=[wikidata_output],
-    )
-    overlay_output = ValueArtifact(value=overlay_output_dir, depends_on=[overlay_job])
-
     # Entity unification
     entity_loc = edl_locator / "edl_unified"
     ent_python_file = edl_params.existing_file("ent_unification")
@@ -209,11 +190,11 @@ def main(params: Parameters) -> None:
         ent_python_file,
         f"""
         --edl {edl_internal_file.value} \
-        --claims {overlay_output.value} \
+        --claims {wikidata_output.value} \
         --output {ent_output_dir} \
         {'--include-contains' if include_contains else ''}
         """,
-        depends_on=[overlay_output],
+        depends_on=[wikidata_output],
     )
     claims_with_entities = ValueArtifact(value=ent_output_dir, depends_on=[ent_unify_job])
 

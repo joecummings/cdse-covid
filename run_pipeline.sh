@@ -112,25 +112,14 @@ if [[ ! -e "$CHECKPOINT_DIR"/wikidata_ckpt ]]; then
   echo "Output from Wikidata linking is now in $WIKIDATA_OUTPUT"
 fi
 
-# AMR-overlay
-if [[ ! -e "$CHECKPOINT_DIR"/amr_overlay_ckpt ]]; then
-  echo "Starting AMR for DWD/overlay..."
-  mkdir -p "$OVERLAY_OUTPUT"
-  python "$PROJECT_DIR"/cdse_covid/semantic_extraction/run_amr_dwd_overlay.py \
-      --claim-input "$WIKIDATA_OUTPUT" \
-      --output "$OVERLAY_OUTPUT"
-  touch "$CHECKPOINT_DIR"/amr_overlay_ckpt
-  echo "Output from DWD/Overlay is now in $OVERLAY_OUTPUT"
-fi
-
 # Entity unification
 conda activate $CDSE_COVID_ENV_NAME
 if [[ ! -e "$CHECKPOINT_DIR"/entity_ckpt ]]; then
   echo "Starting entity unification..."
-  mkdir -p "$OVERLAY_OUTPUT"
+  mkdir -p "$ENTITY_OUTPUT"
   python "$PROJECT_DIR"/cdse_covid/semantic_extraction/run_entity_merging.py \
       --edl "$EDL_MAPPING_FILE" \
-      --claims "$OVERLAY_OUTPUT" \
+      --claims "$WIKIDATA_OUTPUT" \
       --output "$ENTITY_OUTPUT" \
       --include-contains
   touch "$CHECKPOINT_DIR"/entity_ckpt
