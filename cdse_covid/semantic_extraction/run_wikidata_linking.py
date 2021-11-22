@@ -2,7 +2,7 @@
 import argparse
 import logging
 from pathlib import Path
-from typing import Any, List, Sequence
+from typing import Any, Optional
 
 from cdse_covid.claim_detection.claim import Claim
 from cdse_covid.claim_detection.run_claim_detection import ClaimDataset
@@ -10,9 +10,9 @@ from cdse_covid.semantic_extraction.mentions import WikidataQnode
 from wikidata_linker.wikidata_linking import disambiguate_kgtk
 
 
-def _find_links(span: str, tokens: Sequence[str]) -> Any:
+def find_links(span: str, query: str) -> Any:
     """Find WikiData links for a set of tokens."""
-    return (disambiguate_kgtk(span, token, k=1) for token in tokens)
+    return disambiguate_kgtk(span, query, k=1)
 
 
 def main(claim_input: Path, srl_input: Path, amr_input: Path, output: Path) -> None:
@@ -24,37 +24,44 @@ def main(claim_input: Path, srl_input: Path, amr_input: Path, output: Path) -> N
 
     for claim in claim_dataset:
         if claim.claimer:
-            claimer_links = _find_links(claim.claim_sentence, [claim.claimer.text])
+            claimer_links = find_links(claim.claim_sentence, claim.claimer.text)
             top_link = create_wikidata_qnodes(claimer_links, claim)
             if top_link:
-                claim.claimer_qnode = top_link[0]
+                claim.claimer_qnode = top_link
         if claim.x_variable:
-            srl_links = _find_links(claim.claim_sentence, [claim.x_variable.text])
+            srl_links = find_links(claim.claim_sentence, claim.x_variable.text)
             top_link = create_wikidata_qnodes(srl_links, claim)
             if top_link:
-                claim.x_variable_qnode = top_link[0]
+                claim.x_variable_qnode = top_link
 
     claim_dataset.save_to_dir(output)
 
     logging.info("Saved claims with Wikidata to %s", output)
 
 
-def create_wikidata_qnodes(links: List[Any], claim: Claim) -> List[WikidataQnode]:
+def create_wikidata_qnodes(link: Any, claim: Claim) -> Optional[WikidataQnode]:
     """Create WikiData Qnodes from links."""
-    all_qnodes = []
-    for link in links:
-        if not link["options"]:
-            continue
-        qnode = WikidataQnode(
-            text=link["options"][0]["rawName"],
-            doc_id=claim.doc_id,
-            span=claim.get_offsets_for_text(link["query"]),
-            qnode_id=link["options"][0]["qnode"],
-            description=link["options"][0]["definition"],
-            from_query=link["query"],
-        )
-        all_qnodes.append(qnode)
-    return all_qnodes
+    if len(link["options"]) < 1:
+        if len(link["all_options"]) < 1:
+            logging.warning("No WikiData links found for '%s'.", link["query"])
+            return None
+        else:
+            text = link["all_options"][0]["label"][0]
+            qnode = link["all_options"][0]["qnode"]
+            description = link["all_options"][0]["description"][0]
+    else:
+        text = link["options"][0]["rawName"]
+        qnode = link["options"][0]["qnode"]
+        description = link["options"][0]["definition"]
+
+    return WikidataQnode(
+        text=text,
+        doc_id=claim.doc_id,
+        span=claim.get_offsets_for_text(link["query"]),
+        qnode_id=qnode,
+        description=description,
+        from_query=link["query"],
+    )
 
 
 if __name__ == "__main__":
