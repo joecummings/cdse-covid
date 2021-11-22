@@ -3,7 +3,7 @@ import argparse
 import logging
 from pathlib import Path
 import re
-from typing import Any, Optional
+from typing import Any, List, Optional
 
 from amr_utils.alignments import AMR_Alignment
 from amr_utils.amr import AMR
