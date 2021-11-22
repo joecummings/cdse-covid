@@ -103,27 +103,26 @@ def get_wikidata_for_labeled_args(
     """Get WikiData for labeled arguments."""
     args_to_qnodes = {}
     for role, arg in args.items():
-        if "-" not in arg:
-            qnode_info = disambiguate_kgtk(" ".join(amr.tokens), arg, no_ss_model=True, k=1)
-            if qnode_info["options"]:
-                qnode_selection = qnode_info["options"][0]
-            elif qnode_info["all_options"]:
-                qnode_selection = qnode_info["all_options"][0]
-            else:
-                qnode_selection = None
+        qnode_info = disambiguate_kgtk(" ".join(amr.tokens), arg, no_ss_model=True, k=1)
+        if qnode_info["options"]:
+            qnode_selection = qnode_info["options"][0]
+        elif qnode_info["all_options"]:
+            qnode_selection = qnode_info["all_options"][0]
+        else:
+            qnode_selection = None
 
-            claim_arg = None
-            if qnode_selection:
-                claim_arg = ClaimArg(
-                    text=qnode_selection.get("rawName"),
-                    doc_id=claim.doc_id,
-                    span=claim.get_offsets_for_text(arg),
-                    qnode_id=qnode_selection["qnode"],
-                    description=qnode_selection.get("definition"),
-                    from_query=arg,
-                )
+        claim_arg = None
+        if qnode_selection:
+            claim_arg = ClaimArg(
+                text=qnode_selection.get("rawName"),
+                doc_id=claim.doc_id,
+                span=claim.get_offsets_for_text(arg),
+                qnode_id=qnode_selection["qnode"],
+                description=qnode_selection.get("definition"),
+                from_query=arg,
+            )
 
-            args_to_qnodes[role] = claim_arg
+        args_to_qnodes[role] = claim_arg
     return args_to_qnodes
 
 
@@ -160,25 +159,13 @@ def disambiguate_with_amr(
     # The first one is the root label
     root_label = pb_label_list[0]
 
-    # Return list of qnode results from the overlay
-    # We prioritize overlay results since they tend to be more precise.
-    # If the result is from the root verb, we automatically go with that.
-    # Otherwise, we also check the master table.
-    best_qnode, overlay_result_from_root = get_overlay_result(
-        pb_label_list, pbs_to_qnodes_overlay, root_label
+    best_qnode = determine_best_qnode(
+        pb_label_list,
+        pbs_to_qnodes_overlay,
+        pbs_to_qnodes_master,
+        original_master_table,
+        amr_sentence
     )
-
-    if not best_qnode or not overlay_result_from_root:
-        logging.warning("Using node other than root to get event Qnode.")
-        # get_master_result...
-        best_master_qnode, master_result_from_root = get_master_result(
-            pb_label_list, pbs_to_qnodes_master, original_master_table, root_label
-        )
-
-        # Prioritize the master result if it is from the root node
-        # or there is no result from the overlay.
-        if master_result_from_root or not best_qnode:
-            best_qnode = best_master_qnode
 
     wd: MutableMapping[str, Any] = {}
     if best_qnode and best_qnode.get("args"):
@@ -195,6 +182,57 @@ def disambiguate_with_amr(
     )
     claim_args = {k: w for k, w in wd.items()}
     return ClaimSemantics(event=claim_event, args=claim_args)
+
+
+def determine_best_qnode(
+        pb_label_list: List[str],
+        pbs_to_qnodes_overlay,
+        pbs_to_qnodes_master,
+        original_master_table,
+        amr: AMR
+):
+    """Return list of qnode results from the overlay.
+
+    We prioritize overlay results since they tend to be more precise.
+    If the result is from the root verb, we automatically go with that.
+    Otherwise, we also check the master table, and finally do a KGTK lookup.
+    """
+    ranked_qnodes = []
+    root_label = amr.nodes[amr.root]
+    best_overlay_qnode, overlay_result_from_root = get_overlay_result(
+        pb_label_list, pbs_to_qnodes_overlay, root_label
+    )
+
+    if best_overlay_qnode:
+        if overlay_result_from_root:
+            return best_overlay_qnode
+        else:
+            ranked_qnodes.append(best_overlay_qnode)
+
+    # Get result from the master table
+    best_master_qnode, master_result_from_root = get_master_result(
+        pb_label_list, pbs_to_qnodes_master, original_master_table, root_label
+    )
+
+    # Prioritize the master result if it is from the root node
+    # or there is no result from the overlay.
+    if master_result_from_root or not best_overlay_qnode:
+        return best_master_qnode
+    elif best_master_qnode and not master_result_from_root:
+        ranked_qnodes.append(best_master_qnode)
+
+    # Finally, run a KGTK lookup
+    best_kgtk_qnode, kgtk_result_from_root = get_kgtk_result_for_event(
+        pb_label_list, amr
+    )
+    # Prioritize the root if there is one
+    if kgtk_result_from_root or not ranked_qnodes:
+        return best_kgtk_qnode
+    # Next, prioritize any other result we found in the tables
+    logging.warning("Using node other than root to get event Qnode.")
+    if ranked_qnodes:
+        return ranked_qnodes[0]
+    return best_kgtk_qnode
 
 
 def get_overlay_result(
@@ -251,6 +289,28 @@ def get_master_result(
                 appended_qnode_data.update(qnode_with_best_name)
                 return appended_qnode_data, is_root
 
+    return {}, False
+
+
+def get_kgtk_result_for_event(pb_label_list: List[str], amr: AMR) -> Tuple[Dict[str, Any], bool]:
+    for pb_label in pb_label_list:
+        is_root = pb_label == amr.nodes[amr.root]
+        formatted_pb = pb_label.rsplit("-", 1)[0]
+        qnode_info = disambiguate_kgtk(" ".join(amr.tokens), formatted_pb, no_ss_model=True, k=1)
+        if qnode_info["options"]:
+            selected_qnode = qnode_info["options"][0]
+        elif qnode_info["all_options"]:
+            selected_qnode = qnode_info["all_options"][0]
+        else:
+            selected_qnode = None
+
+        if selected_qnode:
+            return {
+                "pb": pb_label,
+                "name": selected_qnode.get("rawName") or selected_qnode["label"][0],
+                "qnode": selected_qnode["qnode"],
+                "definition": selected_qnode.get("definition") or selected_qnode["description"][0],
+            }, is_root
     return {}, False
 
 
