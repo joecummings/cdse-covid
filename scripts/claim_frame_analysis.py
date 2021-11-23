@@ -43,14 +43,20 @@ def main() -> None:
     num_of_claims = len(claims)
     print(f"Num of claims: {num_of_claims}")
 
+    # initialization for entity matching analysis
+    entities: MutableMapping[str, int] = defaultdict(int)
+
     # x variable & qnode accuracy
     num_x_variable = 0
     num_x_q_nodes = 0
     for claim in claims:
         if claim["x_variable"]:
             num_x_variable += 1
+            if claim["x_variable"]["entity"]:
+                entities[claim["x_variable"]["entity"]["ent_id"]] += 1
         if claim["x_variable_qnode"]:
             num_x_q_nodes += 1
+    print("---- X Variables -----")
     print(f"% X variables found: {num_x_variable / num_of_claims}")
     print(f"% X variable qnodes found: {num_x_q_nodes / num_x_variable}")
 
@@ -60,10 +66,34 @@ def main() -> None:
     for claim in claims:
         if claim["claimer"]:
             num_claimers += 1
+            if claim["claimer"]["entity"]:
+                entities[claim["claimer"]["entity"]["ent_id"]] += 1
         if claim["claimer_qnode"]:
             num_claimer_q_nodes += 1
+    print("---- Claimers -----")
     print(f"% of claimers found over total: {num_claimers / num_of_claims}")
     print(f"% of claimer qnodes found: {num_claimer_q_nodes / num_claimers}")
+
+    # claim semantics
+    all_args = 0
+    for claim in claims:
+        if claim["claim_semantics"]:
+            for _, arg in claim["claim_semantics"]["args"].items():
+                all_args += 1
+                if arg and arg["entity"]:
+                    entities[arg["entity"]["ent_id"]] += 1
+
+    # entity matching
+    num_entities_with_more_than_one_mention = list(filter(lambda v: v > 1, entities.values()))
+    num_mentions_with_entities = sum(entities.values())
+    print("---- Entities -----")
+    print(f"# of entities found: {len(entities.keys())}")
+    print(
+        f"% of entities found wrt mentions found: {num_mentions_with_entities / (num_x_variable + num_claimers + all_args)}"
+    )
+    print(
+        f"# of entities with more than one mention: {len(num_entities_with_more_than_one_mention)}"
+    )
 
     # overall wikidata accuracy
     if args.wikidata:
