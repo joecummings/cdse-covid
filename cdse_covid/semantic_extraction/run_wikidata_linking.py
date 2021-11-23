@@ -5,8 +5,10 @@ from pathlib import Path
 import re
 from typing import Any, List, Optional
 
+import spacy
 from amr_utils.alignments import AMR_Alignment
 from amr_utils.amr import AMR
+from spacy.language import Language
 
 from cdse_covid.claim_detection.claim import Claim
 from cdse_covid.claim_detection.run_claim_detection import ClaimDataset
@@ -26,6 +28,7 @@ def get_best_qnode_for_mention_text(
     claim: Claim,
     amr: AMR,
     alignments: List[AMR_Alignment],
+    spacy_model: Language,
 ) -> Optional[WikidataQnode]:
     """Return the best WikidataQnode for a string within the claim sentence.
 
@@ -59,6 +62,7 @@ def get_best_qnode_for_mention_text(
             pbs_to_qnodes_overlay,
             pbs_to_qnodes_master,
             amr,
+            spacy_model,
             check_mappings_only=True,
         )
         if best_qnode:
@@ -79,7 +83,7 @@ def get_best_qnode_for_mention_text(
     return None
 
 
-def main(claim_input: Path, srl_input: Path, amr_input: Path, output: Path) -> None:
+def main(claim_input: Path, srl_input: Path, amr_input: Path, output: Path, spacy_model: Language) -> None:
     """Entry point to linking script."""
     ds1 = ClaimDataset.load_from_dir(claim_input)
     ds2 = ClaimDataset.load_from_dir(srl_input)
@@ -96,6 +100,7 @@ def main(claim_input: Path, srl_input: Path, amr_input: Path, output: Path) -> N
                     claim,
                     claim_amr,
                     claim_alignments,
+                    spacy_model,
                 )
                 if best_qnode:
                     claim.x_variable_qnode = best_qnode
@@ -145,9 +150,12 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
+    model = spacy.load("en_core_web_md")
+
     main(
         args.claim_input,
         args.srl_input,
         args.amr_input,
         args.output,
+        model,
     )

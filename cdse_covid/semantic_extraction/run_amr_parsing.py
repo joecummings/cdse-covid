@@ -54,6 +54,7 @@ def main(
                 claim,
                 sentence_amr.graph,
                 sentence_amr.alignments,
+                spacy_model
             )
             if best_qnode:
                 claim.claimer_qnode = best_qnode
@@ -74,7 +75,7 @@ def main(
             claim.x_variable = possible_x_variable
 
         # Get claim semantics from AMR data
-        semantics = get_claim_semantics(sentence_amr.graph, sentence_amr.alignments, claim)
+        semantics = get_claim_semantics(sentence_amr.graph, sentence_amr.alignments, claim, spacy_model)
         claim.claim_semantics = semantics
 
         claim.add_theory("amr", sentence_amr.graph)
@@ -97,7 +98,7 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    model = spacy.load("en_core_web_sm")
+    model = spacy.load("en_core_web_md")
 
     main(
         args.input,

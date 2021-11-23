@@ -9,6 +9,7 @@ from typing import Any, Dict, List, MutableMapping, Optional, Set, Tuple
 from amr_utils.alignments import AMR_Alignment
 from amr_utils.amr import AMR  # pylint: disable=import-error
 from nltk.corpus import stopwords
+from spacy.language import Language
 
 from cdse_covid.claim_detection.claim import Claim
 from cdse_covid.semantic_extraction.mentions import ClaimArg, ClaimEvent, ClaimSemantics
@@ -151,7 +152,7 @@ def load_tables() -> Tuple[Dict[str, Any], Dict[str, Any]]:
 
 
 def get_claim_semantics(
-    amr_sentence: AMR, amr_alignments: List[AMR_Alignment], claim: Claim
+    amr_sentence: AMR, amr_alignments: List[AMR_Alignment], claim: Claim, spacy_model: Language
 ) -> Optional[ClaimSemantics]:
     """Disambiguate AMR sentence according to DWD overlay."""
     # Make both tables
@@ -165,7 +166,7 @@ def get_claim_semantics(
         return None
 
     best_qnode = determine_best_qnode(
-        pb_label_list, pbs_to_qnodes_overlay, pbs_to_qnodes_master, amr_sentence
+        pb_label_list, pbs_to_qnodes_overlay, pbs_to_qnodes_master, amr_sentence, spacy_model
     )
 
     wd: MutableMapping[str, Any] = {}
@@ -190,6 +191,7 @@ def determine_best_qnode(
     pbs_to_qnodes_overlay: Dict[str, Any],
     pbs_to_qnodes_master: Dict[str, Any],
     amr: AMR,
+    spacy_model: Language,
     check_mappings_only: bool = False,
 ) -> Dict[str, Any]:
     """Return list of qnode results from the overlay.
@@ -201,7 +203,7 @@ def determine_best_qnode(
     ranked_qnodes = []
     root_label = amr.nodes[amr.root]
     best_overlay_qnode, overlay_result_from_root = get_overlay_result(
-        pb_label_list, pbs_to_qnodes_overlay, root_label
+        pb_label_list, pbs_to_qnodes_overlay, root_label, spacy_model
     )
 
     if best_overlay_qnode:
@@ -212,7 +214,7 @@ def determine_best_qnode(
 
     # Get result from the master table
     best_master_qnode, master_result_from_root = get_master_result(
-        pb_label_list, pbs_to_qnodes_master, ORIGINAL_MASTER_TABLE, root_label
+        pb_label_list, pbs_to_qnodes_master, ORIGINAL_MASTER_TABLE, root_label, spacy_model
     )
 
     # Prioritize the master result if it is from the root node
@@ -241,7 +243,7 @@ def determine_best_qnode(
 
 
 def get_overlay_result(
-    pb_label_list: List[str], pb_mapping: MutableMapping[str, Any], root_label: str
+    pb_label_list: List[str], pb_mapping: MutableMapping[str, Any], root_label: str, spacy_model: Language
 ) -> Tuple[Dict[str, Any], bool]:
     """Returns the 'best' qnode from the overlay mapping.
 
@@ -257,7 +259,7 @@ def get_overlay_result(
                 return appended_qnode_data, is_root
             # If there is more than one, do string similarity
             # (It's unlikely that there will be a ton)
-            best_qnode = get_best_qnode_by_string_similarity(label, qnode_dicts)
+            best_qnode = get_best_qnode_by_semantic_similarity(label, qnode_dicts, spacy_model)
             if best_qnode:
                 appended_qnode_data.update(best_qnode)
         if len(appended_qnode_data) > 1:
@@ -270,6 +272,7 @@ def get_master_result(
     pb_mapping: MutableMapping[str, Any],
     original_mapping: Path,
     root_label: str,
+    spacy_model: Language,
 ) -> Tuple[Dict[str, Any], bool]:
     """Get Qnode from master JSON."""
     for label in pb_label_list:
@@ -284,7 +287,7 @@ def get_master_result(
             # Else, try to find the "best" result
             # First find the qnode with the best string similarity
             # (to be used as backup)
-            qnode_with_best_name = get_best_qnode_by_string_similarity(label, qnode_dicts)
+            qnode_with_best_name = get_best_qnode_by_semantic_similarity(label, qnode_dicts, spacy_model)
             # Next, try to find the most general qnode
             most_general_qnode = get_most_general_qnode(label, qnode_dicts, original_mapping)
             if most_general_qnode:
@@ -320,13 +323,13 @@ def get_kgtk_result_for_event(pb_label_list: List[str], amr: AMR) -> Tuple[Dict[
     return {}, False
 
 
-def get_best_qnode_by_string_similarity(
-    pb: str, qnode_dicts: List[Dict[str, str]]
+def get_best_qnode_by_semantic_similarity(
+        pb: str, qnode_dicts: List[Dict[str, str]], spacy_model: Language
 ) -> Optional[Dict[str, str]]:
     """Return the best qnode name for the given PropBank frame ID.
 
-    Based on string similarity score (Dice Coefficient), this assumes that
-    all PBs and qnode names are at least two characters long.
+    This computes semantic similarity between two strings by
+    comparing their word vectors from the spaCy model.
     """
     logging.info("Getting similarity scores between %s and its qnodes...", pb)
     best_score = 0.0
@@ -335,20 +338,16 @@ def get_best_qnode_by_string_similarity(
     qnode_names = list(qnames_to_dicts.keys())
     best_qname = qnode_names[0]  # Use as default to start
     # PB example: test-01 -- get text before sense number
-    pb_string = pb.rsplit("-", 1)[0]
-    pb_string_bigrams = get_string_bigrams(pb_string)
-    # {"qname": {<bigrams>}, ...}
-    qname_string_bigram_sets: Dict[str, Set[str]] = {
-        qname: get_string_bigrams(qname) for qname in qnode_names
-    }
-    for qname, qname_string_bigrams in qname_string_bigram_sets.items():
-        overlap = len(pb_string_bigrams & qname_string_bigrams)
-        dice_coefficient = overlap * 2.0 / (len(pb_string_bigrams) + len(qname_string_bigrams))
-        if dice_coefficient > best_score:
-            best_qname = qname
-            best_score = dice_coefficient
+    pb_string = pb.rsplit("-", 1)[0].replace("-", " ")
+    pb_doc = spacy_model(pb_string)
+    for qnode_name in qnode_names:
+        formatted_qname = qnode_name.replace("_", " ")
+        qnode_doc = spacy_model(formatted_qname)
+        similarity_score = pb_doc.similarity(qnode_doc)
+        if similarity_score > best_score:
+            best_score = similarity_score
+            best_qname = qnode_name
     if best_score == 0.0:
-        # Try to find word form matches
         logging.warning("No best score found for %s.", pb)
     return qnames_to_dicts.get(best_qname)
 
