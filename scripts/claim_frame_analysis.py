@@ -75,9 +75,11 @@ def main() -> None:
     print(f"% of claimer qnodes found: {num_claimer_q_nodes / num_claimers}")
 
     # claim semantics
+    all_args = 0
     for claim in claims:
         if claim["claim_semantics"]:
             for _, arg in claim["claim_semantics"]["args"].items():
+                all_args += 1
                 if arg and arg["entity"]:
                     entities[arg["entity"]["ent_id"]] += 1
 
@@ -87,7 +89,7 @@ def main() -> None:
     print("---- Entities -----")
     print(f"# of entities found: {len(entities.keys())}")
     print(
-        f"% of entities found wrt mentions found: {num_mentions_with_entities / (num_x_variable + num_claimers)}"
+        f"% of entities found wrt mentions found: {num_mentions_with_entities / (num_x_variable + num_claimers + all_args)}"
     )
     print(
         f"# of entities with more than one mention: {len(num_entities_with_more_than_one_mention)}"
