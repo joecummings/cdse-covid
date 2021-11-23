@@ -140,9 +140,7 @@ def load_tables() -> Tuple[Dict[str, Any], Dict[str, Any]]:
     overlay_table_path = PARENT_DIR / "resources" / "pb_to_qnode_overlay.json"
     if not overlay_table_path.exists():
         logging.info("Could not find `pb_to_qnode_overlay.json`; generating it now")
-        generate_overlay_dict(
-            PARENT_DIR / "resources" / "xpo_dwd_overlay_v2.json", overlay_table_path
-        )
+        generate_overlay_dict(PARENT_DIR / "resources" / "xpo_v3.2_freeze.json", overlay_table_path)
     # Load both qnode mappings
     with open(master_table_path, "r", encoding="utf-8") as in_json:
         pbs_to_qnodes_master = json.load(in_json)
@@ -454,23 +452,38 @@ def generate_overlay_dict(overlay_path: Path, pb_overlay: Path) -> None:
         qnode_mapping = json.load(in_json)["events"]
 
     pbs_to_qnodes = defaultdict(list)
-    for _, data_list in qnode_mapping.items():
-        for data in data_list:
-            qnode = data.get("wd_node")
-            qname = data.get("name")
-            qdescr = data.get("wd_description")
+    # Use this to keep track of which qnodes have been added
+    # to the final mapping (there are several repeats)
+    pbs_to_qnodes_only: Dict[str, Set[str]] = defaultdict(set)
 
-            args = data.get("arguments")
-            final_args = {}
-            for arg in args:
-                arg_name = arg["name"]
-                arg_parts = arg_name.split("_")
-                arg_pos = arg_parts[1] if arg_parts[0] in ["AM", "Ax", "mnr"] else arg_parts[0]
-                if arg_pos:
-                    final_args[arg_pos] = {
-                        "constraints": arg["constraints"],
-                        "text_role": "-".join(arg_parts[2:]),
-                    }
+    def add_qnode_to_mapping(pb_label: str, qnode: str, qnode_info: Dict[str, Any]) -> None:
+        """Add qnode data to the pb-to-qnode mapping.
+
+        Check first that a qnode's data hasn't been added to the list
+        associated with the PB, then add it to the mapping.
+        """
+        pb = str(pb_label).replace(".", "-").replace("_", "-")
+        if qnode not in pbs_to_qnodes_only[pb]:
+            pbs_to_qnodes[pb].append(qnode_info)
+            pbs_to_qnodes_only[pb].add(qnode)
+
+    for _, data in qnode_mapping.items():
+        qnode = data.get("wd_qnode")
+        qname = data.get("name")
+        qdescr = data.get("wd_description")
+        pb_roleset = data.get("pb_roleset")
+
+        args = data.get("arguments")
+        final_args = {}
+        for arg in args:
+            arg_name = arg["name"]
+            arg_parts = arg_name.split("_")
+            arg_pos = arg_parts[1] if arg_parts[0] in ["AM", "Ax", "mnr"] else arg_parts[0]
+            if arg_pos:
+                final_args[arg_pos] = {
+                    "constraints": arg["constraints"],
+                    "text_role": "-".join(arg_parts[2:]),
+                }
 
             qnode_summary = {
                 "qnode": qnode,
@@ -478,12 +491,16 @@ def generate_overlay_dict(overlay_path: Path, pb_overlay: Path) -> None:
                 "definition": qdescr,
                 "args": final_args,
             }
+            if pb_roleset:
+                add_qnode_to_mapping(pb_roleset, qnode, qnode_summary)
 
+            # Add "other PB rolesets"
             ldc_types = data.get("ldc_types")
-            for ldc_type in ldc_types:
-                pb_list = ldc_type.get("pb_rolesets")
-                for pb_item in pb_list:
-                    pb = str(pb_item).replace(".", "-").replace("_", "-")
-                    pbs_to_qnodes[pb].append(qnode_summary)
+            if ldc_types:
+                for ldc_type in ldc_types:
+                    pb_list = ldc_type.get("other_pb_rolesets")
+                    for pb_item in pb_list:
+                        add_qnode_to_mapping(pb_item, qnode, qnode_summary)
+
     with open(pb_overlay, "w+", encoding="utf-8") as out_json:
         json.dump(pbs_to_qnodes, out_json, indent=4)
