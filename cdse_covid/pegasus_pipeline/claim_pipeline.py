@@ -22,7 +22,7 @@ logger.setLevel(logging.INFO)
 
 
 def load_and_serialize_spacy_model(
-    path_to_saved_model: Path, model: str = "en_core_web_sm"
+    path_to_saved_model: Path, model: str = "en_core_web_md"
 ) -> None:
     """Load a saved SpaCy model and serialized it."""
     spacy_model = spacy.load(model)
