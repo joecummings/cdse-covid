@@ -50,4 +50,4 @@ class ClaimSemantics:
     """Claim Semantics mention."""
 
     event: Optional[ClaimEvent] = None
-    args: Optional[Mapping[str, ClaimArg]] = None
+    args: Optional[Mapping[str, Mapping[str, ClaimArg]]] = None

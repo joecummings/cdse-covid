@@ -111,9 +111,14 @@ def main(edl: Path, claims: Path, output: Path, include_contains: bool) -> None:
         if claim.claim_semantics:
             for _, arg in claim.claim_semantics.args.items():
                 if arg:
-                    arg_mention = find_knowledge_entity(all_kes, arg.span, include_contains)
-                    if arg_mention:
-                        arg.entity = arg_mention.parent_entity
+                    identity_arg = arg["identity"]
+                    if identity_arg:
+                        arg_mention = find_knowledge_entity(
+                            all_kes, identity_arg.span, include_contains
+                        )
+                        if arg_mention:
+                            arg["identity"].entity = arg_mention.parent_entity
+                            arg["type"] = type_mapping_to_qnode[arg_mention.parent_entity.ent_type]
 
     claim_ds.save_to_dir(output)
 
