@@ -9,6 +9,46 @@ from cdse_covid.pegasus_pipeline.ingesters.edl_output_ingester import (  # pylin
     EDLEntity,
     EDLMention,
 )
+from cdse_covid.semantic_extraction.mentions import WikidataQnode
+
+type_mapping_to_qnode = {
+    "PER": WikidataQnode(
+        text="human",
+        qnode_id="Q5",
+        description="common name of Homo sapiens, unique extant species of the genus Homo",
+    ),  # human
+    "LOC": WikidataQnode(
+        text="geographic location",
+        qnode_id="Q2221906",
+        description="point or an area on the Earth's surface or elsewhere",
+    ),  # geographic location
+    "GPE": WikidataQnode(
+        text="geopolitical group",
+        qnode_id="Q52110228",
+        description="group of independent or autonomous territories sharing a given set of traits",
+    ),  # geopolitical group
+    "ORG": WikidataQnode(
+        text="organization",
+        qnode_id="Q43229",
+        description="social entity (not necessarily commercial) uniting people into a structured group managing shared means to meet some needs, or to pursue collective goals",
+    ),  # organization
+    "FAC": WikidataQnode(
+        text="facility", qnode_id="Q13226383", description="place for doing something"
+    ),  # facility
+    "VEH": WikidataQnode(
+        text="vehicle",
+        qnode_id="Q42889",
+        description="mobile machine that transports people, animals or cargo",
+    ),  # vehicle
+    "MHI": WikidataQnode(
+        text="health problem",
+        qnode_id="Q2057971",
+        description="condition negatively affecting the health of an organism",
+    ),  # health problem
+    "WEA": WikidataQnode(
+        text="weapon", qnode_id="Q728", description="tool used to inflict damage or harm"
+    ),  # weapon
+}
 
 
 def _contains(span1: Tuple[int, int], span2: Tuple[int, int]) -> bool:
@@ -56,11 +96,17 @@ def main(edl: Path, claims: Path, output: Path, include_contains: bool) -> None:
             )
             if x_variable_mention:
                 claim.x_variable.entity = x_variable_mention.parent_entity
+                claim.x_variable_type_qnode = type_mapping_to_qnode[
+                    x_variable_mention.parent_entity.ent_type
+                ]
 
         if claim.claimer:
             claimer_mention = find_knowledge_entity(all_kes, claim.claimer.span, include_contains)
             if claimer_mention:
                 claim.claimer.entity = claimer_mention.parent_entity
+                claim.claimer_type_qnode = type_mapping_to_qnode[
+                    claimer_mention.parent_entity.ent_type
+                ]
 
         if claim.claim_semantics:
             for _, arg in claim.claim_semantics.args.items():
