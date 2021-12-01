@@ -48,31 +48,39 @@ def main() -> None:
 
     # x variable & qnode accuracy
     num_x_variable = 0
-    num_x_q_nodes = 0
+    num_x_id_qnodes = 0
+    num_x_type_qnodes = 0
     for claim in claims:
         if claim["x_variable"]:
             num_x_variable += 1
             if claim["x_variable"]["entity"]:
                 entities[claim["x_variable"]["entity"]["ent_id"]] += 1
-        if claim["x_variable_qnode"]:
-            num_x_q_nodes += 1
+        if claim["x_variable_identity_qnode"]:
+            num_x_id_qnodes += 1
+        if claim["x_variable_type_qnode"]:
+            num_x_type_qnodes += 1
     print("---- X Variables -----")
     print(f"% X variables found: {num_x_variable / num_of_claims}")
-    print(f"% X variable qnodes found: {num_x_q_nodes / num_x_variable}")
+    print(f"% X variable identity qnodes found: {num_x_id_qnodes / num_x_variable}")
+    print(f"% X variable type qnodes found: {num_x_type_qnodes / num_x_variable}")
 
     # claimer & qnode accuracy
     num_claimers = 0
-    num_claimer_q_nodes = 0
+    num_claimer_id_qnodes = 0
+    num_claimer_type_qnodes = 0
     for claim in claims:
         if claim["claimer"]:
             num_claimers += 1
             if claim["claimer"]["entity"]:
                 entities[claim["claimer"]["entity"]["ent_id"]] += 1
-        if claim["claimer_qnode"]:
-            num_claimer_q_nodes += 1
+        if claim["claimer_identity_qnode"]:
+            num_claimer_id_qnodes += 1
+        if claim["claimer_type_qnode"]:
+            num_claimer_type_qnodes += 1
     print("---- Claimers -----")
-    print(f"% of claimers found over total: {num_claimers / num_of_claims}")
-    print(f"% of claimer qnodes found: {num_claimer_q_nodes / num_claimers}")
+    print(f"% claims with identified claimers: {num_claimers / num_of_claims}")
+    print(f"% of claimer identity qnodes found: {num_claimer_id_qnodes / num_claimers}")
+    print(f"% of claimer type qnodes found: {num_claimer_type_qnodes / num_claimers}")
 
     # claim semantics
     all_args = 0

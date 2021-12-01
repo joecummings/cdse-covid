@@ -32,9 +32,11 @@ class Claim:
     topic: Optional[str] = None
     subtopic: Optional[str] = None
     x_variable: Optional[XVariable] = None
-    x_variable_qnode: Optional[WikidataQnode] = None
+    x_variable_identity_qnode: Optional[WikidataQnode] = None
+    x_variable_type_qnode: Optional[WikidataQnode] = None
     claimer: Optional[Claimer] = None
-    claimer_qnode: Optional[WikidataQnode] = None
+    claimer_identity_qnode: Optional[WikidataQnode] = None
+    claimer_type_qnode: Optional[WikidataQnode] = None
     claim_date_time: Optional[str] = None
     claim_location: Optional[str] = None
     claim_location_qnode: Optional[WikidataQnode] = None
