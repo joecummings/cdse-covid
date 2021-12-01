@@ -103,7 +103,7 @@ def main(claim_input: Path, srl_input: Path, amr_input: Path, output: Path, spac
                     spacy_model,
                 )
                 if best_qnode:
-                    claim.x_variable_qnode = best_qnode
+                    claim.x_variable_identity_qnode = best_qnode
         else:
             logging.warning(
                 "Could not load AMR or alignments for claim sentence '%s'",

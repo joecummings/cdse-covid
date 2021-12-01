@@ -50,14 +50,10 @@ def main(
             # Add claimer data to Claim
             claim.claimer = possible_claimer
             best_qnode = get_best_qnode_for_mention_text(
-                possible_claimer,
-                claim,
-                sentence_amr.graph,
-                sentence_amr.alignments,
-                spacy_model
+                possible_claimer, claim, sentence_amr.graph, sentence_amr.alignments, spacy_model
             )
             if best_qnode:
-                claim.claimer_qnode = best_qnode
+                claim.claimer_identity_qnode = best_qnode
 
         claim_amr = amr_parser.amr_parse_sentences([tokenized_claim])
 
