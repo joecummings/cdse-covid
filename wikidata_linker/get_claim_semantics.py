@@ -243,7 +243,10 @@ def determine_best_qnode(
 
 
 def get_overlay_result(
-    pb_label_list: List[str], pb_mapping: MutableMapping[str, Any], root_label: str, spacy_model: Language
+    pb_label_list: List[str],
+    pb_mapping: MutableMapping[str, Any],
+    root_label: str,
+    spacy_model: Language,
 ) -> Tuple[Dict[str, Any], bool]:
     """Returns the 'best' qnode from the overlay mapping.
 
@@ -287,7 +290,9 @@ def get_master_result(
             # Else, try to find the "best" result
             # First find the qnode with the best string similarity
             # (to be used as backup)
-            qnode_with_best_name = get_best_qnode_by_semantic_similarity(label, qnode_dicts, spacy_model)
+            qnode_with_best_name = get_best_qnode_by_semantic_similarity(
+                label, qnode_dicts, spacy_model
+            )
             # Next, try to find the most general qnode
             most_general_qnode = get_most_general_qnode(label, qnode_dicts, original_mapping)
             if most_general_qnode:
@@ -324,7 +329,7 @@ def get_kgtk_result_for_event(pb_label_list: List[str], amr: AMR) -> Tuple[Dict[
 
 
 def get_best_qnode_by_semantic_similarity(
-        pb: str, qnode_dicts: List[Dict[str, str]], spacy_model: Language
+    pb: str, qnode_dicts: List[Dict[str, str]], spacy_model: Language
 ) -> Optional[Dict[str, str]]:
     """Return the best qnode name for the given PropBank frame ID.
 

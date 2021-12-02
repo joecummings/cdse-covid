@@ -5,9 +5,9 @@ from pathlib import Path
 import re
 from typing import Any, List, Optional
 
-import spacy
 from amr_utils.alignments import AMR_Alignment
 from amr_utils.amr import AMR
+import spacy
 from spacy.language import Language
 
 from cdse_covid.claim_detection.claim import Claim
@@ -83,7 +83,9 @@ def get_best_qnode_for_mention_text(
     return None
 
 
-def main(claim_input: Path, srl_input: Path, amr_input: Path, output: Path, spacy_model: Language) -> None:
+def main(
+    claim_input: Path, srl_input: Path, amr_input: Path, output: Path, spacy_model: Language
+) -> None:
     """Entry point to linking script."""
     ds1 = ClaimDataset.load_from_dir(claim_input)
     ds2 = ClaimDataset.load_from_dir(srl_input)
