@@ -127,13 +127,15 @@ def main(
 def create_wikidata_qnodes(link: Any, mention: Mention, claim: Claim) -> Optional[WikidataQnode]:
     """Create WikiData Qnodes from links."""
     if len(link["options"]) < 1:
-        if len(link["all_options"]) < 1:
+        all_options = link["all_options"]
+        if len(all_options) < 1:
             logging.warning("No WikiData links found for '%s'.", link["query"])
             return None
         else:
-            text = link["all_options"][0]["label"][0]
-            qnode = link["all_options"][0]["qnode"]
-            description = link["all_options"][0]["description"][0]
+            first_option = all_options[0]
+            text = first_option["label"][0] if first_option["label"] else None
+            qnode = first_option["qnode"][0] if first_option["qnode"] else None
+            description = first_option["description"][0] if first_option["description"] else None
     else:
         text = link["options"][0]["rawName"]
         qnode = link["options"][0]["qnode"]
