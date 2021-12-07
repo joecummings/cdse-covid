@@ -168,6 +168,8 @@ def get_claim_semantics(
     best_qnode = determine_best_qnode(
         pb_label_list, pbs_to_qnodes_overlay, pbs_to_qnodes_master, amr_sentence, spacy_model
     )
+    print(f"PBs: {pb_label_list}")
+    print(f"! Best qnode is {best_qnode}\n")
 
     wd: MutableMapping[str, Any] = {}
     if best_qnode and best_qnode.get("args"):
@@ -238,7 +240,10 @@ def determine_best_qnode(
         logging.warning("Using node other than root to get event Qnode.")
         if ranked_qnodes:
             return ranked_qnodes[0]
+        if not best_kgtk_qnode:
+            logging.warning("Couldn't find a qnode for pbs %s", pb_label_list)
         return best_kgtk_qnode
+    logging.warning("Couldn't find a qnode for pbs %s", pb_label_list)
     return {}
 
 
@@ -317,6 +322,7 @@ def get_kgtk_result_for_event(pb_label_list: List[str], amr: AMR) -> Tuple[Dict[
             selected_qnode = qnode_info["all_options"][0]
         else:
             selected_qnode = None
+            print(f"No qnode found in KGTK for any pb in {pb_label_list}!")
 
         if selected_qnode:
             return {
@@ -355,14 +361,6 @@ def get_best_qnode_by_semantic_similarity(
     if best_score == 0.0:
         logging.warning("No best score found for %s.", pb)
     return qnames_to_dicts.get(best_qname)
-
-
-def get_string_bigrams(string: str) -> Set[str]:
-    """Given a string, return the set of bigrams.
-
-    Example: "cure" --> {'cu', 'ur', 're'}
-    """
-    return {"".join(string[x : x + 2]) for x in range(len(string) - 1)}
 
 
 def get_most_general_qnode(

@@ -71,8 +71,9 @@ def main(
             claim.x_variable = possible_x_variable
 
         # Get claim semantics from AMR data
+        print(f"AMR for claim:\n{claim_amr.graph.graph_string()}")
         semantics = get_claim_semantics(
-            sentence_amr.graph, sentence_amr.alignments, claim, spacy_model
+            claim_amr.graph, claim_amr.alignments, claim, spacy_model
         )
         claim.claim_semantics = semantics
 
