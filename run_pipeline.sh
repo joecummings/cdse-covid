@@ -119,6 +119,8 @@ if [[ ! -e "$CHECKPOINT_DIR"/entity_ckpt ]]; then
   mkdir -p "$ENTITY_OUTPUT"
   python "$PROJECT_DIR"/cdse_covid/semantic_extraction/run_entity_merging.py \
       --edl "$EDL_MAPPING_FILE" \
+      --qnode-freebase "$QNODE_FREEBASE" \
+      --freebase-to-qnodes "$FREEBASE_TO_QNODES" \
       --claims "$WIKIDATA_OUTPUT" \
       --output "$ENTITY_OUTPUT" \
       --include-contains

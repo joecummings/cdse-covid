@@ -5,7 +5,7 @@ import csv
 from dataclasses import dataclass
 from pathlib import Path
 import pickle
-from typing import MutableMapping, Tuple
+from typing import MutableMapping, Tuple, Optional
 
 
 @dataclass
@@ -14,6 +14,7 @@ class EDLEntity:
 
     ent_id: str
     ent_type: str
+    freebase_link: Optional[str] = None
 
 
 @dataclass
@@ -35,16 +36,21 @@ def main(edl_output: Path, output: Path) -> None:
     with open(edl_output / "merged.cs", "r", encoding="utf-8") as handle:
         reader = csv.reader(handle, delimiter="\t")
         all_entities = {}
+        # Collect all entities before looking for mentions
         for line in reader:
             if len(line) == 3:  # We have ourselves a new entity
                 _id = line[0].split("_")
                 formatted_id = _id[-1]
                 ent_type = line[2]
-                if line[1] == "link":  # Not including links to Freebase right now
-                    continue
-                new_entity = EDLEntity(ent_id=formatted_id, ent_type=ent_type)
+                if line[1] == "link":
+                    freebase_link = line[2].split("_")[0]
+                    formatted_link = "/" + freebase_link.replace(".", "/")
+                    new_entity = EDLEntity(ent_id=formatted_id, ent_type=ent_type, freebase_link=formatted_link)
+                else:
+                    new_entity = EDLEntity(ent_id=formatted_id, ent_type=ent_type)
                 all_entities[formatted_id] = new_entity
-            elif len(line) == 5:  # We have ourselves a new mention
+        for line in reader:
+            if len(line) == 5:  # We have ourselves a new mention
                 ent_id = line[0].split("_")
                 formatted_ent_id = ent_id[-1]
                 mention_type = line[1]
