@@ -61,8 +61,13 @@ def get_best_qnode_for_mention_text(
         )
 
     elif re.match(PROPBANK_PATTERN, variable_node_label):
+        query_list = list(
+            filter(
+                None, [variable_node_label, claim_variable_last_token]
+            )
+        )
         best_qnode = determine_best_qnode(
-            [variable_node_label, claim_variable_last_token],
+            query_list,
             pbs_to_qnodes_overlay,
             pbs_to_qnodes_master,
             amr,
@@ -80,7 +85,7 @@ def get_best_qnode_for_mention_text(
                 qnode_id=best_qnode.get("qnode"),
             )
     # If no Qnode was found, try KGTK
-    for query in [mention.text, variable_node_label, claim_variable_last_token]:
+    for query in list(filter(None, [mention.text, variable_node_label, claim_variable_last_token])):
         claim_variable_links = find_links(claim.claim_sentence, query)
         top_link = create_wikidata_qnodes(claim_variable_links, mention, claim)
         if top_link:
