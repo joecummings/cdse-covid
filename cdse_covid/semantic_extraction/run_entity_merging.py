@@ -152,7 +152,6 @@ def main(
     for claim in claim_ds:
         doc_id = claim.doc_id.split(".")[0]
         all_kes = edl_store[doc_id]
-        print(f"All KEs in {doc_id}:\n{all_kes}")
         if claim.x_variable:
             x_variable_mention = find_knowledge_entity(
                 all_kes, claim.x_variable.span, include_contains
@@ -199,10 +198,10 @@ def main(
                             entity_qnode = freebase_to_qnodes.get(entity_freebase)
                             if entity_qnode:
                                 print(f"Found an entity qnode for arg {arg_mention.text}: {entity_qnode}")
-                                arg_qnode = create_wikidata_qnode_from_id(claim.claimer, entity_qnode)
+                                arg_qnode = create_wikidata_qnode_from_id(arg["identity"], entity_qnode)
                                 if arg_qnode:
                                     claim.x_variable_identity_qnode = create_wikidata_qnode_from_id(
-                                        claim.claimer, entity_qnode
+                                        arg["identity"], entity_qnode
                                     )
                             arg["type"] = type_mapping_to_qnode[arg_mention.parent_entity.ent_type]
 

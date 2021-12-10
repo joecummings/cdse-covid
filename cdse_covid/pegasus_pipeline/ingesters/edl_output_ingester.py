@@ -38,18 +38,33 @@ def main(edl_output: Path, output: Path) -> None:
         all_entities = {}
         # Collect all entities before looking for mentions
         for line in reader:
-            if len(line) == 3:  # We have ourselves a new entity
+            if len(line) == 3:  # We have ourselves an entity
                 _id = line[0].split("_")
                 formatted_id = _id[-1]
-                ent_type = line[2]
-                if line[1] == "link":
+                formatted_link = None
+                ent_type = ""
+
+                if line[1] == "link" and line[2].startswith("m."):
                     freebase_link = line[2].split("_")[0]
                     formatted_link = "/" + freebase_link.replace(".", "/")
                     new_entity = EDLEntity(ent_id=formatted_id, ent_type=ent_type, freebase_link=formatted_link)
-                else:
+                elif line[1] == "type":
+                    ent_type = line[2]
                     new_entity = EDLEntity(ent_id=formatted_id, ent_type=ent_type)
-                all_entities[formatted_id] = new_entity
-        for line in reader:
+
+                if all_entities.get(formatted_id):
+                    # The entity already exists in our collection, so we just modify it
+                    if formatted_link:
+                        all_entities[formatted_id].freebase_link = formatted_link
+                    elif ent_type:
+                        all_entities[formatted_id].ent_type = ent_type
+                else:
+                    all_entities[formatted_id] = new_entity
+    with open(edl_output / "merged.cs", "r", encoding="utf-8") as handle2:
+        reader2 = csv.reader(handle2, delimiter="\t")
+        line_count = 0
+        for line in reader2:
+            line_count += 1
             if len(line) == 5:  # We have ourselves a new mention
                 ent_id = line[0].split("_")
                 formatted_ent_id = ent_id[-1]
