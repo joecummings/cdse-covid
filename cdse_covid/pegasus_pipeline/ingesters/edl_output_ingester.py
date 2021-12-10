@@ -5,7 +5,7 @@ import csv
 from dataclasses import dataclass
 from pathlib import Path
 import pickle
-from typing import MutableMapping, Tuple, Optional
+from typing import Dict, MutableMapping, Optional, Tuple
 
 
 @dataclass
@@ -35,7 +35,7 @@ def main(edl_output: Path, output: Path) -> None:
     )
     with open(edl_output / "merged.cs", "r", encoding="utf-8") as handle:
         reader = csv.reader(handle, delimiter="\t")
-        all_entities = {}
+        all_entities: Dict[str, EDLEntity] = {}
         # Collect all entities before looking for mentions
         for line in reader:
             if len(line) == 3:  # We have ourselves an entity
@@ -47,7 +47,9 @@ def main(edl_output: Path, output: Path) -> None:
                 if line[1] == "link" and line[2].startswith("m."):
                     freebase_link = line[2].split("_")[0]
                     formatted_link = "/" + freebase_link.replace(".", "/")
-                    new_entity = EDLEntity(ent_id=formatted_id, ent_type=ent_type, freebase_link=formatted_link)
+                    new_entity = EDLEntity(
+                        ent_id=formatted_id, ent_type=ent_type, freebase_link=formatted_link
+                    )
                 elif line[1] == "type":
                     ent_type = line[2]
                     new_entity = EDLEntity(ent_id=formatted_id, ent_type=ent_type)

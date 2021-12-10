@@ -3,16 +3,15 @@ import argparse
 import csv
 from pathlib import Path
 import pickle
-from typing import MutableMapping, Optional, Tuple, Dict
+from typing import Dict, MutableMapping, Optional, Tuple
 
-from cdse_covid.claim_detection.claim import Claim
 from cdse_covid.claim_detection.run_claim_detection import ClaimDataset
 from cdse_covid.pegasus_pipeline.ingesters.edl_output_ingester import (  # pylint: disable=unused-import
     EDLEntity,
     EDLMention,
 )
-from cdse_covid.semantic_extraction.mentions import WikidataQnode, Mention
-from wikidata_linker.wikidata_linking import disambiguate_kgtk, get_request_kgtk, make_cache_path, KGTK_CACHE
+from cdse_covid.semantic_extraction.mentions import Mention, WikidataQnode
+from wikidata_linker.wikidata_linking import KGTK_CACHE, get_request_kgtk, make_cache_path
 
 type_mapping_to_qnode = {
     "PER": WikidataQnode(
@@ -107,7 +106,7 @@ def create_wikidata_qnode_from_id(mention: Mention, qnode_id: str) -> Optional[W
             span=mention.span,
             qnode_id=qnode_id,
             description=selected_qnode.get("definition"),
-            from_query=qnode_id
+            from_query=qnode_id,
         )
     return None
 
@@ -118,12 +117,12 @@ def load_freebase_to_qnode_mapping(original_map_tsv: Path, mapping_file: Path) -
     Otherwise, generate the mapping from the qnode-freebase file
     and save that data.
     """
+    freebase_to_qnodes: Dict[str, str] = {}
     if mapping_file.exists():
         with open(mapping_file, "rb") as handle:
             freebase_to_qnodes = pickle.load(handle)
     else:
-        freebase_to_qnodes = {}
-        with open(original_map_tsv, 'r', encoding="utf-8") as in_map:
+        with open(original_map_tsv, "r", encoding="utf-8") as in_map:
             reader = csv.reader(in_map, delimiter="\t")
             for line in reader:
                 freebase_to_qnodes[line[1]] = line[0]
@@ -137,16 +136,16 @@ def load_freebase_to_qnode_mapping(original_map_tsv: Path, mapping_file: Path) -
 def main(
     edl: Path,
     qnode_freebase_tsv: Path,
-    freebase_to_qnodes: Path,
+    freebase_to_qnodes_file: Path,
     claims: Path,
     output: Path,
-    include_contains: bool
+    include_contains: bool,
 ) -> None:
     """Run entity linking over claims."""
     with open(edl, "rb") as handle:
         edl_store = pickle.load(handle)
 
-    freebase_to_qnodes = load_freebase_to_qnode_mapping(qnode_freebase_tsv, freebase_to_qnodes)
+    freebase_to_qnodes = load_freebase_to_qnode_mapping(qnode_freebase_tsv, freebase_to_qnodes_file)
     claim_ds = ClaimDataset.load_from_dir(claims)
 
     for claim in claim_ds:
@@ -161,7 +160,6 @@ def main(
                 entity_freebase = claim.x_variable.entity.freebase_link
                 entity_qnode = freebase_to_qnodes.get(entity_freebase)
                 if entity_qnode:
-                    print(f"Found an entity qnode for {claim.x_variable.text}: {entity_qnode}")
                     claim.x_variable_identity_qnode = create_wikidata_qnode_from_id(
                         claim.x_variable, entity_qnode
                     )
@@ -197,8 +195,12 @@ def main(
                             entity_freebase = arg["identity"].entity.freebase_link
                             entity_qnode = freebase_to_qnodes.get(entity_freebase)
                             if entity_qnode:
-                                print(f"Found an entity qnode for arg {arg_mention.text}: {entity_qnode}")
-                                arg_qnode = create_wikidata_qnode_from_id(arg["identity"], entity_qnode)
+                                print(
+                                    f"Found an entity qnode for arg {arg_mention.text}: {entity_qnode}"
+                                )
+                                arg_qnode = create_wikidata_qnode_from_id(
+                                    arg["identity"], entity_qnode
+                                )
                                 if arg_qnode:
                                     claim.x_variable_identity_qnode = create_wikidata_qnode_from_id(
                                         arg["identity"], entity_qnode
@@ -222,5 +224,10 @@ if __name__ == "__main__":
     )
     args = p.parse_args()
     main(
-        args.edl, args.qnode_freebase, args.freebase_to_qnodes, args.claims, args.output, args.include_contains
+        args.edl,
+        args.qnode_freebase,
+        args.freebase_to_qnodes,
+        args.claims,
+        args.output,
+        args.include_contains,
     )
