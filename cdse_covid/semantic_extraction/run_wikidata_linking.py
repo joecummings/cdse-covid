@@ -14,7 +14,7 @@ from cdse_covid.claim_detection.claim import Claim
 from cdse_covid.claim_detection.run_claim_detection import ClaimDataset
 from cdse_covid.semantic_extraction.mentions import Mention, WikidataQnode
 from cdse_covid.semantic_extraction.utils.amr_extraction_utils import PROPBANK_PATTERN
-from wikidata_linker.get_claim_semantics import determine_best_qnode, load_tables, STOP_WORDS
+from wikidata_linker.get_claim_semantics import STOP_WORDS, determine_best_qnode, load_tables
 from wikidata_linker.wikidata_linking import disambiguate_kgtk
 
 
@@ -45,13 +45,18 @@ def get_best_qnode_for_mention_text(
     # (any tokens before it are likely modifiers)
     variable_node_label = None
     claim_variable_tokens = [
-        mention_token for mention_token in mention_text.split(" ") if mention_token not in STOP_WORDS
+        mention_token
+        for mention_token in mention_text.split(" ")
+        if mention_token not in STOP_WORDS
     ]
-    claim_variable_last_token = claim_variable_tokens[-1]
+    claim_variable_tokens.reverse()
+
+    # Locate the AMR node label associated with the mention text
     for node in amr.nodes:
         token_list_for_node = amr.get_tokens_from_node(node, alignments)
-        if claim_variable_last_token in token_list_for_node:
-            variable_node_label = amr.nodes[node].strip("\"")
+        # Try to match the last token since it is most likely to point to the correct node
+        if claim_variable_tokens[0] in token_list_for_node:
+            variable_node_label = amr.nodes[node].strip('"')
             # print(f"Variable node label: {variable_node_label}")
 
     if not variable_node_label:
@@ -61,13 +66,8 @@ def get_best_qnode_for_mention_text(
         )
 
     elif re.match(PROPBANK_PATTERN, variable_node_label):
-        query_list = list(
-            filter(
-                None, [variable_node_label, claim_variable_last_token]
-            )
-        )
         best_qnode = determine_best_qnode(
-            query_list,
+            variable_node_label,
             pbs_to_qnodes_overlay,
             pbs_to_qnodes_master,
             amr,
@@ -85,11 +85,12 @@ def get_best_qnode_for_mention_text(
                 qnode_id=best_qnode.get("qnode"),
             )
     # If no Qnode was found, try KGTK
-    for query in list(filter(None, [mention.text, variable_node_label, claim_variable_last_token])):
+    query_list = [mention.text, variable_node_label]
+    query_list.extend(claim_variable_tokens)
+    for query in list(filter(None, query_list)):
         claim_variable_links = find_links(claim.claim_sentence, query)
         top_link = create_wikidata_qnodes(claim_variable_links, mention, claim)
         if top_link:
-            # print(f"Top link found from {query}: {top_link.qnode_id} ({top_link.text})")
             return top_link
     return None
 
@@ -116,7 +117,6 @@ def main(
                     spacy_model,
                 )
                 if best_qnode:
-                    print(f"Best qnode for {claim.x_variable}: {best_qnode.qnode_id} ({best_qnode.text})")
                     claim.x_variable_identity_qnode = best_qnode
         else:
             logging.warning(
