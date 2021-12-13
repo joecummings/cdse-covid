@@ -15,12 +15,20 @@ from cdse_covid.claim_detection.run_claim_detection import ClaimDataset
 from cdse_covid.semantic_extraction.mentions import Mention, WikidataQnode
 from cdse_covid.semantic_extraction.utils.amr_extraction_utils import PROPBANK_PATTERN
 from wikidata_linker.get_claim_semantics import STOP_WORDS, determine_best_qnode, load_tables
-from wikidata_linker.wikidata_linking import disambiguate_kgtk
+from wikidata_linker.wikidata_linking import(
+    disambiguate_verb_kgtk, disambiguate_refvar_kgtk, VERB, REFVAR
+)
 
 
-def find_links(span: str, query: str) -> Any:
-    """Find WikiData links for a set of tokens."""
-    return disambiguate_kgtk(span, query, k=1)
+def find_links(span: str, query: str, query_type: str) -> Any:
+    """Find WikiData links for a set of tokens.
+
+    Assumes the query is a refvar by default.
+    """
+    if query_type == VERB:
+        return disambiguate_verb_kgtk(query, k=1)
+    else:
+        return disambiguate_refvar_kgtk(query, span, k=1)
 
 
 def get_best_qnode_for_mention_text(
@@ -86,7 +94,7 @@ def get_best_qnode_for_mention_text(
     # If no Qnode was found, try KGTK
     query_list: List[Optional[str]] = [mention.text, variable_node_label, *claim_variable_tokens]
     for query in list(filter(None, query_list)):
-        claim_variable_links = find_links(claim.claim_sentence, query)
+        claim_variable_links = find_links(claim.claim_sentence, query, REFVAR)
         top_link = create_wikidata_qnodes(claim_variable_links, mention, claim)
         if top_link:
             return top_link

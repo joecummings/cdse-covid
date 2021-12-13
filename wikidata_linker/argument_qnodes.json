@@ -1,0 +1,3309 @@
+[
+  {
+    "qnode": "Q515",
+    "description": [
+      "large permanent human settlement"
+    ],
+    "label": [
+      "city"
+    ],
+    "alias": [
+      "cities and towns",
+      "cities"
+    ],
+    "pagerank": 0.00019679692577229417,
+    "statements": 191,
+    "score": 39.0297
+  },
+  {
+    "qnode": "Q532",
+    "description": [
+      "small clustered human settlement smaller than a town"
+    ],
+    "label": [
+      "village"
+    ],
+    "alias": [
+      "small town",
+      "Village"
+    ],
+    "pagerank": 0.0004781698044366732,
+    "statements": 152,
+    "score": 94.83839
+  },
+  {
+    "qnode": "Q728",
+    "description": [
+      "tool used to inflict damage or harm"
+    ],
+    "label": [
+      "weapon"
+    ],
+    "alias": [
+      "arms",
+      "arm",
+      "armament",
+      "Weapon"
+    ],
+    "pagerank": 4.374386843970558e-06,
+    "statements": 114,
+    "score": 0.86756444
+  },
+  {
+    "qnode": "Q729",
+    "description": [
+      "kingdom of multicellular eukaryotic organisms"
+    ],
+    "label": [
+      "animal"
+    ],
+    "alias": [
+      "Animalia",
+      "animals",
+      "Metazoa"
+    ],
+    "pagerank": 3.642235357854605e-05,
+    "statements": 172,
+    "score": 7.2235813
+  },
+  {
+    "qnode": "Q756",
+    "description": [
+      "multicellular eukaryote of the kingdom Plantae"
+    ],
+    "label": [
+      "plant"
+    ],
+    "alias": [
+      "plants",
+      "green plant",
+      "planta",
+      "Plantæ",
+      "kingdom Plantae",
+      "plantae",
+      "green plants"
+    ],
+    "pagerank": 1.0778269201679697e-05,
+    "statements": 149,
+    "score": 2.1375976
+  },
+  {
+    "qnode": "Q808",
+    "description": [
+      "non-cellular, submicroscopic infectious agent that replicates only inside the living cells of an organism"
+    ],
+    "label": [
+      "virus"
+    ],
+    "alias": [
+      "Virus",
+      "infectious agent",
+      "viruses"
+    ],
+    "pagerank": 1.1520217868609165e-05,
+    "statements": 144,
+    "score": 2.2847848
+  },
+  {
+    "qnode": "Q870",
+    "description": [
+      "form of rail transport consisting of a series of connected vehicles"
+    ],
+    "label": [
+      "train"
+    ],
+    "alias": [
+      "rail train",
+      "railroad train",
+      "railway train",
+      "rail-train",
+      "railtrain"
+    ],
+    "pagerank": 2.7569720618558957e-06,
+    "statements": 154,
+    "score": 0.5468074
+  },
+  {
+    "qnode": "Q901",
+    "description": [
+      "person who conducts scientific research into an area of interest"
+    ],
+    "label": [
+      "scientist"
+    ],
+    "alias": [
+      "natural philosopher"
+    ],
+    "pagerank": 0.00031269866529594066,
+    "statements": 176,
+    "score": 62.01947
+  },
+  {
+    "qnode": "Q1368",
+    "description": [
+      "object or record accepted as payment"
+    ],
+    "label": [
+      "money"
+    ],
+    "alias": [
+      "monies",
+      "moolah",
+      "cash",
+      "dough",
+      "simoleon"
+    ],
+    "pagerank": 9.728673150416797e-06,
+    "statements": 104,
+    "score": 1.9294896
+  },
+  {
+    "qnode": "Q1420",
+    "description": [
+      "road vehicle powered by a motor to carry driver and small number of passengers"
+    ],
+    "label": [
+      "motor car"
+    ],
+    "alias": [
+      "autocar",
+      "motorcar",
+      "motor vehicle",
+      "auto",
+      "🚗",
+      "car",
+      "automobile"
+    ],
+    "pagerank": 1.2211719635391644e-05,
+    "statements": 215,
+    "score": 2.4220228
+  },
+  {
+    "qnode": "Q3914",
+    "description": [
+      "institution designed to teach students under the direction of school teacher"
+    ],
+    "label": [
+      "school"
+    ],
+    "alias": [
+      "schools"
+    ],
+    "pagerank": 0.00015847301299901878,
+    "statements": 168,
+    "score": 31.429314
+  },
+  {
+    "qnode": "Q3947",
+    "description": [
+      "building usually intended for living in"
+    ],
+    "label": [
+      "house"
+    ],
+    "alias": [],
+    "pagerank": 0.00013995237231880482,
+    "statements": 147,
+    "score": 27.757586
+  },
+  {
+    "qnode": "Q4006",
+    "description": [
+      "visual representation of a geographical area"
+    ],
+    "label": [
+      "map"
+    ],
+    "alias": [
+      "maps",
+      "geographic map",
+      "Map"
+    ],
+    "pagerank": 0.00021330569011152338,
+    "statements": 194,
+    "score": 42.3038
+  },
+  {
+    "qnode": "Q5107",
+    "description": [
+      "very large landmass"
+    ],
+    "label": [
+      "continent"
+    ],
+    "alias": [],
+    "pagerank": 1.9999618406556435e-05,
+    "statements": 109,
+    "score": 3.9664433
+  },
+  {
+    "qnode": "Q5638",
+    "description": [
+      "large road vehicle for transporting people"
+    ],
+    "label": [
+      "bus"
+    ],
+    "alias": [
+      "omnibus",
+      "autobus",
+      "multibus"
+    ],
+    "pagerank": 2.924106396506058e-06,
+    "statements": 135,
+    "score": 0.5799386
+  },
+  {
+    "qnode": "Q6256",
+    "description": [
+      "the distinct region in geography; a broad term that can include political divisions or regions associated with distinct political characteristics"
+    ],
+    "label": [
+      "country"
+    ],
+    "alias": [
+      "countries"
+    ],
+    "pagerank": 0.0002679555125959001,
+    "statements": 170,
+    "score": 53.143665
+  },
+  {
+    "qnode": "Q7188",
+    "description": [
+      "system or group of people governing an organized community, often a state"
+    ],
+    "label": [
+      "government"
+    ],
+    "alias": [
+      "gov"
+    ],
+    "pagerank": 4.863278510928371e-05,
+    "statements": 115,
+    "score": 9.645629
+  },
+  {
+    "qnode": "Q7278",
+    "description": [
+      "organized group of people who have the same ideology, or who otherwise have the same political positions, and who field candidates for elections, in an attempt to get them elected and thereby implement their agenda"
+    ],
+    "label": [
+      "political party"
+    ],
+    "alias": [
+      "political parties",
+      "party",
+      "parties (politics)",
+      "parties",
+      "party in politics",
+      "party (politics)",
+      "parties in politics"
+    ],
+    "pagerank": 5.236041150548243e-05,
+    "statements": 147,
+    "score": 10.384966
+  },
+  {
+    "qnode": "Q7748",
+    "description": [
+      "system of rules and guidelines, generally backed by governmental authority"
+    ],
+    "label": [
+      "law"
+    ],
+    "alias": [
+      "legal system",
+      "legal regime",
+      "body of law"
+    ],
+    "pagerank": 0.00010379104933110429,
+    "statements": 141,
+    "score": 20.585524
+  },
+  {
+    "qnode": "Q8386",
+    "description": [
+      "chemical substance having an effect on the body"
+    ],
+    "label": [
+      "drug"
+    ],
+    "alias": [
+      "drugs"
+    ],
+    "pagerank": 6.7882220525147635e-06,
+    "statements": 83,
+    "score": 1.3462725
+  },
+  {
+    "qnode": "Q8473",
+    "description": [
+      "organized body primarily tasked with preparing for and conducting war"
+    ],
+    "label": [
+      "military"
+    ],
+    "alias": [
+      "military affairs",
+      "armed forces",
+      "military force",
+      "army"
+    ],
+    "pagerank": 1.1144515781807215e-05,
+    "statements": 110,
+    "score": 2.2103612
+  },
+  {
+    "qnode": "Q10876",
+    "description": [
+      "domain of prokaryotes"
+    ],
+    "label": [
+      "bacteria"
+    ],
+    "alias": [
+      "eubacteria"
+    ],
+    "pagerank": 4.960110409409262e-05,
+    "statements": 179,
+    "score": 9.8373
+  },
+  {
+    "qnode": "Q11028",
+    "description": [
+      "that which informs; the answer to a question of some kind; that from which data and knowledge can be derived"
+    ],
+    "label": [
+      "information"
+    ],
+    "alias": [
+      "information artifact",
+      "info"
+    ],
+    "pagerank": 0.0007919983594796079,
+    "statements": 83,
+    "score": 157.07564
+  },
+  {
+    "qnode": "Q11436",
+    "description": [
+      "machine that is able to fly by gaining support from the air other than the reactions of the air against the earth’s surface"
+    ],
+    "label": [
+      "aircraft"
+    ],
+    "alias": [
+      "aerial vehicle",
+      "individual aircraft"
+    ],
+    "pagerank": 1.7775757568708294e-05,
+    "statements": 117,
+    "score": 3.5255713
+  },
+  {
+    "qnode": "Q11446",
+    "description": [
+      "large buoyant watercraft"
+    ],
+    "label": [
+      "ship"
+    ],
+    "alias": [
+      "ships",
+      "marine vessel",
+      "water vessel",
+      "vessel"
+    ],
+    "pagerank": 0.0001020709925149221,
+    "statements": 150,
+    "score": 20.24356
+  },
+  {
+    "qnode": "Q11563",
+    "description": [
+      "mathematical object used to count, label, and measure"
+    ],
+    "label": [
+      "number"
+    ],
+    "alias": [],
+    "pagerank": 8.132387974397838e-05,
+    "statements": 86,
+    "score": 16.128637
+  },
+  {
+    "qnode": "Q12136",
+    "description": [
+      "abnormal condition negatively affecting organisms"
+    ],
+    "label": [
+      "disease"
+    ],
+    "alias": [
+      "medical disorder",
+      "diseases and disorders",
+      "disease or disorder",
+      "disease of anatomical entity",
+      "ailment",
+      "medical condition",
+      "other disease",
+      "diseased condition",
+      "condition",
+      "disorders",
+      "illness",
+      "sickness",
+      "ailments",
+      "disease or disorder, non-neoplastic",
+      "disorder",
+      "diseases"
+    ],
+    "pagerank": 2.8191136055922915e-05,
+    "statements": 239,
+    "score": 5.5911536
+  },
+  {
+    "qnode": "Q12280",
+    "description": [
+      "structure that spans and provides a passage over a road, railway, river, or some other obstacle"
+    ],
+    "label": [
+      "bridge"
+    ],
+    "alias": [
+      "bridge (structure)",
+      "bridge (engineering)",
+      "bridges"
+    ],
+    "pagerank": 2.6190946051042645e-05,
+    "statements": 182,
+    "score": 5.194606
+  },
+  {
+    "qnode": "Q12518",
+    "description": [
+      "structure with height greater than width"
+    ],
+    "label": [
+      "tower"
+    ],
+    "alias": [],
+    "pagerank": 7.931794432101999e-06,
+    "statements": 124,
+    "score": 1.5730711
+  },
+  {
+    "qnode": "Q12796",
+    "description": [
+      "gun designed to be carried and operated by individuals"
+    ],
+    "label": [
+      "firearm"
+    ],
+    "alias": [
+      "gun"
+    ],
+    "pagerank": 9.603709313589773e-07,
+    "statements": 96,
+    "score": 0.19047606
+  },
+  {
+    "qnode": "Q12876",
+    "description": [
+      "heavy armored fighting vehicle"
+    ],
+    "label": [
+      "tank"
+    ],
+    "alias": [
+      "military tank",
+      "tank vehicle"
+    ],
+    "pagerank": 8.631648434907144e-07,
+    "statements": 125,
+    "score": 0.17118697
+  },
+  {
+    "qnode": "Q14660",
+    "description": [
+      "piece of fabric with a distinctive design, used as a symbol"
+    ],
+    "label": [
+      "flag"
+    ],
+    "alias": [],
+    "pagerank": 3.518796838330413e-05,
+    "statements": 109,
+    "score": 6.9786873
+  },
+  {
+    "qnode": "Q17221",
+    "description": [
+      "someone engaged or elected to speak on behalf of others"
+    ],
+    "label": [
+      "spokesperson"
+    ],
+    "alias": [
+      "spokesman",
+      "spokespeople",
+      "spokeswoman",
+      "spokeswomen",
+      "spokespersons",
+      "spokesmen"
+    ],
+    "pagerank": 4.147739246611094e-07,
+    "statements": 105,
+    "score": 0.08225994
+  },
+  {
+    "qnode": "Q19799",
+    "description": [
+      "aircraft configured specifically to transport cargo"
+    ],
+    "label": [
+      "cargo aircraft"
+    ],
+    "alias": [
+      "freighter",
+      "cargo jet",
+      "airlifter",
+      "freight aircraft",
+      "air freighter",
+      "cargo plane"
+    ],
+    "pagerank": 4.555065421945603e-08,
+    "statements": 75,
+    "score": 0.00903407
+  },
+  {
+    "qnode": "Q22667",
+    "description": [
+      "interconnected network of infrastructure and vehicles used for train rail transport"
+    ],
+    "label": [
+      "railway"
+    ],
+    "alias": [
+      "rail-way",
+      "fixed rail",
+      "rail way",
+      "rail-road",
+      "rail road",
+      "railroads",
+      "railroad",
+      "railways"
+    ],
+    "pagerank": 1.2041615613456891e-05,
+    "statements": 173,
+    "score": 2.3881505
+  },
+  {
+    "qnode": "Q26540",
+    "description": [
+      "human-made object put into an orbit"
+    ],
+    "label": [
+      "artificial satellite"
+    ],
+    "alias": [
+      "space satellite",
+      "artificial moon",
+      "satellite"
+    ],
+    "pagerank": 6.274306627981987e-05,
+    "statements": 108,
+    "score": 12.443844
+  },
+  {
+    "qnode": "Q30185",
+    "description": [
+      "head of municipal government such as a town or city"
+    ],
+    "label": [
+      "mayor"
+    ],
+    "alias": [
+      "Mayor"
+    ],
+    "pagerank": 4.9746476041330745e-05,
+    "statements": 210,
+    "score": 9.866513
+  },
+  {
+    "qnode": "Q34486",
+    "description": [
+      "type of rotor craft in which lift and thrust are supplied by rotors"
+    ],
+    "label": [
+      "helicopter"
+    ],
+    "alias": [
+      "chopper",
+      "helo",
+      "egg beater",
+      "helicopters",
+      "whirlybird"
+    ],
+    "pagerank": 7.219880096739626e-07,
+    "statements": 128,
+    "score": 0.14318895
+  },
+  {
+    "qnode": "Q35872",
+    "description": [
+      "smaller watercraft"
+    ],
+    "label": [
+      "boat"
+    ],
+    "alias": [],
+    "pagerank": 7.757409911089772e-06,
+    "statements": 113,
+    "score": 1.5384864
+  },
+  {
+    "qnode": "Q39397",
+    "description": [
+      "Weapon or tool consisting of a shaft, usually of wood, with a head attached at a parallel angle that is used primarily for chopping, splitting, or shaping wood and similar materials"
+    ],
+    "label": [
+      "axe"
+    ],
+    "alias": [
+      "ax"
+    ],
+    "pagerank": 2.917869536972175e-07,
+    "statements": 76,
+    "score": 0.05787184
+  },
+  {
+    "qnode": "Q41176",
+    "description": [
+      "structure, typically with a roof and walls, standing more or less permanently in one place"
+    ],
+    "label": [
+      "building"
+    ],
+    "alias": [
+      "buildings",
+      "edifice"
+    ],
+    "pagerank": 0.0002673825157314018,
+    "statements": 166,
+    "score": 53.031635
+  },
+  {
+    "qnode": "Q41291",
+    "description": [
+      "pyrokinetic engine used for propulsion; for the incendiary weapon, see Q2037215"
+    ],
+    "label": [
+      "rocket"
+    ],
+    "alias": [
+      "rockets"
+    ],
+    "pagerank": 1.5050278082443352e-06,
+    "statements": 108,
+    "score": 0.2985011
+  },
+  {
+    "qnode": "Q41487",
+    "description": [
+      "judicial institution with the authority to resolve legal disputes"
+    ],
+    "label": [
+      "court"
+    ],
+    "alias": [],
+    "pagerank": 1.1555715644783707e-05,
+    "statements": 124,
+    "score": 2.2919137
+  },
+  {
+    "qnode": "Q42889",
+    "description": [
+      "mobile machine that transports people, animals or cargo"
+    ],
+    "label": [
+      "vehicle"
+    ],
+    "alias": [],
+    "pagerank": 1.985809744326949e-05,
+    "statements": 106,
+    "score": 3.9385746
+  },
+  {
+    "qnode": "Q43109",
+    "description": [
+      "direct and universal vote in which an entire electorate is invited to vote on a particular proposal"
+    ],
+    "label": [
+      "referendum"
+    ],
+    "alias": [
+      "plebiscite",
+      "ballot question",
+      "people\\s vote"
+    ],
+    "pagerank": 4.644087371587614e-06,
+    "statements": 164,
+    "score": 0.92104304
+  },
+  {
+    "qnode": "Q43193",
+    "description": [
+      "freight motor vehicle"
+    ],
+    "label": [
+      "truck"
+    ],
+    "alias": [
+      "lorry"
+    ],
+    "pagerank": 1.3503721101676264e-06,
+    "statements": 110,
+    "score": 0.26781222
+  },
+  {
+    "qnode": "Q43229",
+    "description": [
+      "social entity (not necessarily commercial) uniting people into a structured group managing shared means to meet some needs, or to pursue collective goals"
+    ],
+    "label": [
+      "organization"
+    ],
+    "alias": [
+      "organisations",
+      "org",
+      "organizations",
+      "organisation"
+    ],
+    "pagerank": 0.0010630700046678557,
+    "statements": 183,
+    "score": 210.83438
+  },
+  {
+    "qnode": "Q46737",
+    "description": [
+      "economic resource, from which future economic benefits are expected"
+    ],
+    "label": [
+      "asset"
+    ],
+    "alias": [
+      "Assets",
+      "assets"
+    ],
+    "pagerank": 8.975292115460792e-06,
+    "statements": 65,
+    "score": 1.780054
+  },
+  {
+    "qnode": "Q47064",
+    "description": [
+      "member of the armed forces"
+    ],
+    "label": [
+      "military personnel"
+    ],
+    "alias": [
+      "military man",
+      "military member"
+    ],
+    "pagerank": 5.0788595220121755e-05,
+    "statements": 110,
+    "score": 10.072697
+  },
+  {
+    "qnode": "Q47988",
+    "description": [
+      "document which may be used to identify a person"
+    ],
+    "label": [
+      "identity document"
+    ],
+    "alias": [
+      "piece of identification",
+      "ID card",
+      "identification document",
+      "identification card",
+      "identity card",
+      "National identity card",
+      "government ID"
+    ],
+    "pagerank": 5.042274724356559e-07,
+    "statements": 138,
+    "score": 0.10000657
+  },
+  {
+    "qnode": "Q48352",
+    "description": [
+      "official who holds the highest-ranked executive position in a sovereign state"
+    ],
+    "label": [
+      "head of state"
+    ],
+    "alias": [
+      "governor",
+      "chief of state"
+    ],
+    "pagerank": 2.2158493776889975e-05,
+    "statements": 130,
+    "score": 4.3948255
+  },
+  {
+    "qnode": "Q55488",
+    "description": [
+      "railway facility where trains regularly stop to load or unload passengers and/or freight"
+    ],
+    "label": [
+      "railway station"
+    ],
+    "alias": [
+      "train station",
+      "railway stop",
+      "railroad station",
+      "train stop",
+      "rail station",
+      "rail stop"
+    ],
+    "pagerank": 6.74845716074446e-05,
+    "statements": 178,
+    "score": 13.383862
+  },
+  {
+    "qnode": "Q56061",
+    "description": [
+      "territorial entity for administration purposes, with or without its own local government"
+    ],
+    "label": [
+      "administrative territorial entity"
+    ],
+    "alias": [
+      "administrative division",
+      "administrative region",
+      "entity",
+      "administrative unit",
+      "subdivision",
+      "administrative divisions"
+    ],
+    "pagerank": 0.0005502306203556643,
+    "statements": 136,
+    "score": 109.12435
+  },
+  {
+    "qnode": "Q62447",
+    "description": [
+      "location from which aircraft flight operations take place"
+    ],
+    "label": [
+      "aerodrome"
+    ],
+    "alias": [
+      "airfield",
+      "airdrome"
+    ],
+    "pagerank": 2.4493871550662275e-05,
+    "statements": 113,
+    "score": 4.8580217
+  },
+  {
+    "qnode": "Q64418",
+    "description": [
+      "weapon designed to launch projectiles beyond normal infantry weapon range"
+    ],
+    "label": [
+      "artillery"
+    ],
+    "alias": [],
+    "pagerank": 1.0102064482459574e-06,
+    "statements": 111,
+    "score": 0.20035444
+  },
+  {
+    "qnode": "Q79007",
+    "description": [
+      "public thoroughfare in a built environment"
+    ],
+    "label": [
+      "street"
+    ],
+    "alias": [
+      "St."
+    ],
+    "pagerank": 0.00043037084560955375,
+    "statements": 161,
+    "score": 85.353714
+  },
+  {
+    "qnode": "Q81103",
+    "description": [
+      "class of artillery which fires at a low or flat trajectory"
+    ],
+    "label": [
+      "cannon"
+    ],
+    "alias": [],
+    "pagerank": 6.265958736829051e-07,
+    "statements": 94,
+    "score": 0.12426947
+  },
+  {
+    "qnode": "Q81715",
+    "description": [
+      "object or structure that creates a barrier or obstacle to control, block passage or force the flow of traffic in a desired direction"
+    ],
+    "label": [
+      "barricade"
+    ],
+    "alias": [],
+    "pagerank": 3.236831256936303e-08,
+    "statements": 64,
+    "score": 0.0064195506
+  },
+  {
+    "qnode": "Q82794",
+    "description": [
+      "2D or 3D defined space, mainly in terrestrial and astrophysics sciences"
+    ],
+    "label": [
+      "geographic region"
+    ],
+    "alias": [
+      "geographic area",
+      "region",
+      "geographical area",
+      "delimited region",
+      "bounded region",
+      "geographical region",
+      "geographical zone",
+      "bounded area",
+      "place",
+      "geographic zone"
+    ],
+    "pagerank": 0.0002826445257107389,
+    "statements": 109,
+    "score": 56.058647
+  },
+  {
+    "qnode": "Q82955",
+    "description": [
+      "person involved in politics, person who holds or seeks positions in government"
+    ],
+    "label": [
+      "politician"
+    ],
+    "alias": [
+      "polit.",
+      "political figure",
+      "political leader"
+    ],
+    "pagerank": 0.0003833840523592852,
+    "statements": 241,
+    "score": 76.03455
+  },
+  {
+    "qnode": "Q83307",
+    "description": [
+      "politician who holds significant civil public office in a national or regional government, generally heading a ministry"
+    ],
+    "label": [
+      "minister"
+    ],
+    "alias": [
+      "cabinet secretary",
+      "secretary of a government department",
+      "cabinet minister",
+      "government minister"
+    ],
+    "pagerank": 1.1428878193323662e-05,
+    "statements": 146,
+    "score": 2.2667603
+  },
+  {
+    "qnode": "Q83620",
+    "description": [
+      "transportation route connecting one location to another"
+    ],
+    "label": [
+      "thoroughfare"
+    ],
+    "alias": [
+      "route"
+    ],
+    "pagerank": 3.8599094347926696e-05,
+    "statements": 108,
+    "score": 7.6552906
+  },
+  {
+    "qnode": "Q107711",
+    "description": [
+      "rescuer trained to extinguish hazardous fires"
+    ],
+    "label": [
+      "firefighter"
+    ],
+    "alias": [
+      "firewoman",
+      "fireofficer",
+      "fireman",
+      "fire fighter"
+    ],
+    "pagerank": 8.660362830729849e-07,
+    "statements": 151,
+    "score": 0.17176114
+  },
+  {
+    "qnode": "Q121998",
+    "description": [
+      "diplomatic envoy"
+    ],
+    "label": [
+      "ambassador"
+    ],
+    "alias": [],
+    "pagerank": 6.857397891161824e-06,
+    "statements": 158,
+    "score": 1.3600703
+  },
+  {
+    "qnode": "Q123705",
+    "description": [
+      "geographically localised community within a larger city, town or suburb"
+    ],
+    "label": [
+      "neighborhood"
+    ],
+    "alias": [
+      "neighbourhood",
+      "subdistrict",
+      "quarter"
+    ],
+    "pagerank": 7.693033318094633e-05,
+    "statements": 135,
+    "score": 15.258071
+  },
+  {
+    "qnode": "Q127197",
+    "description": [
+      "explosive weapon"
+    ],
+    "label": [
+      "bomb"
+    ],
+    "alias": [],
+    "pagerank": 5.861721605961971e-07,
+    "statements": 96,
+    "score": 0.11625245
+  },
+  {
+    "qnode": "Q127771",
+    "description": [
+      "aircraft class designed to engage other aircraft in air-to-air combat"
+    ],
+    "label": [
+      "fighter"
+    ],
+    "alias": [
+      "military aircraft, fighter",
+      "pursuit aircraft",
+      "hunter aircraft",
+      "scout aircraft",
+      "aircraft, fighter",
+      "fighter aircraft",
+      "fighter plane"
+    ],
+    "pagerank": 3.522534431866133e-07,
+    "statements": 126,
+    "score": 0.06986451
+  },
+  {
+    "qnode": "Q131257",
+    "description": [
+      "legal concept"
+    ],
+    "label": [
+      "intellectual property"
+    ],
+    "alias": [
+      "IP"
+    ],
+    "pagerank": 0.00013738568952534956,
+    "statements": 96,
+    "score": 27.247149
+  },
+  {
+    "qnode": "Q132050",
+    "description": [
+      "governing official"
+    ],
+    "label": [
+      "governor"
+    ],
+    "alias": [],
+    "pagerank": 9.856580325510921e-06,
+    "statements": 141,
+    "score": 1.9548384
+  },
+  {
+    "qnode": "Q134808",
+    "description": [
+      "biological preparatory medicine that improves immunity to a particular disease that comes from a pathogen"
+    ],
+    "label": [
+      "vaccine"
+    ],
+    "alias": [
+      "vaccines"
+    ],
+    "pagerank": 4.072341053000664e-07,
+    "statements": 114,
+    "score": 0.08076915
+  },
+  {
+    "qnode": "Q153936",
+    "description": [
+      "generally refers to an army or other fighting force that is composed of non-professional fighters"
+    ],
+    "label": [
+      "militia"
+    ],
+    "alias": [],
+    "pagerank": 2.286162541763085e-07,
+    "statements": 77,
+    "score": 0.045340262
+  },
+  {
+    "qnode": "Q161524",
+    "description": [
+      "any full or partial face covering, whether ceremonial, protective, decorative, or used as disguise"
+    ],
+    "label": [
+      "mask"
+    ],
+    "alias": [
+      "art mask",
+      "costume mask",
+      "cultural mask"
+    ],
+    "pagerank": 1.1042524631363418e-06,
+    "statements": 96,
+    "score": 0.21901293
+  },
+  {
+    "qnode": "Q167037",
+    "description": [
+      "separate legal entity that has been incorporated through a legislative or registration process established through legislation"
+    ],
+    "label": [
+      "corporation"
+    ],
+    "alias": [
+      "incorporated entity",
+      "Inc."
+    ],
+    "pagerank": 1.5373609561532963e-05,
+    "statements": 94,
+    "score": 3.049139
+  },
+  {
+    "qnode": "Q167096",
+    "description": [
+      "Incendiary weapon using flammable liquid in a bottle"
+    ],
+    "label": [
+      "Molotov cocktail"
+    ],
+    "alias": [
+      "poor man\\s grenade",
+      "fire bomb",
+      "petrol bomb"
+    ],
+    "pagerank": 1.2145392669893135e-08,
+    "statements": 106,
+    "score": 0.0024087466
+  },
+  {
+    "qnode": "Q169872",
+    "description": [
+      "departure from normal function or feeling which is noticed by a patient, reflecting the presence of an unusual state, or of a disease; subjective, observed by the patient, cannot be measured directly"
+    ],
+    "label": [
+      "symptom"
+    ],
+    "alias": [
+      "medical symptom",
+      "Symptom"
+    ],
+    "pagerank": 1.1309152831496425e-05,
+    "statements": 141,
+    "score": 2.2430115
+  },
+  {
+    "qnode": "Q170173",
+    "description": [
+      "recreational boat or ship"
+    ],
+    "label": [
+      "yacht"
+    ],
+    "alias": [],
+    "pagerank": 4.673822014207246e-07,
+    "statements": 97,
+    "score": 0.092695095
+  },
+  {
+    "qnode": "Q174583",
+    "description": [
+      "projectile propelled by a firearm, sling, or an air gun"
+    ],
+    "label": [
+      "bullet"
+    ],
+    "alias": [
+      "projectile"
+    ],
+    "pagerank": 5.1421605842103435e-06,
+    "statements": 76,
+    "score": 1.0198457
+  },
+  {
+    "qnode": "Q174782",
+    "description": [
+      "open public spaces in cities or towns, usually rectilinear, surrounded by buildings, and located at the junction of two or more thoroughfares"
+    ],
+    "label": [
+      "square"
+    ],
+    "alias": [
+      "plaza",
+      "square (open space)",
+      "public square",
+      "piazza",
+      "town square",
+      "city square",
+      "urban square"
+    ],
+    "pagerank": 1.4083652444135777e-05,
+    "statements": 141,
+    "score": 2.793137
+  },
+  {
+    "qnode": "Q177597",
+    "description": [
+      "water-borne vessel that is operated by a legal or insurrectionary armed service"
+    ],
+    "label": [
+      "naval ship"
+    ],
+    "alias": [
+      "military ship",
+      "naval vessels",
+      "naval ships",
+      "military ships",
+      "navy ships",
+      "navy ship",
+      "naval vessel",
+      "combat vessel"
+    ],
+    "pagerank": 1.0503156934245731e-06,
+    "statements": 82,
+    "score": 0.20830488
+  },
+  {
+    "qnode": "Q178197",
+    "description": [
+      "soldier who fights for hire"
+    ],
+    "label": [
+      "mercenary"
+    ],
+    "alias": [
+      "soldier of fortune"
+    ],
+    "pagerank": 2.8093619249862535e-07,
+    "statements": 116,
+    "score": 0.055717584
+  },
+  {
+    "qnode": "Q184613",
+    "description": [
+      "class of gun designed to fire grenade shells"
+    ],
+    "label": [
+      "grenade launcher"
+    ],
+    "alias": [],
+    "pagerank": 7.585748569146087e-08,
+    "statements": 58,
+    "score": 0.015044417
+  },
+  {
+    "qnode": "Q185785",
+    "description": [
+      "general term for a wide range of weapon items such as bombs, missiles, mines and projectiles"
+    ],
+    "label": [
+      "ammunition"
+    ],
+    "alias": [
+      "ammo",
+      "munitions"
+    ],
+    "pagerank": 6.437659459349775e-07,
+    "statements": 86,
+    "score": 0.12767822
+  },
+  {
+    "qnode": "Q188869",
+    "description": [
+      "area of land used for agricultural purposes"
+    ],
+    "label": [
+      "field"
+    ],
+    "alias": [
+      "paddock",
+      "agricultural field",
+      "farmer\\s field"
+    ],
+    "pagerank": 1.3563628406794504e-06,
+    "statements": 68,
+    "score": 0.26900506
+  },
+  {
+    "qnode": "Q189290",
+    "description": [
+      "member of an armed force or uniformed service who holds a position of authority"
+    ],
+    "label": [
+      "military officer"
+    ],
+    "alias": [
+      "army officer",
+      "officer"
+    ],
+    "pagerank": 1.8818747440663844e-05,
+    "statements": 134,
+    "score": 3.7324338
+  },
+  {
+    "qnode": "Q190512",
+    "description": [
+      "non-lethal chemical weapon"
+    ],
+    "label": [
+      "tear gas"
+    ],
+    "alias": [
+      "tear smoke",
+      "lachrymator",
+      "tear gases",
+      "Tear Gas",
+      "lachrymatory agent",
+      "Lachrymatory Bomb"
+    ],
+    "pagerank": 7.918073879643221e-09,
+    "statements": 140,
+    "score": 0.0015703932
+  },
+  {
+    "qnode": "Q192283",
+    "description": [
+      "News gathering organization"
+    ],
+    "label": [
+      "news agency"
+    ],
+    "alias": [
+      "news service",
+      "news wire",
+      "wire service",
+      "press agency",
+      "newswire"
+    ],
+    "pagerank": 4.117555192640353e-06,
+    "statements": 141,
+    "score": 0.81661314
+  },
+  {
+    "qnode": "Q192852",
+    "description": [
+      "political force against majority"
+    ],
+    "label": [
+      "political opposition"
+    ],
+    "alias": [
+      "opposition"
+    ],
+    "pagerank": 6.795254279361654e-06,
+    "statements": 85,
+    "score": 1.347743
+  },
+  {
+    "qnode": "Q193432",
+    "description": [
+      "person who is enthusiastically devoted to something or someone"
+    ],
+    "label": [
+      "fan"
+    ],
+    "alias": [
+      "fanatic",
+      "enthusiast",
+      "supporter",
+      "fans",
+      "aficionado"
+    ],
+    "pagerank": 9.136141638204426e-07,
+    "statements": 105,
+    "score": 0.18119231
+  },
+  {
+    "qnode": "Q201948",
+    "description": [
+      "Highly trained marksman"
+    ],
+    "label": [
+      "sniper"
+    ],
+    "alias": [],
+    "pagerank": 8.7072780272276e-08,
+    "statements": 98,
+    "score": 0.017268687
+  },
+  {
+    "qnode": "Q205895",
+    "description": [
+      "contiguous area of land surrounded by ocean; large continuous area of land, either surrounded by sea or contiguous with another landmass"
+    ],
+    "label": [
+      "landmass"
+    ],
+    "alias": [
+      "land mass"
+    ],
+    "pagerank": 6.0254879794166796e-05,
+    "statements": 56,
+    "score": 11.950034
+  },
+  {
+    "qnode": "Q208281",
+    "description": [
+      "emergency vehicle intended to put out fires"
+    ],
+    "label": [
+      "fire engine"
+    ],
+    "alias": [
+      "firetruck",
+      "fire-truck",
+      "fire apparatus"
+    ],
+    "pagerank": 1.2073419070022303e-07,
+    "statements": 103,
+    "score": 0.023945928
+  },
+  {
+    "qnode": "Q213441",
+    "description": [
+      "place where items or services are sold"
+    ],
+    "label": [
+      "shop"
+    ],
+    "alias": [
+      "supply store",
+      "store",
+      "store (building)"
+    ],
+    "pagerank": 4.299686915704906e-06,
+    "statements": 124,
+    "score": 0.85275775
+  },
+  {
+    "qnode": "Q215627",
+    "description": [
+      "being that has certain capacities or attributes constituting personhood (avoid use with P31; use Q5 for humans)"
+    ],
+    "label": [
+      "person"
+    ],
+    "alias": [
+      "persons"
+    ],
+    "pagerank": 0.0006966346372607897,
+    "statements": 110,
+    "score": 138.16788
+  },
+  {
+    "qnode": "Q216353",
+    "description": [
+      "prefix or suffix added to someone\\s name in certain contexts"
+    ],
+    "label": [
+      "title"
+    ],
+    "alias": [],
+    "pagerank": 0.0001360895745808066,
+    "statements": 70,
+    "score": 26.990406
+  },
+  {
+    "qnode": "Q222405",
+    "description": [
+      "weapon characterized by its ability to harm or kill without the use of fire or explosives"
+    ],
+    "label": [
+      "close combat weapon"
+    ],
+    "alias": [],
+    "pagerank": 9.016814784688911e-07,
+    "statements": 70,
+    "score": 0.17883065
+  },
+  {
+    "qnode": "Q243249",
+    "description": [
+      "guided missile designed to be carried by aircraft for attack against other aircraft"
+    ],
+    "label": [
+      "air-to-air missile"
+    ],
+    "alias": [
+      "air intercept missile",
+      "Air-to-air missile, AAM",
+      "AAM"
+    ],
+    "pagerank": 1.3277951006124268e-07,
+    "statements": 88,
+    "score": 0.026334185
+  },
+  {
+    "qnode": "Q245065",
+    "description": [
+      "organization composed primarily of sovereign states"
+    ],
+    "label": [
+      "intergovernmental organization"
+    ],
+    "alias": [
+      "IGO",
+      "international governmental organization"
+    ],
+    "pagerank": 0.00017510660371498175,
+    "statements": 74,
+    "score": 34.72998
+  },
+  {
+    "qnode": "Q249556",
+    "description": [
+      "entity that operates a railroad track and/or trains"
+    ],
+    "label": [
+      "railway company"
+    ],
+    "alias": [
+      "railroad company",
+      "rail transport company"
+    ],
+    "pagerank": 6.630594539284236e-06,
+    "statements": 89,
+    "score": 1.315019
+  },
+  {
+    "qnode": "Q269949",
+    "description": [
+      "public or private road or other public way on land"
+    ],
+    "label": [
+      "highway"
+    ],
+    "alias": [],
+    "pagerank": 6.36463776234094e-06,
+    "statements": 110,
+    "score": 1.2622652
+  },
+  {
+    "qnode": "Q272730",
+    "description": [
+      "portion of the atmosphere controlled by a country above its territory, or any three-dimensional portion of the atmosphere"
+    ],
+    "label": [
+      "airspace"
+    ],
+    "alias": [
+      "air space"
+    ],
+    "pagerank": 1.2820369649019626e-06,
+    "statements": 53,
+    "score": 0.25427437
+  },
+  {
+    "qnode": "Q319608",
+    "description": [
+      "collection of information that describes the locastion of a building, apartment, or other structure"
+    ],
+    "label": [
+      "postal address"
+    ],
+    "alias": [
+      "mailing address",
+      "address for mail",
+      "delivery address",
+      "addressing",
+      "address",
+      "mail address"
+    ],
+    "pagerank": 3.817924311590233e-05,
+    "statements": 101,
+    "score": 7.571889
+  },
+  {
+    "qnode": "Q327245",
+    "description": [
+      "group linked in a common purpose"
+    ],
+    "label": [
+      "team"
+    ],
+    "alias": [],
+    "pagerank": 3.091031244079194e-05,
+    "statements": 57,
+    "score": 6.1306343
+  },
+  {
+    "qnode": "Q327333",
+    "description": [
+      "organization in the machinery of government responsible for specific functions"
+    ],
+    "label": [
+      "government agency"
+    ],
+    "alias": [
+      "agency",
+      "government body",
+      "government office",
+      "state agency",
+      "public body",
+      "public agency",
+      "government department"
+    ],
+    "pagerank": 0.00011714515352073766,
+    "statements": 116,
+    "score": 23.232924
+  },
+  {
+    "qnode": "Q335778",
+    "description": [
+      "site of ballot casting in elections"
+    ],
+    "label": [
+      "polling place"
+    ],
+    "alias": [
+      "polling station"
+    ],
+    "pagerank": 3.285050443914073e-06,
+    "statements": 81,
+    "score": 0.65150684
+  },
+  {
+    "qnode": "Q384593",
+    "description": [
+      "warranted employee of a police force"
+    ],
+    "label": [
+      "police officer"
+    ],
+    "alias": [
+      "copper",
+      "fed",
+      "policeman",
+      "polis",
+      "crusher",
+      "cozzer",
+      "dibble",
+      "cop",
+      "bobby",
+      "jake",
+      "piggy",
+      "constable",
+      "policewoman",
+      "bizzie",
+      "officer",
+      "chazzer",
+      "pig",
+      "oinker",
+      "police agent",
+      "Officer Friendly",
+      "barney",
+      "Old Bill",
+      "beatsman"
+    ],
+    "pagerank": 3.7006019681113964e-06,
+    "statements": 180,
+    "score": 0.73396343
+  },
+  {
+    "qnode": "Q392326",
+    "description": [
+      "short staff or stick, usually made of wood, wielded as a weapon"
+    ],
+    "label": [
+      "club"
+    ],
+    "alias": [
+      "baton",
+      "cosh",
+      "bludgeon",
+      "cudgel",
+      "truncheon",
+      "nightstick"
+    ],
+    "pagerank": 5.993535115368257e-07,
+    "statements": 87,
+    "score": 0.118873335
+  },
+  {
+    "qnode": "Q466704",
+    "description": [
+      "ground-launched missile designed to attack aerial targets"
+    ],
+    "label": [
+      "surface-to-air missile"
+    ],
+    "alias": [
+      "ground-to-air missile",
+      "surface to air missile",
+      "ground to air missile",
+      "GTAM",
+      "air defense missile",
+      "SAM"
+    ],
+    "pagerank": 2.0175735655679183e-07,
+    "statements": 115,
+    "score": 0.040013723
+  },
+  {
+    "qnode": "Q484000",
+    "description": [
+      "aircraft without a human pilot aboard"
+    ],
+    "label": [
+      "unmanned aerial vehicle"
+    ],
+    "alias": [
+      "uncrewed aerial vehicle",
+      "unmanned aircraft",
+      "unmanned aircraft system",
+      "drone",
+      "UAV",
+      "unmanned aerial system"
+    ],
+    "pagerank": 3.315412468908327e-07,
+    "statements": 155,
+    "score": 0.065754
+  },
+  {
+    "qnode": "Q484652",
+    "description": [
+      "organization with an international membership, scope, or presence"
+    ],
+    "label": [
+      "international organization"
+    ],
+    "alias": [
+      "international organisation"
+    ],
+    "pagerank": 0.00032835893899464577,
+    "statements": 93,
+    "score": 65.125374
+  },
+  {
+    "qnode": "Q574258",
+    "description": [
+      "Group of the viruses which cause influenza on humans and diseases on mammals and birds"
+    ],
+    "label": [
+      "influenza virus"
+    ],
+    "alias": [],
+    "pagerank": 9.632947201097077e-09,
+    "statements": 34,
+    "score": 0.0019104518
+  },
+  {
+    "qnode": "Q637703",
+    "description": [
+      "scattered remains of something destroyed or discarded"
+    ],
+    "label": [
+      "debris"
+    ],
+    "alias": [],
+    "pagerank": 6.087144894666737e-08,
+    "statements": 33,
+    "score": 0.012072528
+  },
+  {
+    "qnode": "Q693464",
+    "description": [
+      "physical money"
+    ],
+    "label": [
+      "cash"
+    ],
+    "alias": [],
+    "pagerank": 1.807969016944899e-06,
+    "statements": 77,
+    "score": 0.35857484
+  },
+  {
+    "qnode": "Q702269",
+    "description": [
+      "person who is paid to undertake a specialized set of tasks and to complete them for a fee"
+    ],
+    "label": [
+      "professional"
+    ],
+    "alias": [
+      "specialist"
+    ],
+    "pagerank": 0.00028935821743951467,
+    "statements": 107,
+    "score": 57.3869
+  },
+  {
+    "qnode": "Q702492",
+    "description": [
+      "human settlement with high population density and infrastructure of built environment"
+    ],
+    "label": [
+      "urban area"
+    ],
+    "alias": [],
+    "pagerank": 2.7244205036560493e-05,
+    "statements": 108,
+    "score": 5.403505
+  },
+  {
+    "qnode": "Q732717",
+    "description": [
+      "government agency responsible for the enforcement of the laws"
+    ],
+    "label": [
+      "law enforcement agency"
+    ],
+    "alias": [
+      "LEA",
+      "law enforcement agencies"
+    ],
+    "pagerank": 8.660045365846457e-06,
+    "statements": 73,
+    "score": 1.7175485
+  },
+  {
+    "qnode": "Q783794",
+    "description": [
+      "legal entity representing an association of people, whether natural, legal or a mixture of both, with a specific objective"
+    ],
+    "label": [
+      "company"
+    ],
+    "alias": [
+      "co.",
+      "firm"
+    ],
+    "pagerank": 0.00011921350359532512,
+    "statements": 96,
+    "score": 23.644321
+  },
+  {
+    "qnode": "Q809910",
+    "description": [
+      "club used for baseball, or as a weapon"
+    ],
+    "label": [
+      "baseball bat"
+    ],
+    "alias": [],
+    "pagerank": 1.615964140617603e-06,
+    "statements": 74,
+    "score": 0.3204857
+  },
+  {
+    "qnode": "Q811430",
+    "description": [
+      "artificial construction meant to remain at a fixed geographic location"
+    ],
+    "label": [
+      "human-made geographic feature"
+    ],
+    "alias": [
+      "constructions",
+      "construction"
+    ],
+    "pagerank": 0.00011730389499166518,
+    "statements": 64,
+    "score": 23.264904
+  },
+  {
+    "qnode": "Q811979",
+    "description": [
+      "human-made designed structure"
+    ],
+    "label": [
+      "architectural structure"
+    ],
+    "alias": [
+      "structures (architectural)",
+      "architectural structures",
+      "structure (designed)",
+      "structures (designed)",
+      "structures in architecture",
+      "structure in architecture",
+      "structure (architectural)",
+      "designed structures",
+      "designed structure"
+    ],
+    "pagerank": 0.0003488296134219479,
+    "statements": 108,
+    "score": 69.18344
+  },
+  {
+    "qnode": "Q826745",
+    "description": [
+      "material or logistical assistance for people in need"
+    ],
+    "label": [
+      "humanitarian aid"
+    ],
+    "alias": [
+      "relief work",
+      "humanitarian assistance",
+      "humanitarian relief"
+    ],
+    "pagerank": 7.245262497129875e-07,
+    "statements": 94,
+    "score": 0.1436998
+  },
+  {
+    "qnode": "Q905151",
+    "description": [
+      "document used to cast votes in an election"
+    ],
+    "label": [
+      "ballot"
+    ],
+    "alias": [
+      "voting paper",
+      "ballot paper"
+    ],
+    "pagerank": 9.043354281954234e-08,
+    "statements": 57,
+    "score": 0.01793521
+  },
+  {
+    "qnode": "Q913345",
+    "description": [
+      "rubber or rubber-coated projectiles that can be fired from either standard firearms or dedicated riot guns"
+    ],
+    "label": [
+      "rubber bullet"
+    ],
+    "alias": [
+      "rubber baton round",
+      "rubber bullets"
+    ],
+    "pagerank": 3.2449886759170124e-09,
+    "statements": 56,
+    "score": 0.00064359786
+  },
+  {
+    "qnode": "Q937228",
+    "description": [
+      "predominant feature that characterizes a being, a thing, a phenomenon, etc. and which differentiates one being from another, one thing from another"
+    ],
+    "label": [
+      "property"
+    ],
+    "alias": [
+      "characteristic",
+      "attribute",
+      "propriety"
+    ],
+    "pagerank": 0.0011681096962346956,
+    "statements": 76,
+    "score": 231.67142
+  },
+  {
+    "qnode": "Q974850",
+    "description": [
+      "self-propelled guided weapon system"
+    ],
+    "label": [
+      "missile"
+    ],
+    "alias": [
+      "guided missile",
+      "missiles"
+    ],
+    "pagerank": 3.907836256274209e-07,
+    "statements": 92,
+    "score": 0.077502064
+  },
+  {
+    "qnode": "Q988108",
+    "description": [
+      "association of people united by a common interest or goal"
+    ],
+    "label": [
+      "club"
+    ],
+    "alias": [
+      "association"
+    ],
+    "pagerank": 7.478592207371902e-06,
+    "statements": 78,
+    "score": 1.48319
+  },
+  {
+    "qnode": "Q1021645",
+    "description": [
+      "building which contains spaces mainly designed to be used for offices"
+    ],
+    "label": [
+      "office building"
+    ],
+    "alias": [
+      "office building",
+      "office property",
+      "office real estate",
+      "office block"
+    ],
+    "pagerank": 6.020582508028361e-06,
+    "statements": 111,
+    "score": 1.1940305
+  },
+  {
+    "qnode": "Q1048835",
+    "description": [
+      "a region accepted to be in the jurisdiction of a particular government entity"
+    ],
+    "label": [
+      "political territorial entity"
+    ],
+    "alias": [
+      "political division",
+      "polity"
+    ],
+    "pagerank": 8.518922336464795e-05,
+    "statements": 53,
+    "score": 16.896109
+  },
+  {
+    "qnode": "Q1058795",
+    "description": [
+      "liquids originating from inside of the bodies of living people, including fluids excreted or secreted, and body water that normally is not"
+    ],
+    "label": [
+      "body fluids"
+    ],
+    "alias": [
+      "biological fluid",
+      "biofluid",
+      "bodily fluids",
+      "bodily fluid",
+      "body fluid",
+      "biological liquid"
+    ],
+    "pagerank": 1.7218084169532875e-06,
+    "statements": 91,
+    "score": 0.34147725
+  },
+  {
+    "qnode": "Q1092499",
+    "description": [
+      "authority responsible for law enforcement and criminal enforcement"
+    ],
+    "label": [
+      "prosecutors office"
+    ],
+    "alias": [
+      "prosecutor",
+      "State prosecution",
+      "prosecutor\\s office",
+      "prosecution service"
+    ],
+    "pagerank": 8.094789475082041e-07,
+    "statements": 62,
+    "score": 0.16054899
+  },
+  {
+    "qnode": "Q1184840",
+    "description": [
+      "land combat and transportation vehicles which are designed for or are significantly used by military forces"
+    ],
+    "label": [
+      "military vehicle"
+    ],
+    "alias": [],
+    "pagerank": 9.070731792801254e-07,
+    "statements": 68,
+    "score": 0.17989823
+  },
+  {
+    "qnode": "Q1194773",
+    "description": [
+      "weapon designed to discharge projectiles or other material"
+    ],
+    "label": [
+      "projectile weapon"
+    ],
+    "alias": [
+      "gun"
+    ],
+    "pagerank": 7.474731917039024e-07,
+    "statements": 65,
+    "score": 0.1482465
+  },
+  {
+    "qnode": "Q1229765",
+    "description": [
+      "vehicles that are intended for locomotion on or in the water"
+    ],
+    "label": [
+      "watercraft"
+    ],
+    "alias": [
+      "water vehicle",
+      "water vessel",
+      "sea vessel",
+      "marine vessel",
+      "vessel"
+    ],
+    "pagerank": 1.0415378156466091e-05,
+    "statements": 99,
+    "score": 2.0656397
+  },
+  {
+    "qnode": "Q1244442",
+    "description": [
+      "individual buildings or groups of buildings designed or used as places of instruction"
+    ],
+    "label": [
+      "school building"
+    ],
+    "alias": [
+      "school house",
+      "school-house",
+      "schoolhouse",
+      "educational building"
+    ],
+    "pagerank": 2.3487282311921372e-05,
+    "statements": 105,
+    "score": 4.658372
+  },
+  {
+    "qnode": "Q1251441",
+    "description": [
+      "someone with the authority to affect the conduct of others; who have the responsibility of leading"
+    ],
+    "label": [
+      "leader"
+    ],
+    "alias": [
+      "boss",
+      "person in charge"
+    ],
+    "pagerank": 8.467723091279582e-06,
+    "statements": 89,
+    "score": 1.6794537
+  },
+  {
+    "qnode": "Q1292279",
+    "description": [
+      "boundary line between two territories, for example countries, states, provinces, cities"
+    ],
+    "label": [
+      "political border"
+    ],
+    "alias": [
+      "political boundary"
+    ],
+    "pagerank": 5.902569090379598e-06,
+    "statements": 117,
+    "score": 1.1706256
+  },
+  {
+    "qnode": "Q1307347",
+    "description": [
+      "obstacle marking a delimitation of land"
+    ],
+    "label": [
+      "boundary"
+    ],
+    "alias": [
+      "fence"
+    ],
+    "pagerank": 1.407007738515341e-06,
+    "statements": 127,
+    "score": 0.27904615
+  },
+  {
+    "qnode": "Q1333024",
+    "description": [
+      "protective clothing or equipment designed to help protect an individual from injury, infection, or other hazards"
+    ],
+    "label": [
+      "personal protective equipment"
+    ],
+    "alias": [
+      "safety gear",
+      "protective gear",
+      "protective clothing",
+      "PPE"
+    ],
+    "pagerank": 3.0882410897833867e-06,
+    "statements": 84,
+    "score": 0.6124914
+  },
+  {
+    "qnode": "Q1339847",
+    "description": [
+      "percentage of eligible voters who cast a ballot in an election"
+    ],
+    "label": [
+      "voter turnout"
+    ],
+    "alias": [],
+    "pagerank": 1.7553025155094912e-08,
+    "statements": 36,
+    "score": 0.0034812607
+  },
+  {
+    "qnode": "Q1351647",
+    "description": [
+      "genus of viruses"
+    ],
+    "label": [
+      "Rhinovirus"
+    ],
+    "alias": [
+      "rinoceronvirus"
+    ],
+    "pagerank": 1.5575375693087776e-08,
+    "statements": 64,
+    "score": 0.0030889825
+  },
+  {
+    "qnode": "Q1355821",
+    "description": [
+      "political and geographical area near or beyond a boundary"
+    ],
+    "label": [
+      "frontier"
+    ],
+    "alias": [],
+    "pagerank": 2.3359302601083393e-06,
+    "statements": 44,
+    "score": 0.46329957
+  },
+  {
+    "qnode": "Q1360677",
+    "description": [
+      "location that may be associated with a committed crime"
+    ],
+    "label": [
+      "crime scene"
+    ],
+    "alias": [],
+    "pagerank": 2.822954147190177e-08,
+    "statements": 51,
+    "score": 0.0055989325
+  },
+  {
+    "qnode": "Q1371819",
+    "description": [
+      "outline of a strategy for achievement of an objective"
+    ],
+    "label": [
+      "plan"
+    ],
+    "alias": [
+      "plans",
+      "programme",
+      "program"
+    ],
+    "pagerank": 0.0001752244582363286,
+    "statements": 45,
+    "score": 34.753357
+  },
+  {
+    "qnode": "Q1414937",
+    "description": [
+      "person who takes a direct part in the hostilities of an armed conflict"
+    ],
+    "label": [
+      "combatant"
+    ],
+    "alias": [
+      "fighter",
+      "المقاتل"
+    ],
+    "pagerank": 3.0523828005905243e-06,
+    "statements": 62,
+    "score": 0.60539806
+  },
+  {
+    "qnode": "Q1445518",
+    "description": [
+      "aircraft designed to carry military cargo and personnel"
+    ],
+    "label": [
+      "airlifter"
+    ],
+    "alias": [
+      "military cargo aircraft",
+      "military transport aircraft"
+    ],
+    "pagerank": 1.0975270325051239e-07,
+    "statements": 74,
+    "score": 0.021767937
+  },
+  {
+    "qnode": "Q1566976",
+    "description": [
+      "weapon designed to be thrown at its target by muscle power"
+    ],
+    "label": [
+      "throwing weapon"
+    ],
+    "alias": [
+      "thrown weapon",
+      "ranged weapon, throwing"
+    ],
+    "pagerank": 2.447960538793665e-07,
+    "statements": 52,
+    "score": 0.04855192
+  },
+  {
+    "qnode": "Q1673189",
+    "description": [
+      "any non-standard military organization"
+    ],
+    "label": [
+      "irregular military"
+    ],
+    "alias": [],
+    "pagerank": 5.718699841689794e-07,
+    "statements": 48,
+    "score": 0.113419086
+  },
+  {
+    "qnode": "Q1763090",
+    "description": [
+      "decree of punishment in law"
+    ],
+    "label": [
+      "sentence"
+    ],
+    "alias": [
+      "sentencing"
+    ],
+    "pagerank": 1.1620992905441014e-06,
+    "statements": 114,
+    "score": 0.23047444
+  },
+  {
+    "qnode": "Q1788992",
+    "description": [
+      "organization that commits crimes"
+    ],
+    "label": [
+      "criminal organization"
+    ],
+    "alias": [
+      "criminal gang",
+      "criminal organisation"
+    ],
+    "pagerank": 8.983753031929773e-07,
+    "statements": 67,
+    "score": 0.17818035
+  },
+  {
+    "qnode": "Q1930187",
+    "description": [
+      "person who collects, writes and distributes news and other information"
+    ],
+    "label": [
+      "journalist"
+    ],
+    "alias": [
+      "journo"
+    ],
+    "pagerank": 7.361262410355094e-05,
+    "statements": 156,
+    "score": 14.60005
+  },
+  {
+    "qnode": "Q2057971",
+    "description": [
+      "condition negatively affecting the health of an organism"
+    ],
+    "label": [
+      "health problem"
+    ],
+    "alias": [
+      "health issue"
+    ],
+    "pagerank": 9.741824246923319e-06,
+    "statements": 86,
+    "score": 1.9321566
+  },
+  {
+    "qnode": "Q2221906",
+    "description": [
+      "point or an area on the Earth\\s surface or elsewhere"
+    ],
+    "label": [
+      "geographic location"
+    ],
+    "alias": [
+      "site (geography)",
+      "geographic point",
+      "geographical location",
+      "location",
+      "coordinates",
+      "place",
+      "place (geography)"
+    ],
+    "pagerank": 0.0005662508309625322,
+    "statements": 110,
+    "score": 112.30156
+  },
+  {
+    "qnode": "Q2285706",
+    "description": [
+      "chief officer of the executive branch of a government"
+    ],
+    "label": [
+      "head of government"
+    ],
+    "alias": [
+      "chief administrator",
+      "leader of government",
+      "government leader",
+      "administrator of executive government",
+      "chief of government"
+    ],
+    "pagerank": 1.9013331977185033e-05,
+    "statements": 93,
+    "score": 3.7710326
+  },
+  {
+    "qnode": "Q2671652",
+    "description": [
+      "medical procedure performed to detect, diagnose, or monitor diseases, disease processes, susceptibility, or to determine a course of treatment"
+    ],
+    "label": [
+      "medical test"
+    ],
+    "alias": [],
+    "pagerank": 2.46124828927699e-06,
+    "statements": 88,
+    "score": 0.48815396
+  },
+  {
+    "qnode": "Q2742167",
+    "description": [
+      "community (group of people) who practice the same religion"
+    ],
+    "label": [
+      "religious community"
+    ],
+    "alias": [],
+    "pagerank": 2.253574592696907e-06,
+    "statements": 95,
+    "score": 0.4469655
+  },
+  {
+    "qnode": "Q2826767",
+    "description": [
+      "the biological pathogen that causes a disease, such as a virus, parasite, fungus, or bacterium"
+    ],
+    "label": [
+      "disease causative agent"
+    ],
+    "alias": [],
+    "pagerank": 3.2571933098338644e-07,
+    "statements": 36,
+    "score": 0.0645982
+  },
+  {
+    "qnode": "Q2855502",
+    "description": [
+      "title given to an appointed official or an elected one in the chain of command of a police department"
+    ],
+    "label": [
+      "chief of police"
+    ],
+    "alias": [
+      "police chief"
+    ],
+    "pagerank": 1.3353668530722002e-07,
+    "statements": 88,
+    "score": 0.026484357
+  },
+  {
+    "qnode": "Q2875704",
+    "description": [
+      "heavier-than-air aircraft with fixed wings generating aerodynamic lift in the airflow caused by forward airspeed"
+    ],
+    "label": [
+      "fixed-wing aircraft"
+    ],
+    "alias": [
+      "fixed wing aircraft"
+    ],
+    "pagerank": 4.0040486762296275e-07,
+    "statements": 61,
+    "score": 0.07941068
+  },
+  {
+    "qnode": "Q3216918",
+    "description": [
+      "device for launching rockets"
+    ],
+    "label": [
+      "rocket launcher"
+    ],
+    "alias": [],
+    "pagerank": 1.1078546798340685e-07,
+    "statements": 66,
+    "score": 0.021971889
+  },
+  {
+    "qnode": "Q3639228",
+    "description": [
+      "device that uses chemicals to harm or kill people"
+    ],
+    "label": [
+      "chemical weapon"
+    ],
+    "alias": [
+      "CW"
+    ],
+    "pagerank": 3.3884033707834815e-06,
+    "statements": 96,
+    "score": 0.6720227
+  },
+  {
+    "qnode": "Q4189293",
+    "description": [
+      "level or position in a hierarchical organization, a social role"
+    ],
+    "label": [
+      "rank"
+    ],
+    "alias": [],
+    "pagerank": 0.000125058407396053,
+    "statements": 67,
+    "score": 24.802856
+  },
+  {
+    "qnode": "Q4330518",
+    "description": [
+      "something that undergoes testing or observation in a scientific experiment"
+    ],
+    "label": [
+      "research object"
+    ],
+    "alias": [],
+    "pagerank": 2.1097844877057297e-05,
+    "statements": 38,
+    "score": 4.184467
+  },
+  {
+    "qnode": "Q4389307",
+    "description": [
+      "integrated system incorporating missiles along with other related elements"
+    ],
+    "label": [
+      "missile system"
+    ],
+    "alias": [],
+    "pagerank": 1.65471512816228e-08,
+    "statements": 29,
+    "score": 0.0032818995
+  },
+  {
+    "qnode": "Q4830453",
+    "description": [
+      "organization involved in commercial, industrial, or professional activity"
+    ],
+    "label": [
+      "business"
+    ],
+    "alias": [
+      "enterprise",
+      "BIZ",
+      "business enterprise"
+    ],
+    "pagerank": 0.0004017373715072993,
+    "statements": 106,
+    "score": 79.67495
+  },
+  {
+    "qnode": "Q4936952",
+    "description": [
+      "entity with a single connected inherent 3D shape that\\s created by coordinated expression of the organism\\s own DNA"
+    ],
+    "label": [
+      "anatomical structure"
+    ],
+    "alias": [
+      "bodypart",
+      "part of body",
+      "bodily part",
+      "bodyparts",
+      "parts of body",
+      "anatomical features",
+      "anatomical structures",
+      "bodily parts",
+      "anatomical feature",
+      "body part"
+    ],
+    "pagerank": 0.00010971337359838367,
+    "statements": 96,
+    "score": 21.75901
+  },
+  {
+    "qnode": "Q6498663",
+    "description": [
+      "organisation with trained personnel for dealing with fires and other incidents and for co-operating in their prevention"
+    ],
+    "label": [
+      "fire department"
+    ],
+    "alias": [
+      "fire brigade",
+      "fire and rescue service",
+      "fire service"
+    ],
+    "pagerank": 2.1669921548984384e-06,
+    "statements": 89,
+    "score": 0.42979303
+  },
+  {
+    "qnode": "Q7210356",
+    "description": [
+      "group involved in political activities"
+    ],
+    "label": [
+      "political organisation"
+    ],
+    "alias": [
+      "political organization",
+      "organization (politics)",
+      "political group",
+      "organization in politics"
+    ],
+    "pagerank": 8.892702860140964e-05,
+    "statements": 67,
+    "score": 17.637426
+  },
+  {
+    "qnode": "Q8205328",
+    "description": [
+      "physical object made or shaped by human hand"
+    ],
+    "label": [
+      "artificial physical object"
+    ],
+    "alias": [
+      "human-made physical object",
+      "physical artefact",
+      "man-made physical object",
+      "non-natural physical object",
+      "artifact",
+      "artefact"
+    ],
+    "pagerank": 0.0004317380156159476,
+    "statements": 67,
+    "score": 85.62584
+  },
+  {
+    "qnode": "Q9150205",
+    "description": [],
+    "label": [
+      "live-fire ammunition"
+    ],
+    "alias": [
+      "live round",
+      "live ammunition"
+    ],
+    "pagerank": 2.8423258514033433e-09,
+    "statements": 33,
+    "score": 0.000563707
+  },
+  {
+    "qnode": "Q9352089",
+    "description": [
+      "person engaged obtaining information that is considered secret or confidential"
+    ],
+    "label": [
+      "spy"
+    ],
+    "alias": [
+      "secret agent",
+      "intelligence agent"
+    ],
+    "pagerank": 8.120709525729557e-07,
+    "statements": 91,
+    "score": 0.16105475
+  },
+  {
+    "qnode": "Q10553309",
+    "description": [
+      "deliberative assembly acting as part of a legislature"
+    ],
+    "label": [
+      "legislative house"
+    ],
+    "alias": [
+      "legislative body",
+      "legislative chamber"
+    ],
+    "pagerank": 1.2625177959140339e-05,
+    "statements": 53,
+    "score": 2.5040264
+  },
+  {
+    "qnode": "Q11499147",
+    "description": [
+      "activist wanting political change"
+    ],
+    "label": [
+      "political activist"
+    ],
+    "alias": [
+      "political organizer"
+    ],
+    "pagerank": 3.306084695133262e-05,
+    "statements": 84,
+    "score": 6.556964
+  },
+  {
+    "qnode": "Q11974939",
+    "description": [
+      "individual who systematically provides health care services"
+    ],
+    "label": [
+      "health professional"
+    ],
+    "alias": [
+      "healthcare worker",
+      "health-care worker",
+      "healthcare personnel",
+      "health care worker",
+      "health care provider",
+      "medical practitioner",
+      "medical professional",
+      "health worker",
+      "medical personnel"
+    ],
+    "pagerank": 9.844817155899967e-06,
+    "statements": 136,
+    "score": 1.9525245
+  },
+  {
+    "qnode": "Q12909644",
+    "description": [
+      "ideology that advocates social, political and economic organization of human life"
+    ],
+    "label": [
+      "political ideology"
+    ],
+    "alias": [
+      "political current",
+      "political stream"
+    ],
+    "pagerank": 3.7196953917447306e-05,
+    "statements": 71,
+    "score": 7.3771214
+  },
+  {
+    "qnode": "Q13226383",
+    "description": [
+      "place for doing something"
+    ],
+    "label": [
+      "facility"
+    ],
+    "alias": [
+      "site",
+      "amenity",
+      "venue"
+    ],
+    "pagerank": 0.0001393473073444429,
+    "statements": 80,
+    "score": 27.636507
+  },
+  {
+    "qnode": "Q13235160",
+    "description": [
+      "individual or organization that creates goods and services"
+    ],
+    "label": [
+      "producer"
+    ],
+    "alias": [
+      "manufacturer",
+      "maker",
+      "builder",
+      "author"
+    ],
+    "pagerank": 6.700545042932157e-06,
+    "statements": 100,
+    "score": 1.3289074
+  },
+  {
+    "qnode": "Q13402009",
+    "description": [
+      "multiunit residential dwelling"
+    ],
+    "label": [
+      "apartment building"
+    ],
+    "alias": [
+      "mansion block",
+      "high-rise",
+      "apartment block",
+      "apartment complex",
+      "residential tower",
+      "block of flats",
+      "apartment house",
+      "flat complex",
+      "tower block",
+      "apartment tower"
+    ],
+    "pagerank": 2.627161184374364e-06,
+    "statements": 110,
+    "score": 0.52103424
+  },
+  {
+    "qnode": "Q15265344",
+    "description": [
+      "organization responsible for production and transmission of radio and television programs"
+    ],
+    "label": [
+      "broadcaster"
+    ],
+    "alias": [
+      "broadcasting company",
+      "broadcasting station",
+      "broadcast station"
+    ],
+    "pagerank": 1.0564385588962219e-05,
+    "statements": 103,
+    "score": 2.095216
+  },
+  {
+    "qnode": "Q15401930",
+    "description": [
+      "result of some kind of work or effort"
+    ],
+    "label": [
+      "product"
+    ],
+    "alias": [
+      "work product"
+    ],
+    "pagerank": 9.160576652153138e-05,
+    "statements": 37,
+    "score": 18.16819
+  },
+  {
+    "qnode": "Q15618781",
+    "description": [
+      "any vehicle with wheel"
+    ],
+    "label": [
+      "wheeled vehicle"
+    ],
+    "alias": [],
+    "pagerank": 1.1279111988753812e-06,
+    "statements": 48,
+    "score": 0.22369407
+  },
+  {
+    "qnode": "Q15621286",
+    "description": [
+      "work created through human thought and perception, including creative work"
+    ],
+    "label": [
+      "intellectual work"
+    ],
+    "alias": [],
+    "pagerank": 0.00026445086784083,
+    "statements": 52,
+    "score": 52.45011
+  },
+  {
+    "qnode": "Q15911314",
+    "description": [
+      "group of individuals (natural persons) or entities (legal persons) of all kinds"
+    ],
+    "label": [
+      "association"
+    ],
+    "alias": [
+      "organization",
+      "organisation"
+    ],
+    "pagerank": 4.4817431929656885e-05,
+    "statements": 57,
+    "score": 8.888407
+  },
+  {
+    "qnode": "Q16334295",
+    "description": [
+      "any set of human beings"
+    ],
+    "label": [
+      "group of humans"
+    ],
+    "alias": [
+      "human group",
+      "group",
+      "multiple humans",
+      "group of people",
+      "person group",
+      "multiple persons",
+      "group of persons"
+    ],
+    "pagerank": 0.0005107864903349138,
+    "statements": 74,
+    "score": 101.30438
+  },
+  {
+    "qnode": "Q16678266",
+    "description": [
+      "follower and supporter of an athlete, group of athletes or a sports team"
+    ],
+    "label": [
+      "supporter"
+    ],
+    "alias": [
+      "sports fan"
+    ],
+    "pagerank": 1.8314469949774717e-06,
+    "statements": 54,
+    "score": 0.36322346
+  },
+  {
+    "qnode": "Q16686022",
+    "description": [],
+    "label": [
+      "natural physical object"
+    ],
+    "alias": [],
+    "pagerank": 8.836087182527331e-05,
+    "statements": 32,
+    "score": 17.524149
+  },
+  {
+    "qnode": "Q16798631",
+    "description": [
+      "collective term for all items that are required to exercise a certain activity"
+    ],
+    "label": [
+      "equipment"
+    ],
+    "alias": [],
+    "pagerank": 3.80658098552674e-05,
+    "statements": 55,
+    "score": 7.549599
+  },
+  {
+    "qnode": "Q16831714",
+    "description": [
+      "building built for and by the government, such as a town hall"
+    ],
+    "label": [
+      "government building"
+    ],
+    "alias": [],
+    "pagerank": 8.52401306763202e-06,
+    "statements": 75,
+    "score": 1.6905525
+  },
+  {
+    "qnode": "Q17149090",
+    "description": [
+      "organization which achieves or tries to achieve its goals using weapons"
+    ],
+    "label": [
+      "armed organization"
+    ],
+    "alias": [
+      "militant group",
+      "armed organisation",
+      "armed group",
+      "militant organization"
+    ],
+    "pagerank": 1.3546909560333267e-05,
+    "statements": 45,
+    "score": 2.686843
+  },
+  {
+    "qnode": "Q17334923",
+    "description": [
+      "location of physical or non-physical object in space"
+    ],
+    "label": [
+      "location"
+    ],
+    "alias": [
+      "relative location",
+      "relative position",
+      "place",
+      "position"
+    ],
+    "pagerank": 0.0003880549833342053,
+    "statements": 72,
+    "score": 76.96525
+  },
+  {
+    "qnode": "Q18643213",
+    "description": [
+      "item in use by or designed for use by military forces"
+    ],
+    "label": [
+      "military equipment"
+    ],
+    "alias": [
+      "equipment of the armed forces",
+      "military gear"
+    ],
+    "pagerank": 2.121509464913098e-06,
+    "statements": 50,
+    "score": 0.42075038
+  },
+  {
+    "qnode": "Q18691599",
+    "description": [
+      "place developed for and utilized by military forces"
+    ],
+    "label": [
+      "military facility"
+    ],
+    "alias": [
+      "military facility"
+    ],
+    "pagerank": 2.653536733332149e-06,
+    "statements": 60,
+    "score": 0.52629244
+  },
+  {
+    "qnode": "Q19267880",
+    "description": [
+      "small bomb thrown by hand or launched mechanically"
+    ],
+    "label": [
+      "grenade"
+    ],
+    "alias": [],
+    "pagerank": 7.400640084605247e-08,
+    "statements": 45,
+    "score": 0.014677703
+  },
+  {
+    "qnode": "Q19571328",
+    "description": [],
+    "label": [
+      "electoral result"
+    ],
+    "alias": [
+      "electoral outcome",
+      "election outcome",
+      "election results"
+    ],
+    "pagerank": 4.080374938696188e-06,
+    "statements": 43,
+    "score": 0.8092615
+  },
+  {
+    "qnode": "Q19772737",
+    "description": [
+      "candidate in an election for political office"
+    ],
+    "label": [
+      "political candidate"
+    ],
+    "alias": [
+      "office-seeker",
+      "election candidate",
+      "nominee",
+      "electoral candidate",
+      "candidate"
+    ],
+    "pagerank": 3.49796806930679e-06,
+    "statements": 90,
+    "score": 0.69375265
+  },
+  {
+    "qnode": "Q24060765",
+    "description": [
+      "anatomic organ of an animal"
+    ],
+    "label": [
+      "animal organ"
+    ],
+    "alias": [
+      "organ of an animal",
+      "organ in an animal"
+    ],
+    "pagerank": 3.200516217911996e-06,
+    "statements": 61,
+    "score": 0.63477826
+  },
+  {
+    "qnode": "Q27096213",
+    "description": [
+      "place or entity that could be a place"
+    ],
+    "label": [
+      "geographic entity"
+    ],
+    "alias": [],
+    "pagerank": 0.0002474274319758278,
+    "statements": 28,
+    "score": 49.070988
+  },
+  {
+    "qnode": "Q27096235",
+    "description": [
+      "elements of the ground or the underground that have been greatly modified by human being (roads, houses, ...)"
+    ],
+    "label": [
+      "artificial geographic entity"
+    ],
+    "alias": [],
+    "pagerank": 0.0001371304135927315,
+    "statements": 38,
+    "score": 27.197927
+  },
+  {
+    "qnode": "Q47461344",
+    "description": [
+      "any creative work expressed in writing like: inscriptions, manuscripts, documents or maps"
+    ],
+    "label": [
+      "written work"
+    ],
+    "alias": [],
+    "pagerank": 0.0004199061093017839,
+    "statements": 49,
+    "score": 83.28006
+  },
+  {
+    "qnode": "Q51591359",
+    "description": [
+      "numeric outcome of an election or vote"
+    ],
+    "label": [
+      "voting result"
+    ],
+    "alias": [
+      "ballots count",
+      "election result",
+      "ballot result",
+      "vote result"
+    ],
+    "pagerank": 1.3444804394048699e-05,
+    "statements": 26,
+    "score": 2.6665106
+  },
+  {
+    "qnode": "Q55942755",
+    "description": [
+      "harmful gas used as a chemical weapon"
+    ],
+    "label": [
+      "poison gas"
+    ],
+    "alias": [
+      "poisonous gas"
+    ],
+    "pagerank": 7.0271238750071154e-09,
+    "statements": 93,
+    "score": 0.0013937311
+  },
+  {
+    "qnode": "Q72857065",
+    "description": [],
+    "label": [
+      "military intelligence agency"
+    ],
+    "alias": [],
+    "pagerank": 4.716605483847808e-08,
+    "statements": 39,
+    "score": 0.009354737
+  },
+  {
+    "qnode": "Q82069695",
+    "description": [
+      "strain of virus causing the ongoing pandemic of coronavirus disease 2019 (COVID-19)"
+    ],
+    "label": [
+      "SARS-CoV-2"
+    ],
+    "alias": [
+      "Chinese coronavirus",
+      "SARS-CoV-2 virus",
+      "novel coronavirus",
+      "2019-nCoV",
+      "Severe acute respiratory syndrome coronavirus 2",
+      "nCoV2019",
+      "2019nCoV",
+      "SARS-CoV2",
+      "NCP",
+      "Wuhan seafood market pneumonia virus",
+      "Acute respiratory syndrome coronavirus 2",
+      "Wuhan coronavirus",
+      "Coronavirus SARS-COV2",
+      "Corona",
+      "COVID-19 virus",
+      "Wuhan virus",
+      "severe acute respiratory syndrome coronavirus clade 2",
+      "2019 nCoV",
+      "Severe acute respiratory syndrome-related coronavirus 2",
+      "Novel coronavirus (2019-nCoV)",
+      "Corona virus",
+      "Coronavirus",
+      "nCoV-2019"
+    ],
+    "pagerank": 8.005891426183412e-06,
+    "statements": 205,
+    "score": 1.5878583
+  },
+  {
+    "qnode": "Q88871664",
+    "description": [
+      "place where travellers, vehicles or goods are generally inspected"
+    ],
+    "label": [
+      "checkpoint"
+    ],
+    "alias": [],
+    "pagerank": 5.970088617285876e-07,
+    "statements": 45,
+    "score": 0.118402354
+  }
+]

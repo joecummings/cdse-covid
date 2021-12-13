@@ -17,7 +17,9 @@ from cdse_covid.semantic_extraction.utils.amr_extraction_utils import (
     STOP_WORDS,
     create_node_to_token_dict,
 )
-from wikidata_linker.wikidata_linking import disambiguate_kgtk
+from wikidata_linker.wikidata_linking import(
+    disambiguate_verb_kgtk, disambiguate_refvar_kgtk
+)
 
 OVERLAY = "overlay"
 MASTER = "master"
@@ -103,9 +105,11 @@ def get_wikidata_for_labeled_args(
     """Get WikiData for labeled arguments."""
     args_to_qnodes = {}
     for role, arg in args.items():
-        qnode_info = disambiguate_kgtk(" ".join(amr.tokens), arg, no_ss_model=True, k=1)
+        qnode_info = disambiguate_refvar_kgtk(arg, " ".join(amr.tokens), k=1)
         if qnode_info["options"]:
             qnode_selection = qnode_info["options"][0]
+        elif qnode_info["other_options"]:
+            qnode_selection = qnode_info["other_options"][0]
         elif qnode_info["all_options"]:
             qnode_selection = qnode_info["all_options"][0]
         else:
@@ -311,9 +315,11 @@ def get_kgtk_result_for_event(pb_label_list: List[str], amr: AMR) -> Tuple[Dict[
     for pb_label in pb_label_list:
         is_root = pb_label == amr.nodes[amr.root]
         formatted_pb = pb_label.rsplit("-", 1)[0]
-        qnode_info = disambiguate_kgtk(" ".join(amr.tokens), formatted_pb, no_ss_model=True, k=1)
+        qnode_info = disambiguate_verb_kgtk(formatted_pb, k=1)
         if qnode_info["options"]:
             selected_qnode = qnode_info["options"][0]
+        elif qnode_info["other_options"]:
+            selected_qnode = qnode_info["other_options"][0]
         elif qnode_info["all_options"]:
             selected_qnode = qnode_info["all_options"][0]  # Just selecting the first result
         else:

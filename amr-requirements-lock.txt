@@ -46,6 +46,7 @@ prompt-toolkit==3.0.20
 ptyprocess==0.7.0
 pycparser==2.20
 Pygments==2.10.0
+pyinflect==0.5.1
 pyinstrument==4.0.4
 pyparsing==2.4.7
 PyYAML==6.0
@@ -64,6 +65,7 @@ toolz==0.11.1
 torch==1.2.0
 tqdm==4.62.3
 traitlets==5.1.0
+transformers==3.1.0
 typing-extensions==3.10.0.2
 ujson==4.2.0
 urllib3==1.26.7
