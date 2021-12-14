@@ -2,7 +2,7 @@
 from collections import defaultdict
 import re
 import string
-from typing import Any, Dict, List, MutableMapping, Optional, Set
+from typing import Any, Dict, List, MutableMapping, Optional
 
 from amr_utils.alignments import AMR_Alignment  # pylint: disable=import-error
 from amr_utils.amr import AMR  # pylint: disable=import-error

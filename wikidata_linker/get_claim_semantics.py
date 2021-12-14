@@ -318,7 +318,6 @@ def get_kgtk_result_for_event(pb_label_list: List[str], amr: AMR) -> Tuple[Dict[
             selected_qnode = qnode_info["all_options"][0]
         else:
             selected_qnode = None
-            print(f"No qnode found in KGTK for any pb in {pb_label_list}!")
 
         if selected_qnode:
             return {
