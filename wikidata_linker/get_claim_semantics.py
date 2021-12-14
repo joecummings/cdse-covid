@@ -17,9 +17,7 @@ from cdse_covid.semantic_extraction.utils.amr_extraction_utils import (
     STOP_WORDS,
     create_node_to_token_dict,
 )
-from wikidata_linker.wikidata_linking import(
-    disambiguate_verb_kgtk, disambiguate_refvar_kgtk
-)
+from wikidata_linker.wikidata_linking import disambiguate_refvar_kgtk, disambiguate_verb_kgtk
 
 OVERLAY = "overlay"
 MASTER = "master"

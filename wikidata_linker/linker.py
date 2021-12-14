@@ -47,7 +47,6 @@ class WikidataLinkingClassifier(torch.nn.Module):
         """
         return self.model(**x, labels=y)
 
-
     def infer(self, text: str, qnode_texts: Sequence[str]):
         """A function to take two string inputs, format them, and generate predictions for them.
 

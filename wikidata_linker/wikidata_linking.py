@@ -1,16 +1,17 @@
 import argparse
 import json
 from pathlib import Path
-from typing import Any, Callable, List, Mapping, MutableMapping, Sequence, Tuple, Union, Set
+from typing import Any, Callable, List, Mapping, MutableMapping, Sequence, Set, Tuple, Union
+
 from nltk.stem.snowball import SnowballStemmer
 import numpy as np
+from pyinflect import getInflection
 import requests
 from sentence_transformers import SentenceTransformer, util as ss_util
-import torch
 import spacy
-from wikidata_linker.linker import WikidataLinkingClassifier
-from pyinflect import getInflection
+import torch
 
+from wikidata_linker.linker import WikidataLinkingClassifier
 
 nlp = spacy.load("en_core_web_md")
 
@@ -19,10 +20,10 @@ BASE = Path(__file__).parent
 device = "cpu"  # change this if you want to use GPU
 LINKING_MODEL = WikidataLinkingClassifier()
 STATE_DICT_PATH = BASE / "wikidata_classifier.state_dict"
-CKPT = torch.load(STATE_DICT_PATH, map_location=torch.device('cpu'))
-LINKING_MODEL.load_state_dict(CKPT)
-LINKING_MODEL.to(device) 
-MAX_BATCH_SIZE = 8  # I use 8 using GPU, to avoid OOM events. Could probably handle more. Not sure there will be a huge boost if you use CPU. 
+CKPT = torch.load(STATE_DICT_PATH, map_location=torch.device("cpu"))
+LINKING_MODEL.load_state_dict(CKPT, strict=False)
+LINKING_MODEL.to(device)
+MAX_BATCH_SIZE = 8  # I use 8 using GPU, to avoid OOM events. Could probably handle more. Not sure there will be a huge boost if you use CPU.
 SOFTMAX = torch.nn.Softmax(dim=1)
 
 
@@ -91,8 +92,7 @@ def get_all_verbs() -> Set[str]:
 verb_set = get_all_verbs()
 
 
-def get_verb_lemmas(
-    nlp, sentence: str) -> Tuple[List[str], List[float]]:
+def get_verb_lemmas(nlp, sentence: str) -> Tuple[List[str], List[float]]:
     """Returns the lemma of all verbs (or roots if not verbs found) in the sentence.
 
     Args:
@@ -354,7 +354,7 @@ def disambiguate_verb_kgtk(event_description, no_expansion: bool = False, k: int
         kgtk_json[i]["score_weight"] = weight
     unique_candidates = filter_duplicate_candidates(kgtk_json)
     options = []
-    # USE BELOW IF YOU PLAN ON USING A SERVER 
+    # USE BELOW IF YOU PLAN ON USING A SERVER
     # wikidata_classifier_server_url = (
     #     f"http://{settings.wikidata_linking_server}.isi.edu:5002/api/get_linker_scores"
     # )
@@ -381,7 +381,7 @@ def disambiguate_verb_kgtk(event_description, no_expansion: bool = False, k: int
         if option not in options:
             options.append(option)
     option_qnodes = [option["qnode"] for option in options]
-    # USE BELOW IF YOU PLAN ON USING A SERVER    
+    # USE BELOW IF YOU PLAN ON USING A SERVER
     # other_post_params = {
     #     "event_description": cleaned_description,
     #     "use_title": True,
@@ -451,8 +451,10 @@ def disambiguate_refvar_kgtk(refvar, context="", no_expansion: bool = False, k: 
     #     wikidata_classifier_server_url, data=json.dumps(post_params)
     # ).json()["scores"]
     if context:
-        cleaned_refvar = refvar + " - " + context # this is how it would be done in MASC, since refvars are not 
-                                                  #necessarily mentioned in context, otherwise context is probably sufficient
+        cleaned_refvar = (
+            refvar + " - " + context
+        )  # this is how it would be done in MASC, since refvars are not
+        # necessarily mentioned in context, otherwise context is probably sufficient
     candidate_scores = get_linker_scores(cleaned_refvar, False, unique_candidates)["scores"]
     top3 = filter_candidates_with_scores(candidate_scores, unique_candidates, k=k)
     for candidate in top3:
@@ -498,9 +500,17 @@ def disambiguate_refvar_kgtk(refvar, context="", no_expansion: bool = False, k: 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--query_type", type=str, help="There type of query that will be launched. Should be 'verb' or 'refvar'")
+    parser.add_argument(
+        "--query_type",
+        type=str,
+        help="There type of query that will be launched. Should be 'verb' or 'refvar'",
+    )
     parser.add_argument("--query", type=str, help="Term to be queried for")
-    parser.add_argument("--context", type=str, help="Surrounding context for query (context isn't used if no_ss_model specified")
+    parser.add_argument(
+        "--context",
+        type=str,
+        help="Surrounding context for query (context isn't used if no_ss_model specified",
+    )
     parser.add_argument(
         "--no_expansion",
         action="store_true",
@@ -509,8 +519,19 @@ if __name__ == "__main__":
     parser.add_argument("--k", type=int, default=3, help="Number of options to be returned")
     args = parser.parse_args()
     if args.query_type == VERB:
-        print(json.dumps(disambiguate_verb_kgtk(args.query, args.no_expansion, args.k)["options"], indent=4))
+        print(
+            json.dumps(
+                disambiguate_verb_kgtk(args.query, args.no_expansion, args.k)["options"], indent=4
+            )
+        )
     elif args.query_type == REFVAR:
-        print(json.dumps(disambiguate_refvar_kgtk(args.query, args.context, args.no_expansion, args.k)["options"], indent=4))
+        print(
+            json.dumps(
+                disambiguate_refvar_kgtk(args.query, args.context, args.no_expansion, args.k)[
+                    "options"
+                ],
+                indent=4,
+            )
+        )
     else:
         print("--query_type should be 'verb' or 'refvar'")

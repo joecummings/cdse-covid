@@ -15,8 +15,11 @@ from cdse_covid.claim_detection.run_claim_detection import ClaimDataset
 from cdse_covid.semantic_extraction.mentions import Mention, WikidataQnode
 from cdse_covid.semantic_extraction.utils.amr_extraction_utils import PROPBANK_PATTERN
 from wikidata_linker.get_claim_semantics import STOP_WORDS, determine_best_qnode, load_tables
-from wikidata_linker.wikidata_linking import(
-    disambiguate_verb_kgtk, disambiguate_refvar_kgtk, VERB, REFVAR
+from wikidata_linker.wikidata_linking import (
+    REFVAR,
+    VERB,
+    disambiguate_refvar_kgtk,
+    disambiguate_verb_kgtk,
 )
 
 
