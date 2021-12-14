@@ -13,7 +13,7 @@ from cdse_covid.semantic_extraction.utils.amr_extraction_utils import (
     create_node_to_token_dict,
     get_full_description,
     get_full_name_value,
-    remove_trailing_stop_words,
+    remove_preceding_trailing_stop_words,
 )
 
 LEMMATIZER = WordNetLemmatizer()
@@ -51,7 +51,7 @@ def identify_claimer(
     claim_node = get_claim_node(claim_tokens, amr)
     arg_node = get_argument_node(amr, alignments, claim_node)
     if arg_node:
-        final_arg_node = remove_trailing_stop_words(arg_node)
+        final_arg_node = remove_preceding_trailing_stop_words(arg_node)
         if final_arg_node:
             return Claimer(
                 mention_id=create_id(),

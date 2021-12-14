@@ -119,7 +119,7 @@ def create_node_to_token_dict(amr: AMR, alignments: List[AMR_Alignment]) -> Dict
     return {node: " ".join(token_list) for node, token_list in nodes_to_token_lists.items()}
 
 
-def remove_trailing_stop_words(text: str) -> Optional[str]:
+def remove_preceding_trailing_stop_words(text: str) -> Optional[str]:
     """Remove trailing stop words from mention text."""
     text_tokens = text.split(" ")
     if text_tokens[0] in STOP_WORDS:
@@ -135,7 +135,7 @@ def create_x_variable(text: Optional[str], claim: Claim) -> Optional[XVariable]:
     """Return an X-Variable object using the variable text and its claim data."""
     if text:
         # Remove trailing stop words
-        final_text = remove_trailing_stop_words(text)
+        final_text = remove_preceding_trailing_stop_words(text)
         if final_text:
             return XVariable(
                 mention_id=create_id(),
