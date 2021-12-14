@@ -6,11 +6,13 @@ from typing import Any, Dict, List, MutableMapping, Optional
 
 from amr_utils.alignments import AMR_Alignment  # pylint: disable=import-error
 from amr_utils.amr import AMR  # pylint: disable=import-error
+from nltk.corpus import stopwords
 
 from cdse_covid.claim_detection.claim import Claim, create_id
 from cdse_covid.semantic_extraction.mentions import XVariable
 
 PROPBANK_PATTERN = r"[a-z]*-[0-9]{2}"  # e.g. have-name-91
+STOP_WORDS = set(stopwords.words("english")).union({"like"})
 
 
 def get_full_name_value(
@@ -117,15 +119,30 @@ def create_node_to_token_dict(amr: AMR, alignments: List[AMR_Alignment]) -> Dict
     return {node: " ".join(token_list) for node, token_list in nodes_to_token_lists.items()}
 
 
+def remove_preceding_trailing_stop_words(text: str) -> Optional[str]:
+    """Remove trailing stop words from mention text."""
+    text_tokens = text.split(" ")
+    if text_tokens[0] in STOP_WORDS:
+        text_tokens = text_tokens[1:]
+    if text_tokens[-1] in STOP_WORDS:
+        text_tokens = text_tokens[:-1]
+    if len(text_tokens) > 0:
+        return " ".join(text_tokens)
+    return None
+
+
 def create_x_variable(text: Optional[str], claim: Claim) -> Optional[XVariable]:
     """Return an X-Variable object using the variable text and its claim data."""
     if text:
-        return XVariable(
-            mention_id=create_id(),
-            text=text,
-            doc_id=claim.doc_id,
-            span=claim.get_offsets_for_text(text),
-        )
+        # Remove trailing stop words
+        final_text = remove_preceding_trailing_stop_words(text)
+        if final_text:
+            return XVariable(
+                mention_id=create_id(),
+                text=final_text,
+                doc_id=claim.doc_id,
+                span=claim.get_offsets_for_text(final_text),
+            )
     return None
 
 

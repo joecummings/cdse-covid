@@ -8,13 +8,13 @@ from typing import Any, Dict, List, MutableMapping, Optional, Set, Tuple
 
 from amr_utils.alignments import AMR_Alignment
 from amr_utils.amr import AMR  # pylint: disable=import-error
-from nltk.corpus import stopwords
 from spacy.language import Language
 
 from cdse_covid.claim_detection.claim import Claim
 from cdse_covid.semantic_extraction.mentions import ClaimArg, ClaimEvent, ClaimSemantics
 from cdse_covid.semantic_extraction.utils.amr_extraction_utils import (
     PROPBANK_PATTERN,
+    STOP_WORDS,
     create_node_to_token_dict,
 )
 from wikidata_linker.wikidata_linking import disambiguate_kgtk
@@ -24,8 +24,6 @@ MASTER = "master"
 
 PARENT_DIR = Path(__file__).parent
 ORIGINAL_MASTER_TABLE = PARENT_DIR / "resources" / "qe_master.json"
-
-STOP_WORDS = set(stopwords.words("english")).union({"like"})
 
 
 def get_node_from_pb(amr: AMR, pb_label: str) -> str:
@@ -238,7 +236,10 @@ def determine_best_qnode(
         logging.warning("Using node other than root to get event Qnode.")
         if ranked_qnodes:
             return ranked_qnodes[0]
+        if not best_kgtk_qnode:
+            logging.warning("Couldn't find a qnode for pbs %s", pb_label_list)
         return best_kgtk_qnode
+    logging.warning("Couldn't find a qnode for pbs %s", pb_label_list)
     return {}
 
 
@@ -355,14 +356,6 @@ def get_best_qnode_by_semantic_similarity(
     if best_score == 0.0:
         logging.warning("No best score found for %s.", pb)
     return qnames_to_dicts.get(best_qname)
-
-
-def get_string_bigrams(string: str) -> Set[str]:
-    """Given a string, return the set of bigrams.
-
-    Example: "cure" --> {'cu', 'ur', 're'}
-    """
-    return {"".join(string[x : x + 2]) for x in range(len(string) - 1)}
 
 
 def get_most_general_qnode(
