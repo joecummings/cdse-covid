@@ -4,3 +4,4 @@ data/
 wikidata_linker/sent_model/
 wikidata_linker/kgtk_cache/
 *.csv
+output/
