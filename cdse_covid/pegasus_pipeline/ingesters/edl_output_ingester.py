@@ -5,7 +5,7 @@ import csv
 from dataclasses import dataclass
 from pathlib import Path
 import pickle
-from typing import Dict, MutableMapping, Optional, Tuple
+from typing import Dict, MutableMapping, Optional, Tuple, List
 
 
 @dataclass
@@ -33,6 +33,7 @@ def main(edl_output: Path, output: Path) -> None:
     mention_store: MutableMapping[str, MutableMapping[Tuple[int, int], EDLMention]] = defaultdict(
         dict
     )
+    set_aside_mentions: List[Tuple[str, str, str, str, Tuple[int, int]]] = []
     with open(edl_output / "merged.cs", "r", encoding="utf-8") as handle:
         reader = csv.reader(handle, delimiter="\t")
         all_entities: Dict[str, EDLEntity] = {}
@@ -62,12 +63,7 @@ def main(edl_output: Path, output: Path) -> None:
                         all_entities[formatted_id].ent_type = ent_type
                 else:
                     all_entities[formatted_id] = new_entity
-    with open(edl_output / "merged.cs", "r", encoding="utf-8") as handle2:
-        reader2 = csv.reader(handle2, delimiter="\t")
-        line_count = 0
-        for line in reader2:
-            line_count += 1
-            if len(line) == 5:  # We have ourselves a new mention
+            elif len(line) == 5:  # Otherwise it's a mention
                 ent_id = line[0].split("_")
                 formatted_ent_id = ent_id[-1]
                 mention_type = line[1]
@@ -76,14 +72,21 @@ def main(edl_output: Path, output: Path) -> None:
                 doc = doc_and_span[0]
                 span = doc_and_span[1].split("-")
                 formatted_span = (int(span[0]), int(span[1]))
-                new_mention = EDLMention(
-                    doc_id=doc,
-                    text=text,
-                    mention_type=mention_type,
-                    span=formatted_span,
-                    parent_entity=all_entities[formatted_ent_id],
-                )
-                mention_store[doc][formatted_span] = new_mention
+                # Entities for mentions do not have their freebase links yet.
+                # Set aside the mention for examination
+                # until after all entity data is collected.
+                set_aside_mentions.append((formatted_ent_id, doc, text, mention_type, formatted_span))
+
+    # Now add the mentions set aside
+    for ent_id, doc, text, mention_type, span in set_aside_mentions:
+        new_mention = EDLMention(
+            doc_id=doc,
+            text=text,
+            mention_type=mention_type,
+            span=span,
+            parent_entity=all_entities[ent_id],
+        )
+        mention_store[doc][span] = new_mention
 
     with open(output, "wb+") as handle:  # type: ignore
         pickle.dump(mention_store, handle)  # type: ignore
