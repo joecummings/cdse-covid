@@ -14,6 +14,9 @@
       In that case, you will be prompted for a password after you see
       `"Downloading model..."`
       If not, it will assume that you are working from a `/nas`-mounted server.
+6. You will also need to download and unzip two files into `data/`:
+   1. UIUC EDL data (param: `edl.edl_output_dir`): https://drive.google.com/file/d/16ANEPjqy4byNY3B2BmYqsu1ZcBlp9tfR/view?usp=sharing
+   2. Qnode-to-freebase mapping (param: `edl.qnode_freebase_file`): https://drive.google.com/file/d/1z3dSK7nCwJ0uH-_tyV8zeTUtwIU252hi/view?usp=sharing
 
 ## Usage
 
@@ -59,7 +62,13 @@ We provide a simple way to run the whole pipeline without needing Pegasus WMS.
    python -m cdse_covid.pegasus_pipeline.ingesters.aida_txt_ingester \
        --corpus TXT_FILES --output SPACIFIED --spacy-model SPACY_PATH
    ```
-3. Claim detection
+3. EDL ingestion
+   ```
+   conda activate <cdse-covid-env>
+   python -m cdse_covid.pegasus_pipeline.ingesters.edl_output_ingester \
+       --edl-output EDL_OUTPUT --output EDL_MAPPING_FILE
+   ```
+4. Claim detection
    ```
    conda activate <cdse-covid-env>
    python -m cdse_covid.claim_detection.run_claim_detection \
@@ -68,7 +77,7 @@ We provide a simple way to run the whole pipeline without needing Pegasus WMS.
        --out CLAIMS_OUT \
        --spacy-model SPACY_PATH
    ```
-4. Semantic extraction from AMR
+5. Semantic extraction from AMR
    ```
    conda activate transition-amr-parser
    python -m cdse_covid.semantic_extraction.run_amr_parsing \
@@ -78,7 +87,7 @@ We provide a simple way to run the whole pipeline without needing Pegasus WMS.
        --max-tokens MAX_TOKENS \
        --domain DOMAIN
    ```
-5. Semantic extraction from SRL
+6. Semantic extraction from SRL
    ```
    conda activate <cdse-covid-env>
    python -m cdse_covid.semantic_extraction.run_srl \
@@ -86,7 +95,7 @@ We provide a simple way to run the whole pipeline without needing Pegasus WMS.
        --output SRL_OUT \
        --spacy-model SPACY_PATH
    ```
-6. Wikidata linking
+7. Wikidata linking
    ```
    conda activate <cdse-covid-env>
    python -m cdse_covid.semantic_extraction.run_wikidata_linking \
@@ -95,11 +104,22 @@ We provide a simple way to run the whole pipeline without needing Pegasus WMS.
        --amr-input AMR_CLAIMS_OUT \
        --output WIKIDATA_OUT
    ```
-7. Postprocessing
+8. Entity merging
+   ```
+   conda activate <cdse-covid-env>
+   python -m cdse_covid.semantic_extraction.run_entity_merging \
+       --edl EDL_MAPPING_FILE \
+       --qnode-freebase QNODE_FREEBASE_MAPPING \
+       --freebase-to-qnodes FREEBASE_TO_QNODES \
+       --claims WIKIDATA_OUT \
+       --output ENTITY_OUT \
+       --include-contains
+   ```
+9. Postprocessing
    ```
    conda activate <cdse-covid-env>
    python -m cdse_covid.pegasus_pipeline.merge \
-       --input WIKIDATA_OUT \
+       --input ENTITY_OUT \
        --output OUTPUT_FILE
    ```
 

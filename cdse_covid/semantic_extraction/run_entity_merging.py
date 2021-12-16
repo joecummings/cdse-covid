@@ -3,7 +3,7 @@ import argparse
 import csv
 from pathlib import Path
 import pickle
-from typing import Dict, MutableMapping, Optional, Tuple
+from typing import MutableMapping, Optional, Tuple
 
 from cdse_covid.claim_detection.run_claim_detection import ClaimDataset
 from cdse_covid.pegasus_pipeline.ingesters.edl_output_ingester import (  # pylint: disable=unused-import
@@ -111,13 +111,13 @@ def create_wikidata_qnode_from_id(mention: Mention, qnode_id: str) -> Optional[W
     return None
 
 
-def load_freebase_to_qnode_mapping(original_map_tsv: Path, mapping_file: Path) -> Dict[str, str]:
+def load_freebase_to_qnode_mapping(original_map_tsv: Path, mapping_file: Path) -> MutableMapping[str, str]:
     """Load the freebase-to-qnode mapping file if it exists.
 
     Otherwise, generate the mapping from the qnode-freebase file
     and save that data.
     """
-    freebase_to_qnodes: Dict[str, str] = {}
+    freebase_to_qnodes: MutableMapping[str, str] = {}
     if mapping_file.exists():
         with open(mapping_file, "rb") as handle:
             freebase_to_qnodes = pickle.load(handle)
