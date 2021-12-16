@@ -49,14 +49,21 @@ def refine_sentence(tokenized_sentence: List[str], max_tokens: int) -> List[str]
     based on punctuation and keep all tokens within a clause that passes
     the threshold.
 
-    Additionally, take any token with a format like
+    Additionally,
+    1. Take any token with a format like
     "X)Y" and separate it ("X", ")", "Y") to avoid parser errors.
+    2. Replace all double quotes with single quotes.
     """
     refined_sentence = []
     for idx, token in enumerate(tokenized_sentence):
         refined_sentence.extend(re.split(r"([()\"\[\]—])", token))
         if token in STOP_PUNCTUATION and idx >= max_tokens:
             break
+
+    # Replace double quotes
+    for i, token in enumerate(refined_sentence):
+        if token == "\"":
+            refined_sentence[i] = "'"
 
     return refined_sentence
 
