@@ -182,6 +182,8 @@ def main(params: Parameters) -> None:
 
     # Entity unification
     entity_loc = edl_locator / "edl_unified"
+    qnode_freebase_file = edl_params.existing_file("qnode_freebase_file")
+    freebase_to_qnodes = edl_params.creatable_file("freebase_to_qnodes")
     ent_python_file = edl_params.existing_file("ent_unification")
     ent_output_dir = directory_for(entity_loc) / "documents"
     include_contains = edl_params.boolean("include_contains")
@@ -190,6 +192,8 @@ def main(params: Parameters) -> None:
         ent_python_file,
         f"""
         --edl {edl_internal_file.value} \
+        --qnode-freebase {qnode_freebase_file} \
+        --freebase-to-qnodes {freebase_to_qnodes} \
         --claims {wikidata_output.value} \
         --output {ent_output_dir} \
         {'--include-contains' if include_contains else ''}
