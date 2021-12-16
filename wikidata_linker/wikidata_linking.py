@@ -66,7 +66,7 @@ def get_linker_scores(event_description, use_title, candidates) -> Any:
     while i * MAX_BATCH_SIZE < len(candidates):
         candidate_batch = candidate_descriptions[i * MAX_BATCH_SIZE : (i + 1) * MAX_BATCH_SIZE]
         with torch.no_grad():
-            logits = LINKING_MODEL.infer(event_description, candidate_batch).logits.detach().cpu()
+            logits = LINKING_MODEL.infer(event_description, candidate_batch)[0].detach().cpu()
             candidate_batch_scores = SOFTMAX(logits)[:, 2]  # get "entailment" score from model
             for candidate_batch_score in candidate_batch_scores:
                 scores.append(candidate_batch_score.item())
