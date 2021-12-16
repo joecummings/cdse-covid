@@ -1,4 +1,5 @@
 """Collection of AMR extraction utils."""
+import logging
 from collections import defaultdict
 import re
 import string
@@ -21,7 +22,7 @@ def get_full_name_value(
     """Get the full name of a named_node."""
     name_nodes = amr_dict[named_node].get(":name")
     if name_nodes:
-        name_strings = [nodes_to_strings[name_node] for name_node in name_nodes]
+        name_strings = list(filter(None, [nodes_to_strings.get(name_node) for name_node in name_nodes]))
         return " ".join(name_strings)
     return None
 
@@ -49,7 +50,13 @@ def get_full_description(
     <ARG1-of> <consist-of> <mod>* <focus_node> <op1> <ARG1>
     """
     descr_strings = []
-    focus_string = nodes_to_strings[focus_node]
+    focus_string = nodes_to_strings.get(focus_node)
+    if not focus_string:
+        logging.warning(
+            "Couldn't get source text of AMR node %s.\n"
+            "nodes_to_strings: %s", focus_node, nodes_to_strings
+        )
+        return ""
     if re.match(PROPBANK_PATTERN, nodes_to_labels[focus_node]):
         node_args = amr_dict[focus_node]
         for arg_role, arg_node_list in node_args.items():
@@ -71,15 +78,27 @@ def get_full_description(
             arg_list = amr_dict[focus_node].get(arg_role)
             if arg_list:
                 # Only use the first one
-                first_arg_option = nodes_to_strings[arg_list[0]]
-                if first_arg_option not in descr_strings:
+                first_arg_option = nodes_to_strings.get(arg_list[0])
+                if first_arg_option and first_arg_option not in descr_strings:
                     descr_strings.insert(0, first_arg_option)
+                elif not first_arg_option:
+                    logging.warning(
+                        "Couldn't get source text of AMR node %s.\n"
+                        "nodes_to_strings: %s", arg_list[0], nodes_to_strings
+                    )
 
         # First check for :mods
         mods_of_focus_node = amr_dict[focus_node].get(":mod")
         if mods_of_focus_node:
             for mod in mods_of_focus_node:
-                descr_strings.insert(0, nodes_to_strings[mod])
+                mod_string = nodes_to_strings.get(mod)
+                if mod_string:
+                    descr_strings.insert(0, mod_string)
+                else:
+                    logging.warning(
+                        "Couldn't get source text of AMR node %s.\n"
+                        "nodes_to_strings: %s", mod, nodes_to_strings
+                    )
 
         # Other mods come from :consists-of and :ARG1-of
         # and they tend to precede :mods in word order
@@ -93,7 +112,14 @@ def get_full_description(
             # Add focus node text before op1
             if not ignore_focus_node and focus_string not in descr_strings:
                 descr_strings.append(focus_string)
-            descr_strings.append(nodes_to_strings[op_of[0]])
+            op_of_string = nodes_to_strings.get(op_of[0])
+            if op_of_string:
+                descr_strings.append(op_of_string)
+            else:
+                logging.warning(
+                    "Couldn't get source text of AMR node %s.\n"
+                    "nodes_to_strings: %s", op_of, nodes_to_strings
+                )
         # Else, just add focus node text here
         elif not ignore_focus_node and focus_string not in descr_strings:
             descr_strings.append(focus_string)
@@ -122,13 +148,15 @@ def create_node_to_token_dict(amr: AMR, alignments: List[AMR_Alignment]) -> Dict
 def remove_preceding_trailing_stop_words(text: str) -> Optional[str]:
     """Remove trailing stop words from mention text."""
     text_tokens = text.split(" ")
-    if text_tokens[0] in STOP_WORDS:
-        text_tokens = text_tokens[1:]
-    if text_tokens[-1] in STOP_WORDS:
-        text_tokens = text_tokens[:-1]
-    if len(text_tokens) > 0:
-        return " ".join(text_tokens)
-    return None
+    first_nonstop_idx = -1
+    last_nonstop_idx = -1
+    for i, token in enumerate(text_tokens):
+        if first_nonstop_idx == -1 and not token in STOP_WORDS:
+            first_nonstop_idx = i
+        if first_nonstop_idx > -1 and not token in STOP_WORDS:
+            last_nonstop_idx = i
+    clipped_text = text_tokens[first_nonstop_idx:last_nonstop_idx + 1]
+    return " ".join(clipped_text)
 
 
 def create_x_variable(text: Optional[str], claim: Claim) -> Optional[XVariable]:
