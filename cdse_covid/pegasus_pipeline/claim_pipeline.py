@@ -1,6 +1,7 @@
 """Run E2E Pegasus claim pipeline."""
 import logging
 from pathlib import Path
+from typing import Optional
 
 from pegasus_wrapper import (
     directory_for,
@@ -36,21 +37,22 @@ def main(params: Parameters) -> None:
     # Base info
     base_locator = Locator(("claims",))
     input_corpus_dir = params.existing_directory("corpus")
+    from_raw_documents = False
 
-    # Preprocessing
     spacy_params = params.namespace("spacy")
-    spacy_python_file = spacy_params.existing_file("ingester")
-    spacified_docs_locator = base_locator / "spacified"
     model_path = directory_for(base_locator) / "spacy.mdl"
     load_and_serialize_spacy_model(model_path, spacy_params.string("model_type"))
-    spacified_output_dir = directory_for(spacified_docs_locator)
-    preprocess_job = run_python_on_args(
-        spacified_docs_locator,
-        spacy_python_file,
-        f"--corpus {input_corpus_dir} --output {spacified_output_dir} --spacy-model {model_path}",
-        depends_on=[],
-    )
-    preprocessed_docs = ValueArtifact(value=spacified_output_dir, depends_on=[preprocess_job])
+
+    if from_raw_documents:
+        preprocessed_docs = annotate_raw_documents(
+            spacy_params, base_locator, model_path, input_corpus_dir
+        )
+        claim_detection_output = isi_claim_detection(
+            params, base_locator, model_path, preprocessed_docs
+        )
+    else:
+        uiuc_claims = ingest_uiuc_claims(params, base_locator)
+        claim_detection_output = add_topic_information(params, base_locator, uiuc_claims)
 
     # Ingest EDL data
     edl_params = params.namespace("edl")
@@ -70,6 +72,7 @@ def main(params: Parameters) -> None:
     edl_internal_file = ValueArtifact(value=edl_mapping_file, depends_on=[edl_job])
 
     # AMR parsing over the entirety of each document
+    # TODO: Move this shite
     amr_params = params.namespace("amr")
     amr_all_loc = base_locator / "amr_all"
     amr_all_python_file = amr_params.existing_file("python_file_all")
@@ -79,43 +82,16 @@ def main(params: Parameters) -> None:
         larger_resource = SlurmResourceRequest(memory=MemoryAmount.parse("8G"), num_gpus=1)
     else:
         larger_resource = None
-    amr_all_job = run_python_on_args(
+    amr_over_all_docs(
+        params,
+        input_corpus_dir,
+        amr_params,
         amr_all_loc,
         amr_all_python_file,
-        f"""
-        --corpus {input_corpus_dir} \
-        --output {amr_all_output_dir} \
-        --amr-parser-model {amr_params.existing_directory("model_path")} \
-        --max-tokens {amr_max_tokens}
-        """,
-        override_conda_config=CondaConfiguration(
-            conda_base_path=params.existing_directory("conda_base_path"),
-            conda_environment="transition-amr-parser",
-        ),
-        resource_request=larger_resource,
-        depends_on=[],
+        amr_all_output_dir,
+        amr_max_tokens,
+        larger_resource,
     )
-    amr_all_output = ValueArtifact(value=amr_all_output_dir, depends_on=[amr_all_job])
-    logging.info("Printing this to avoid unused-variable: %s", amr_all_output)
-
-    # Claim detection
-    claim_params = params.namespace("claim_detection")
-    claim_loc = base_locator / "claim_detection"
-    claim_python_file = claim_params.existing_file("python_file")
-    patterns_file = claim_params.existing_file("patterns")
-    claim_output_dir = directory_for(claim_loc) / "documents"
-    claim_detection_job = run_python_on_args(
-        claim_loc,
-        claim_python_file,
-        f"""
-        --input {preprocessed_docs.value} \
-        --patterns {patterns_file} \
-        --out {claim_output_dir} \
-        --spacy-model {model_path}
-        """,
-        depends_on=[preprocessed_docs],
-    )
-    claim_detection_output = ValueArtifact(value=claim_output_dir, depends_on=[claim_detection_job])
 
     # AMR parsing for claims
     amr_loc = base_locator / "amr"
@@ -218,6 +194,118 @@ def main(params: Parameters) -> None:
     )
 
     write_workflow_description()
+
+
+def add_topic_information(
+    params: Parameters, base_locator: Locator, uiuc_claims: ValueArtifact
+) -> ValueArtifact:
+    """Add topic information to Claims."""
+    topic_params = params.namespace("topic_information")
+    topic_locator = base_locator / "topic_info"
+    add_topic_python_file = topic_params.existing_file("python_file")
+    ss_model = topic_params.string("ss_model")
+    topics = topic_params.existing_file("patterns")
+    out = directory_for(topic_locator) / "documents"
+    add_topics_job = run_python_on_args(
+        topic_locator,
+        add_topic_python_file,
+        f"""
+            --claims {uiuc_claims.value} \
+            --templates-file {topics} \
+            --ss-model {ss_model} \
+            --output {out}
+            """,
+        depends_on=[uiuc_claims],
+    )
+    return ValueArtifact(value=out, depends_on=[add_topics_job])
+
+
+def ingest_uiuc_claims(params: Parameters, base_locator: Locator) -> ValueArtifact:
+    """Ingest UIUC claims."""
+    uiuc_params = params.namespace("uiuc_claims")
+    uiuc_locator = base_locator / "uiuc_claims"
+    uiuc_ingester = uiuc_params.existing_file("ingester")
+    uiuc_input = uiuc_params.existing_file("json_file_of_claims")
+    uiuc_output_dir = directory_for(uiuc_locator) / "documents"
+    uiuc_job = run_python_on_args(
+        uiuc_locator,
+        uiuc_ingester,
+        f"""
+            --claims-file {uiuc_input} \
+            --output {uiuc_output_dir}
+            """,
+        depends_on=[],
+    )
+    return ValueArtifact(value=uiuc_output_dir, depends_on=[uiuc_job])
+
+
+def annotate_raw_documents(
+    params: Parameters, base_locator: Locator, model_path: Path, input_corpus_dir: Path
+) -> ValueArtifact:
+    """Annotate raw documents with SpaCy tags."""
+    spacy_python_file = params.existing_file("ingester")
+    spacified_docs_locator = base_locator / "spacified"
+    spacified_output_dir = directory_for(spacified_docs_locator)
+    preprocess_job = run_python_on_args(
+        spacified_docs_locator,
+        spacy_python_file,
+        f"--corpus {input_corpus_dir} --output {spacified_output_dir} --spacy-model {model_path}",
+        depends_on=[],
+    )
+    return ValueArtifact(value=spacified_output_dir, depends_on=[preprocess_job])
+
+
+def amr_over_all_docs(
+    params: Parameters,
+    input_corpus_dir: Path,
+    amr_params: Parameters,
+    amr_all_loc: Locator,
+    amr_all_python_file: Path,
+    amr_all_output_dir: Path,
+    amr_max_tokens: int,
+    larger_resource: Optional[SlurmResourceRequest],
+) -> ValueArtifact:
+    """Run AMR parser over all sentences in all docs."""
+    amr_all_job = run_python_on_args(
+        amr_all_loc,
+        amr_all_python_file,
+        f"""
+        --corpus {input_corpus_dir} \
+        --output {amr_all_output_dir} \
+        --amr-parser-model {amr_params.existing_directory("model_path")} \
+        --max-tokens {amr_max_tokens}
+        """,
+        override_conda_config=CondaConfiguration(
+            conda_base_path=params.existing_directory("conda_base_path"),
+            conda_environment="transition-amr-parser",
+        ),
+        resource_request=larger_resource,
+        depends_on=[],
+    )
+    return ValueArtifact(value=amr_all_output_dir, depends_on=[amr_all_job])
+
+
+def isi_claim_detection(
+    params: Parameters, base_locator: Locator, model_path: Path, preprocessed_docs: ValueArtifact
+) -> ValueArtifact:
+    """Detect claims from SpaCy docs using ISI claim detection."""
+    claim_params = params.namespace("claim_detection")
+    claim_loc = base_locator / "claim_detection"
+    claim_python_file = claim_params.existing_file("python_file")
+    patterns_file = claim_params.existing_file("patterns")
+    claim_output_dir = directory_for(claim_loc) / "documents"
+    claim_detection_job = run_python_on_args(
+        claim_loc,
+        claim_python_file,
+        f"""
+        --input {preprocessed_docs.value} \
+        --patterns {patterns_file} \
+        --out {claim_output_dir} \
+        --spacy-model {model_path}
+        """,
+        depends_on=[preprocessed_docs],
+    )
+    return ValueArtifact(value=claim_output_dir, depends_on=[claim_detection_job])
 
 
 if __name__ == "__main__":

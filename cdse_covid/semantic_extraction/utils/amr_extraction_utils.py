@@ -1,6 +1,6 @@
 """Collection of AMR extraction utils."""
-import logging
 from collections import defaultdict
+import logging
 import re
 import string
 from typing import Any, Dict, List, MutableMapping, Optional
@@ -13,7 +13,24 @@ from cdse_covid.claim_detection.claim import Claim, create_id
 from cdse_covid.semantic_extraction.mentions import XVariable
 
 PROPBANK_PATTERN = r"[a-z]*-[0-9]{2}"  # e.g. have-name-91
-STOP_WORDS = set(stopwords.words("english")).union({"like"})
+PRONOUNS = {
+    "he",
+    "she",
+    "it",
+    "one",
+    "they",
+    "them",
+    "we",
+    "our",
+    "you",
+    "your",
+    "ours",
+    "her",
+    "him",
+    "I",
+    "me",
+}
+STOP_WORDS = set(stopwords.words("english")).union({"like"}) - PRONOUNS
 
 
 def get_full_name_value(
@@ -22,7 +39,9 @@ def get_full_name_value(
     """Get the full name of a named_node."""
     name_nodes = amr_dict[named_node].get(":name")
     if name_nodes:
-        name_strings = list(filter(None, [nodes_to_strings.get(name_node) for name_node in name_nodes]))
+        name_strings = list(
+            filter(None, [nodes_to_strings.get(name_node) for name_node in name_nodes])
+        )
         return " ".join(name_strings)
     return None
 
@@ -53,8 +72,9 @@ def get_full_description(
     focus_string = nodes_to_strings.get(focus_node)
     if not focus_string:
         logging.warning(
-            "Couldn't get source text of AMR node %s.\n"
-            "nodes_to_strings: %s", focus_node, nodes_to_strings
+            "Couldn't get source text of AMR node %s.\n" "nodes_to_strings: %s",
+            focus_node,
+            nodes_to_strings,
         )
         return ""
     if re.match(PROPBANK_PATTERN, nodes_to_labels[focus_node]):
@@ -83,8 +103,9 @@ def get_full_description(
                     descr_strings.insert(0, first_arg_option)
                 elif not first_arg_option:
                     logging.warning(
-                        "Couldn't get source text of AMR node %s.\n"
-                        "nodes_to_strings: %s", arg_list[0], nodes_to_strings
+                        "Couldn't get source text of AMR node %s.\n" "nodes_to_strings: %s",
+                        arg_list[0],
+                        nodes_to_strings,
                     )
 
         # First check for :mods
@@ -96,8 +117,9 @@ def get_full_description(
                     descr_strings.insert(0, mod_string)
                 else:
                     logging.warning(
-                        "Couldn't get source text of AMR node %s.\n"
-                        "nodes_to_strings: %s", mod, nodes_to_strings
+                        "Couldn't get source text of AMR node %s.\n" "nodes_to_strings: %s",
+                        mod,
+                        nodes_to_strings,
                     )
 
         # Other mods come from :consists-of and :ARG1-of
@@ -117,8 +139,9 @@ def get_full_description(
                 descr_strings.append(op_of_string)
             else:
                 logging.warning(
-                    "Couldn't get source text of AMR node %s.\n"
-                    "nodes_to_strings: %s", op_of, nodes_to_strings
+                    "Couldn't get source text of AMR node %s.\n" "nodes_to_strings: %s",
+                    op_of,
+                    nodes_to_strings,
                 )
         # Else, just add focus node text here
         elif not ignore_focus_node and focus_string not in descr_strings:
@@ -151,11 +174,11 @@ def remove_preceding_trailing_stop_words(text: str) -> Optional[str]:
     first_nonstop_idx = -1
     last_nonstop_idx = -1
     for i, token in enumerate(text_tokens):
-        if first_nonstop_idx == -1 and not token in STOP_WORDS:
+        if first_nonstop_idx == -1 and token not in STOP_WORDS:
             first_nonstop_idx = i
-        if first_nonstop_idx > -1 and not token in STOP_WORDS:
+        if first_nonstop_idx > -1 and token not in STOP_WORDS:
             last_nonstop_idx = i
-    clipped_text = text_tokens[first_nonstop_idx:last_nonstop_idx + 1]
+    clipped_text = text_tokens[first_nonstop_idx : last_nonstop_idx + 1]
     return " ".join(clipped_text)
 
 

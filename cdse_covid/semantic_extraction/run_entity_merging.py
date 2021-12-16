@@ -111,7 +111,9 @@ def create_wikidata_qnode_from_id(mention: Mention, qnode_id: str) -> Optional[W
     return None
 
 
-def load_freebase_to_qnode_mapping(original_map_tsv: Path, mapping_file: Path) -> MutableMapping[str, str]:
+def load_freebase_to_qnode_mapping(
+    original_map_tsv: Path, mapping_file: Path
+) -> MutableMapping[str, str]:
     """Load the freebase-to-qnode mapping file if it exists.
 
     Otherwise, generate the mapping from the qnode-freebase file

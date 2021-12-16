@@ -315,16 +315,19 @@ def get_kgtk_result_for_event(pb_label_list: List[str], amr: AMR) -> Tuple[Dict[
         if qnode_info["options"]:
             selected_qnode = qnode_info["options"][0]
         elif qnode_info["all_options"]:
-            selected_qnode = qnode_info["all_options"][0]
+            selected_qnode = qnode_info["all_options"][0]  # Just selecting the first result
         else:
             selected_qnode = None
 
         if selected_qnode:
+            definition = selected_qnode.get("definition")
+            if not definition and selected_qnode.get("description"):
+                definition = selected_qnode["description"][0]
             return {
                 "pb": pb_label,
                 "name": selected_qnode.get("rawName") or selected_qnode["label"][0],
                 "qnode": selected_qnode["qnode"],
-                "definition": selected_qnode.get("definition") or selected_qnode["description"][0],
+                "definition": definition,
             }, is_root
     return {}, False
 

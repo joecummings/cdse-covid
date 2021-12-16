@@ -62,7 +62,7 @@ def refine_sentence(tokenized_sentence: List[str], max_tokens: int) -> List[str]
 
     # Replace double quotes
     for i, token in enumerate(refined_sentence):
-        if token == "\"":
+        if token == '"':
             refined_sentence[i] = "'"
 
     return refined_sentence

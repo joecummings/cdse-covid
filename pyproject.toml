@@ -35,7 +35,7 @@ disable = """
 R,fixme,no-member,unsupported-membership-test,unsubscriptable-object
 unsupported-assignment-operation,not-an-iterable,too-many-lines,wrong-import-order,
 missing-module-docstring,missing-class-docstring,missing-function-docstring, protected-access,
-dangerous-default-value
+dangerous-default-value, import-error
 """
 
 [tool.pylint.reports]

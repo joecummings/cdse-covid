@@ -36,4 +36,13 @@ wikidata:
 
 unify:
     output: "%experiments_root%/output.json"
-    python_file: /Users/jcummings/Desktop/projects/GAIA/cdse-covid/cdse_covid/pegasus_pipeline/merge.py
+    python_file: "%project_root%/cdse_covid/pegasus_pipeline/merge.py"
+
+uiuc_claims:
+    json_file_of_claims: "%project_root%/data/claim_all.json"
+    ingester: "%project_root%/cdse_covid/pegasus_pipeline/ingesters/uiuc_claims_ingester.py"
+
+topic_information:
+    python_file: "%project_root%/cdse_covid/semantic_extraction/add_topic_information.py"
+    patterns: "%project_root%/cdse_covid/claim_detection/topic_list.txt"
+    ss_model: all-mpnet-base-v2
