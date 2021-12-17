@@ -18,6 +18,8 @@ from vistautils.memory_amount import MemoryAmount
 from vistautils.parameters import Parameters
 from vistautils.parameters_only_entrypoint import parameters_only_entry_point
 
+from wikidata_linker.wikidata_linking import CPU, CUDA
+
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
@@ -38,6 +40,7 @@ def main(params: Parameters) -> None:
     base_locator = Locator(("claims",))
     input_corpus_dir = params.existing_directory("corpus")
     from_raw_documents = params.boolean("from_raw_documents", default=True)
+    state_dict = params.existing_file("state_dict")
 
     spacy_params = params.namespace("spacy")
     model_path = directory_for(base_locator) / "spacy.mdl"
@@ -74,10 +77,15 @@ def main(params: Parameters) -> None:
     # AMR parsing over the entirety of each document
     amr_params = params.namespace("amr")
     amr_max_tokens = amr_params.integer("max_tokens", default=50)
+    device = CPU
     if params.string("site") == "saga":
         larger_resource = SlurmResourceRequest(memory=MemoryAmount.parse("8G"), num_gpus=1)
+        even_larger_resource = SlurmResourceRequest(memory=MemoryAmount.parse("16G"), num_gpus=1)
+        device = CUDA
     else:
         larger_resource = None
+        even_larger_resource = None
+
     if amr_params.optional_existing_file("python_file_all"):
         _ = amr_over_all_docs(
             params,
@@ -100,13 +108,15 @@ def main(params: Parameters) -> None:
         --output {amr_output_dir} \
         --amr-parser-model {amr_params.existing_directory("model_path")} \
         --max-tokens {amr_max_tokens} \
-        --domain {amr_params.string("domain", default="general")}
+        --state-dict {state_dict} \
+        --domain {amr_params.string("domain", default="general")} \
+        --device {device}
         """,
         override_conda_config=CondaConfiguration(
             conda_base_path=params.existing_directory("conda_base_path"),
             conda_environment="transition-amr-parser",
         ),
-        resource_request=larger_resource,
+        resource_request=even_larger_resource,
         depends_on=[claim_detection_output],
     )
     amr_output = ValueArtifact(value=amr_output_dir, depends_on=[amr_job])
@@ -140,7 +150,9 @@ def main(params: Parameters) -> None:
         --claim-input {claim_detection_output.value} \
         --srl-input {srl_output.value} \
         --amr-input {amr_output.value} \
+        --state-dict {state_dict} \
         --output {wikidata_output_dir} \
+        --device {device}
         """,
         override_conda_config=CondaConfiguration(
             conda_base_path=params.existing_directory("conda_base_path"),

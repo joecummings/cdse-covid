@@ -1,9 +1,10 @@
 """Module of class model for RoBERTa classifier used for Wikidata linking classification."""
-from typing import Any, List, Optional, Sequence, Tuple
+from typing import Any, Optional, Sequence
 
 import torch
 import torch.multiprocessing
-from torch.utils.data import DataLoader
+
+# from torch.utils.data import DataLoader
 from transformers import PreTrainedTokenizer, RobertaForSequenceClassification, RobertaTokenizerFast
 
 
@@ -47,7 +48,7 @@ class WikidataLinkingClassifier(torch.nn.Module):
         """
         return self.model(**x, labels=y)
 
-    def infer(self, text: str, qnode_texts: Sequence[str]):
+    def infer(self, text: str, qnode_texts: Sequence[str]) -> Any:
         """A function to take two string inputs, format them, and generate predictions for them.
 
         Returns:

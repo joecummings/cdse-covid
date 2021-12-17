@@ -8,6 +8,7 @@ from pathlib import Path
 
 import spacy
 from spacy.language import Language
+import torch
 
 from cdse_covid.claim_detection.run_claim_detection import ClaimDataset
 from cdse_covid.pegasus_pipeline.run_amr_parsing_all import tokenize_sentence
@@ -19,6 +20,8 @@ from cdse_covid.semantic_extraction.utils.amr_extraction_utils import (
 )
 from cdse_covid.semantic_extraction.utils.claimer_utils import identify_claimer
 from wikidata_linker.get_claim_semantics import get_claim_semantics
+from wikidata_linker.linker import WikidataLinkingClassifier
+from wikidata_linker.wikidata_linking import CPU
 
 COVID_DOMAIN = "covid"
 
@@ -30,10 +33,17 @@ def main(
     max_tokens: int,
     spacy_model: Language,
     parser_path: Path,
+    state_dict: Path,
     domain: str,
+    device: str = CPU,
 ) -> None:
     """Entrypoint to AMR parsing script."""
     amr_parser = AMRModel.from_folder(parser_path)
+
+    linking_model = WikidataLinkingClassifier()
+    model_ckpt = torch.load(state_dict, map_location=torch.device(device))
+    linking_model.load_state_dict(model_ckpt, strict=False)
+    linking_model.to(device)
 
     claim_ds = ClaimDataset.load_from_dir(input_dir)
 
@@ -51,7 +61,13 @@ def main(
             # Add claimer data to Claim
             claim.claimer = possible_claimer
             best_qnode = get_best_qnode_for_mention_text(
-                possible_claimer, claim, sentence_amr.graph, sentence_amr.alignments, spacy_model
+                possible_claimer,
+                claim,
+                sentence_amr.graph,
+                sentence_amr.alignments,
+                spacy_model,
+                linking_model,
+                device,
             )
             if best_qnode:
                 claim.claimer_identity_qnode = best_qnode
@@ -72,7 +88,9 @@ def main(
             claim.x_variable = possible_x_variable
 
         # Get claim semantics from AMR data
-        semantics = get_claim_semantics(claim_amr.graph, claim_amr.alignments, claim, spacy_model)
+        semantics = get_claim_semantics(
+            claim_amr.graph, claim_amr.alignments, claim, spacy_model, linking_model, device
+        )
         claim.claim_semantics = semantics
 
         claim.add_theory("amr", sentence_amr.graph)
@@ -88,10 +106,12 @@ if __name__ == "__main__":
     parser.add_argument("--input", help="Input docs", type=Path)
     parser.add_argument("--output", help="AMR output dir", type=Path)
     parser.add_argument("--amr-parser-model", type=Path)
+    parser.add_argument("--state-dict", type=Path)
     parser.add_argument(
         "--max-tokens", help="Max tokens allowed in a sentence to be parsed", type=int, default=50
     )
     parser.add_argument("--domain", help="`covid` or `general`", type=str, default="general")
+    parser.add_argument("--device", help="cpu or cuda", type=str, default=CPU)
 
     args = parser.parse_args()
 
@@ -103,5 +123,7 @@ if __name__ == "__main__":
         max_tokens=args.max_tokens,
         spacy_model=model,
         parser_path=args.amr_parser_model,
+        state_dict=args.state_dict,
         domain=args.domain,
+        device=args.device,
     )

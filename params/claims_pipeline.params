@@ -7,6 +7,7 @@ workflow_directory: "%experiments_root%"
 experiment_name: claims
 
 corpus: "%project_root%/data/english_data_large"
+state_dict: "$project_root%/wikidata_linker/wikidata_classifier.state_dict"
 
 from_raw_documents: False
 

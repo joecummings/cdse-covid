@@ -1,3 +1,4 @@
+"""Collection of Wikidata linking utils."""
 import argparse
 import json
 from pathlib import Path
@@ -9,20 +10,17 @@ from pyinflect import getInflection
 import requests
 from sentence_transformers import SentenceTransformer, util as ss_util
 import spacy
+from spacy.language import Language
 import torch
 
 from wikidata_linker.linker import WikidataLinkingClassifier
 
+CPU = "cpu"
+CUDA = "cuda"
 nlp = spacy.load("en_core_web_md")
 
 
 BASE = Path(__file__).parent
-device = "cpu"  # change this if you want to use GPU
-LINKING_MODEL = WikidataLinkingClassifier()
-STATE_DICT_PATH = BASE / "wikidata_classifier.state_dict"
-CKPT = torch.load(STATE_DICT_PATH, map_location=torch.device("cpu"))
-LINKING_MODEL.load_state_dict(CKPT, strict=False)
-LINKING_MODEL.to(device)
 MAX_BATCH_SIZE = 8  # I use 8 using GPU, to avoid OOM events. Could probably handle more. Not sure there will be a huge boost if you use CPU.
 SOFTMAX = torch.nn.Softmax(dim=1)
 
@@ -35,7 +33,7 @@ KGTK_REFVAR_CACHE = BASE / "kgtk_refvar_cache"
 ARG_QNODES_PATH = BASE / "argument_qnodes.json"
 EVENT_QNODES_PATH = BASE / "event_qnodes.json"
 VERBS_ALL = BASE / "verbs-all.json"
-with open(STEM_MAP_PATH) as f:
+with open(STEM_MAP_PATH, encoding="utf-8") as f:
     STEM_MAP = json.load(f)
 with open(OVERLAY_PATH, encoding="utf-8") as json_ontology_fp:
     XPO_ONTOLOGY = json.load(json_ontology_fp)
@@ -48,7 +46,13 @@ VERB = "verb"
 REFVAR = "refvar"
 
 
-def get_linker_scores(event_description, use_title, candidates) -> Any:
+def get_linker_scores(
+    event_description: str,
+    use_title: bool,
+    candidates: List[MutableMapping[str, Any]],
+    linking_model: WikidataLinkingClassifier,
+    device: str = CPU,
+) -> Any:
     """Gets predictions from Wikidata linking classification model, given a string and candidate JSONs.
 
     Returns:
@@ -66,7 +70,11 @@ def get_linker_scores(event_description, use_title, candidates) -> Any:
     while i * MAX_BATCH_SIZE < len(candidates):
         candidate_batch = candidate_descriptions[i * MAX_BATCH_SIZE : (i + 1) * MAX_BATCH_SIZE]
         with torch.no_grad():
-            logits = LINKING_MODEL.infer(event_description, candidate_batch)[0].detach().cpu()
+            logits = (
+                linking_model.infer(event_description, candidate_batch)[0].detach()
+                if device == CUDA
+                else linking_model.infer(event_description, candidate_batch)[0].detach().cpu()
+            )
             candidate_batch_scores = SOFTMAX(logits)[:, 2]  # get "entailment" score from model
             for candidate_batch_score in candidate_batch_scores:
                 scores.append(candidate_batch_score.item())
@@ -92,11 +100,11 @@ def get_all_verbs() -> Set[str]:
 verb_set = get_all_verbs()
 
 
-def get_verb_lemmas(nlp, sentence: str) -> Tuple[List[str], List[float]]:
+def get_verb_lemmas(spacy_model: Language, sentence: str) -> Tuple[List[str], List[float]]:
     """Returns the lemma of all verbs (or roots if not verbs found) in the sentence.
 
     Args:
-        nlp: A spaCy English Language model.
+        spacy_model: A spaCy English Language model.
         sentence: An event description.
         verb_set: A set of verbs and their forms to check words against for additional queries.
 
@@ -106,7 +114,7 @@ def get_verb_lemmas(nlp, sentence: str) -> Tuple[List[str], List[float]]:
     """
     verb_lemmas = []
     extra_lemmas = []
-    for token in nlp(sentence):
+    for token in spacy_model(sentence):
         if token.pos_ == "VERB":
             verb_lemmas.append(token.lemma_)
         elif str(token).lower() in verb_set or str(token.lemma_).lower() in verb_set:
@@ -214,8 +222,8 @@ def get_request_kgtk(
     if "/" in query:
         return []
     if cache_file.is_file():
-        with open(cache_file, encoding="utf-8") as f:
-            candidates: List[Any] = json.load(f)
+        with open(cache_file, encoding="utf-8") as cf:
+            candidates: List[Any] = json.load(cf)
             return candidates
     kgtk_request_url = "https://kgtk.isi.edu/api"
     params = {
@@ -242,9 +250,9 @@ def get_request_kgtk(
             candidate["kgtk_query"] = query
         if filter_results:
             candidates = list(filter(make_kgtk_candidates_filter(query), candidates))
-        with open(cache_file, "w", encoding="utf-8") as f:
-            json.dump(candidates, f, ensure_ascii=False, indent=2)
-            f.write("\n")
+        with open(cache_file, "w", encoding="utf-8") as cf:
+            json.dump(candidates, cf, ensure_ascii=False, indent=2)
+            cf.write("\n")
         return candidates
 
 
@@ -280,7 +288,9 @@ def wikidata_topk(
     return top_k
 
 
-def filter_duplicate_candidates(candidates: List[Mapping[str, Any]]) -> List[Mapping[str, Any]]:
+def filter_duplicate_candidates(
+    candidates: List[MutableMapping[str, Any]]
+) -> List[MutableMapping[str, Any]]:
     """Filters duplicate candidates from concatenated list of KGTK queries.
 
     Args:
@@ -316,7 +326,7 @@ def filter_candidates_with_scores(
     Returns:
         A list of k candidates.
     """
-    for i, (candidate, score) in enumerate(zip(candidates, scores)):
+    for (candidate, score) in zip(candidates, scores):
         candidate["linking_score"] = score
     np_scores = np.array(scores)
     top_k_idx = np.argsort(-np_scores)[:k]
@@ -325,7 +335,13 @@ def filter_candidates_with_scores(
     return top_k
 
 
-def disambiguate_verb_kgtk(event_description, no_expansion: bool = False, k: int = 3) -> Any:
+def disambiguate_verb_kgtk(
+    event_description: str,
+    linking_model: WikidataLinkingClassifier,
+    no_expansion: bool = False,
+    k: int = 3,
+    device: str = CPU,
+) -> Any:
     """Disambiguates verbs from event description and return candidate qnodes.
 
     Returns:
@@ -368,7 +384,9 @@ def disambiguate_verb_kgtk(event_description, no_expansion: bool = False, k: int
     # ).json()["scores"]
 
     # USE BELOW IF YOU RUN IT LOCALLY
-    candidate_scores = get_linker_scores(cleaned_description, False, unique_candidates)["scores"]
+    candidate_scores = get_linker_scores(
+        cleaned_description, False, unique_candidates, linking_model, device
+    )["scores"]
     top3 = filter_candidates_with_scores(candidate_scores, unique_candidates, k=k)
     print("HERE")
     for candidate in top3:
@@ -391,7 +409,9 @@ def disambiguate_verb_kgtk(event_description, no_expansion: bool = False, k: int
     #     wikidata_classifier_server_url, data=json.dumps(other_post_params)
     # ).json()["scores"]
     print(len(EVENT_QNODES))
-    other_candidate_scores = get_linker_scores(cleaned_description, False, EVENT_QNODES)["scores"]
+    other_candidate_scores = get_linker_scores(
+        cleaned_description, False, EVENT_QNODES, linking_model, device
+    )["scores"]
     top3_other_qnodes = filter_candidates_with_scores(other_candidate_scores, EVENT_QNODES, k=k)
     other_options = []
     for candidate in top3_other_qnodes:
@@ -413,7 +433,14 @@ def disambiguate_verb_kgtk(event_description, no_expansion: bool = False, k: int
     return response
 
 
-def disambiguate_refvar_kgtk(refvar, context="", no_expansion: bool = False, k: int = 3) -> Any:
+def disambiguate_refvar_kgtk(
+    refvar: str,
+    linking_model: WikidataLinkingClassifier,
+    context: str = "",
+    no_expansion: bool = False,
+    k: int = 3,
+    device: str = CPU,
+) -> Any:
     """Disambiguates refvar with KGTK webserver API.
 
     Returns:
@@ -455,7 +482,9 @@ def disambiguate_refvar_kgtk(refvar, context="", no_expansion: bool = False, k: 
             refvar + " - " + context
         )  # this is how it would be done in MASC, since refvars are not
         # necessarily mentioned in context, otherwise context is probably sufficient
-    candidate_scores = get_linker_scores(cleaned_refvar, False, unique_candidates)["scores"]
+    candidate_scores = get_linker_scores(
+        cleaned_refvar, False, unique_candidates, linking_model, device
+    )["scores"]
     top3 = filter_candidates_with_scores(candidate_scores, unique_candidates, k=k)
     for candidate in top3:
         # description can be empty sometimes on less popular qnodes
@@ -476,7 +505,9 @@ def disambiguate_refvar_kgtk(refvar, context="", no_expansion: bool = False, k: 
     #     wikidata_classifier_server_url, data=json.dumps(post_params)
     # ).json()["scores"]
     # top3_other_qnodes = filter_candidates_with_scores(other_candidate_scores, ARGUMENT_QNODES, k=3)
-    other_candidate_scores = get_linker_scores(cleaned_refvar, False, ARGUMENT_QNODES)["scores"]
+    other_candidate_scores = get_linker_scores(
+        cleaned_refvar, False, ARGUMENT_QNODES, linking_model, device
+    )["scores"]
     top3_other_qnodes = filter_candidates_with_scores(other_candidate_scores, ARGUMENT_QNODES, k=k)
     other_options = []
     for candidate in top3_other_qnodes:
@@ -517,19 +548,23 @@ if __name__ == "__main__":
         help="If specified, no query expansion will be performed (expansion is querying all terms that share stem with query term)",
     )
     parser.add_argument("--k", type=int, default=3, help="Number of options to be returned")
+    parser.add_argument("--device", type=str, default="cpu", help="cpu or cuda")
     args = parser.parse_args()
     if args.query_type == VERB:
         print(
             json.dumps(
-                disambiguate_verb_kgtk(args.query, args.no_expansion, args.k)["options"], indent=4
+                disambiguate_verb_kgtk(args.query, args.no_expansion, args.k, args.device)[
+                    "options"
+                ],
+                indent=4,
             )
         )
     elif args.query_type == REFVAR:
         print(
             json.dumps(
-                disambiguate_refvar_kgtk(args.query, args.context, args.no_expansion, args.k)[
-                    "options"
-                ],
+                disambiguate_refvar_kgtk(
+                    args.query, args.context, args.no_expansion, args.k, args.device
+                )["options"],
                 indent=4,
             )
         )

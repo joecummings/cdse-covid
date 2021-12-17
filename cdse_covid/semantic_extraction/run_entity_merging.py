@@ -14,6 +14,11 @@ from cdse_covid.semantic_extraction.mentions import Mention, WikidataQnode
 from wikidata_linker.wikidata_linking import KGTK_CACHE, get_request_kgtk, make_cache_path
 
 type_mapping_to_qnode = {
+    "COM": WikidataQnode(
+        text="physical object",
+        qnode_id="Q223557",
+        description="singular aggregation of substance(s) such as matter or radiation, with overall properties such as mass, position or momentum",
+    ),  # physical object
     "PER": WikidataQnode(
         text="human",
         qnode_id="Q5",
