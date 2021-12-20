@@ -370,25 +370,11 @@ def disambiguate_verb_kgtk(
         kgtk_json[i]["score_weight"] = weight
     unique_candidates = filter_duplicate_candidates(kgtk_json)
     options = []
-    # USE BELOW IF YOU PLAN ON USING A SERVER
-    # wikidata_classifier_server_url = (
-    #     f"http://{settings.wikidata_linking_server}.isi.edu:5002/api/get_linker_scores"
-    # )
-    # post_params = {
-    #     "event_description": cleaned_description,
-    #     "use_title": False,
-    #     "candidates": unique_candidates,
-    # }
-    # candidate_scores = requests.get(
-    #     wikidata_classifier_server_url, data=json.dumps(post_params)
-    # ).json()["scores"]
 
-    # USE BELOW IF YOU RUN IT LOCALLY
     candidate_scores = get_linker_scores(
         cleaned_description, False, unique_candidates, linking_model, device
     )["scores"]
     top3 = filter_candidates_with_scores(candidate_scores, unique_candidates, k=k)
-    print("HERE")
     for candidate in top3:
         option = {
             "qnode": candidate["qnode"],
@@ -399,16 +385,7 @@ def disambiguate_verb_kgtk(
         if option not in options:
             options.append(option)
     option_qnodes = [option["qnode"] for option in options]
-    # USE BELOW IF YOU PLAN ON USING A SERVER
-    # other_post_params = {
-    #     "event_description": cleaned_description,
-    #     "use_title": True,
-    #     "candidates": EVENT_QNODES,
-    # }
-    # other_candidate_scores = requests.get(
-    #     wikidata_classifier_server_url, data=json.dumps(other_post_params)
-    # ).json()["scores"]
-    print(len(EVENT_QNODES))
+
     other_candidate_scores = get_linker_scores(
         cleaned_description, False, EVENT_QNODES, linking_model, device
     )["scores"]
@@ -466,17 +443,7 @@ def disambiguate_refvar_kgtk(
             kgtk_json += get_request_kgtk(lemma_token, cache_file)
     unique_candidates = filter_duplicate_candidates(kgtk_json)
     options = []
-    # wikidata_classifier_server_url = (
-    #     f"http://{settings.wikidata_linking_server}.isi.edu:5002/api/get_linker_scores"
-    # )
-    # post_params = {
-    #     "event_description": cleaned_refvar,
-    #     "use_title": False,
-    #     "candidates": unique_candidates,
-    # }
-    # candidate_scores = requests.get(
-    #     wikidata_classifier_server_url, data=json.dumps(post_params)
-    # ).json()["scores"]
+
     if context:
         cleaned_refvar = (
             refvar + " - " + context
@@ -496,15 +463,7 @@ def disambiguate_refvar_kgtk(
         }
         if option not in options:
             options.append(option)
-    # post_params = {
-    #     "event_description": cleaned_refvar,
-    #     "use_title": False,
-    #     "candidates": ARGUMENT_QNODES,
-    # }
-    # other_candidate_scores = requests.get(
-    #     wikidata_classifier_server_url, data=json.dumps(post_params)
-    # ).json()["scores"]
-    # top3_other_qnodes = filter_candidates_with_scores(other_candidate_scores, ARGUMENT_QNODES, k=3)
+
     other_candidate_scores = get_linker_scores(
         cleaned_refvar, False, ARGUMENT_QNODES, linking_model, device
     )["scores"]
