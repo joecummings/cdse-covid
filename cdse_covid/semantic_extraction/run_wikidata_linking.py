@@ -84,8 +84,7 @@ def get_best_qnode_for_mention_text(
                 qnode_id=best_qnode.get("qnode"),
             )
     # If no Qnode was found, try KGTK
-    query_list = [mention.text, variable_node_label]
-    query_list.extend(claim_variable_tokens)
+    query_list: List[Optional[str]] = [mention.text, variable_node_label, *claim_variable_tokens]
     for query in list(filter(None, query_list)):
         claim_variable_links = find_links(claim.claim_sentence, query)
         top_link = create_wikidata_qnodes(claim_variable_links, mention, claim)

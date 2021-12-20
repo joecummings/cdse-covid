@@ -5,8 +5,8 @@ from pathlib import Path
 from typing import List
 import uuid
 
-from amr_utils.amr_readers import AMR_Reader, Metadata_Parser  # pylint: disable=import-error
-from transition_amr_parser.parse import AMRParser  # pylint: disable=import-error
+from amr_utils.amr_readers import AMR_Reader, Metadata_Parser
+from transition_amr_parser.parse import AMRParser
 
 from cdse_covid.semantic_extraction.models.output_formats import AMROutput
 

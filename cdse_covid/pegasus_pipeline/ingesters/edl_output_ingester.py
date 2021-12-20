@@ -5,7 +5,7 @@ import csv
 from dataclasses import dataclass
 from pathlib import Path
 import pickle
-from typing import Dict, MutableMapping, Optional, Tuple, List
+from typing import Dict, List, MutableMapping, Optional, Tuple
 
 
 @dataclass
@@ -64,21 +64,23 @@ def main(edl_output: Path, output: Path) -> None:
                 else:
                     all_entities[formatted_id] = new_entity
             elif len(line) == 5:  # Otherwise it's a mention
-                ent_id = line[0].split("_")
-                formatted_ent_id = ent_id[-1]
+                _ent_id = line[0].split("_")
+                formatted_ent_id = _ent_id[-1]
                 mention_type = line[1]
                 text = line[2]
                 doc_and_span = line[3].split(":")
                 doc = doc_and_span[0]
-                span = doc_and_span[1].split("-")
-                formatted_span = (int(span[0]), int(span[1]))
+                _span = doc_and_span[1].split("-")
+                formatted_span = (int(_span[0]), int(_span[1]))
                 # Entities for mentions do not have their freebase links yet.
                 # Set aside the mention for examination
                 # until after all entity data is collected.
-                set_aside_mentions.append((formatted_ent_id, doc, text, mention_type, formatted_span))
+                set_aside_mentions.append(
+                    (formatted_ent_id, doc, text, mention_type, formatted_span)
+                )
 
     # Now add the mentions set aside
-    for ent_id, doc, text, mention_type, span in set_aside_mentions:
+    for (ent_id, doc, text, mention_type, span) in set_aside_mentions:
         new_mention = EDLMention(
             doc_id=doc,
             text=text,

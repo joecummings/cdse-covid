@@ -38,6 +38,7 @@ def main(
     claim_ds = ClaimDataset.load_from_dir(input_dir)
 
     for claim in claim_ds.claims:
+        logging.info("Processing claim %s", claim.claim_id)
         tokenized_sentence = tokenize_sentence(
             claim.claim_sentence, spacy_model.tokenizer, max_tokens
         )
