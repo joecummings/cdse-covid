@@ -27,6 +27,7 @@ pip install -r requirements-dev.txt
 # (CONDA_PREFIX is set automatically by conda upon activating an env)
 python -m nltk.downloader -d "$CONDA_PREFIX"/nltk_data wordnet
 python -m nltk.downloader -d "$CONDA_PREFIX"/nltk_data framenet_v17
+python -m nltk.downloader -d "$CONDA_PREFIX"/nltk_data stopwords
 
 # Create this package as a module
 pip install -e .
