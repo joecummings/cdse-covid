@@ -8,6 +8,8 @@ experiment_name: claims
 
 corpus: "%project_root%/data/english_data_large"
 
+from_raw_documents: False
+
 claim_detection:
     python_file: "%project_root%/cdse_covid/claim_detection/run_claim_detection.py"
     patterns: "%project_root%/cdse_covid/claim_detection/topics.json"

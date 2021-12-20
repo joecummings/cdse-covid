@@ -37,7 +37,7 @@ def main(params: Parameters) -> None:
     # Base info
     base_locator = Locator(("claims",))
     input_corpus_dir = params.existing_directory("corpus")
-    from_raw_documents = False
+    from_raw_documents = params.boolean("from_raw_documents", default=True)
 
     spacy_params = params.namespace("spacy")
     model_path = directory_for(base_locator) / "spacy.mdl"
@@ -72,26 +72,21 @@ def main(params: Parameters) -> None:
     edl_internal_file = ValueArtifact(value=edl_mapping_file, depends_on=[edl_job])
 
     # AMR parsing over the entirety of each document
-    # TODO: Move this shite
     amr_params = params.namespace("amr")
-    amr_all_loc = base_locator / "amr_all"
-    amr_all_python_file = amr_params.existing_file("python_file_all")
-    amr_all_output_dir = directory_for(amr_all_loc) / "documents"
     amr_max_tokens = amr_params.integer("max_tokens", default=50)
     if params.string("site") == "saga":
         larger_resource = SlurmResourceRequest(memory=MemoryAmount.parse("8G"), num_gpus=1)
     else:
         larger_resource = None
-    amr_over_all_docs(
-        params,
-        input_corpus_dir,
-        amr_params,
-        amr_all_loc,
-        amr_all_python_file,
-        amr_all_output_dir,
-        amr_max_tokens,
-        larger_resource,
-    )
+    if amr_params.optional_existing_file("python_file_all"):
+        _ = amr_over_all_docs(
+            params,
+            input_corpus_dir,
+            base_locator,
+            amr_params,
+            amr_max_tokens,
+            larger_resource,
+        )
 
     # AMR parsing for claims
     amr_loc = base_locator / "amr"
@@ -258,14 +253,15 @@ def annotate_raw_documents(
 def amr_over_all_docs(
     params: Parameters,
     input_corpus_dir: Path,
+    base_locator: Locator,
     amr_params: Parameters,
-    amr_all_loc: Locator,
-    amr_all_python_file: Path,
-    amr_all_output_dir: Path,
     amr_max_tokens: int,
     larger_resource: Optional[SlurmResourceRequest],
 ) -> ValueArtifact:
     """Run AMR parser over all sentences in all docs."""
+    amr_all_loc = base_locator / "amr_all"
+    amr_all_python_file = amr_params.existing_file("python_file_all")
+    amr_all_output_dir = directory_for(amr_all_loc) / "documents"
     amr_all_job = run_python_on_args(
         amr_all_loc,
         amr_all_python_file,
