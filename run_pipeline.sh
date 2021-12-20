@@ -76,8 +76,10 @@ if [[ ! -e "$CHECKPOINT_DIR"/amr_ckpt ]]; then
       --input "$CLAIMS_OUTPUT" \
       --output "$AMR_OUTPUT" \
       --amr-parser-model "$PROJECT_DIR"/../transition-amr-parser \
+      --state-dict "$STATE_DICT" \
       --max-tokens "$MAX_TOKENS" \
-      --domain "$DOMAIN"
+      --domain "$DOMAIN" \
+      --device "$DEVICE"
 
   touch "$CHECKPOINT_DIR"/amr_ckpt
   echo "Claim data from AMR is now in $AMR_OUTPUT"
@@ -106,7 +108,9 @@ if [[ ! -e "$CHECKPOINT_DIR"/wikidata_ckpt ]]; then
       --claim-input "$CLAIMS_OUTPUT" \
       --amr-input "$AMR_OUTPUT" \
       --srl-input "$SRL_OUTPUT" \
-      --output "$WIKIDATA_OUTPUT"
+      --state-dict "$STATE_DICT" \
+      --output "$WIKIDATA_OUTPUT" \
+      --device "$DEVICE"
 
   touch "$CHECKPOINT_DIR"/wikidata_ckpt
   echo "Output from Wikidata linking is now in $WIKIDATA_OUTPUT"

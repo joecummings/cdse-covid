@@ -1,0 +1,1981 @@
+[
+  {
+    "qnode": "Q4",
+    "description": [
+      "permanent cessation of vital functions"
+    ],
+    "label": [
+      "death"
+    ],
+    "alias": [
+      "cessation",
+      "has passed away",
+      "final rest",
+      "succumbs",
+      "bereft of life",
+      "has kicked the bucket",
+      "dies",
+      "fallen",
+      "morbidity",
+      "meeting the Reaper",
+      "fatal",
+      "oblivion",
+      "mortis",
+      "deaths",
+      "has succumbed",
+      "deceased",
+      "passes away",
+      "dead",
+      "perish",
+      "has died"
+    ],
+    "pagerank": 8.022539098481933e-05,
+    "statements": 240,
+    "score": 15.389108
+  },
+  {
+    "qnode": "P3828",
+    "description": [
+      "clothing or accessory worn on subject\\s body"
+    ],
+    "label": [
+      "wears"
+    ],
+    "alias": [
+      "clothing",
+      "wearing",
+      "uniform",
+      "accessory",
+      "outfit",
+      "garment",
+      "wore"
+    ],
+    "pagerank": 2.8423258514033433e-09,
+    "statements": 104,
+    "score": 0.0005637036,
+    "data_type": "wikibase-item"
+  },
+  {
+    "qnode": "Q7590",
+    "description": [
+      "human-directed movement of things or people between locations"
+    ],
+    "label": [
+      "transport"
+    ],
+    "alias": [
+      "delivery",
+      "transit",
+      "transportation"
+    ],
+    "pagerank": 2.867118310935257e-05,
+    "statements": 132,
+    "score": 5.6863613
+  },
+  {
+    "qnode": "Q8434",
+    "description": [
+      "learning in which knowledge and skills are transferred through teaching"
+    ],
+    "label": [
+      "education"
+    ],
+    "alias": [
+      "educate"
+    ],
+    "pagerank": 0.00016175912464056928,
+    "statements": 177,
+    "score": 32.082645
+  },
+  {
+    "qnode": "Q11024",
+    "description": [
+      "act of conveying intended meanings from one entity or group to another through the use of mutually understood signs and rules"
+    ],
+    "label": [
+      "communication"
+    ],
+    "alias": [
+      "communication in the organizations",
+      "expression"
+    ],
+    "pagerank": 0.00017900234030769301,
+    "statements": 150,
+    "score": 35.502647
+  },
+  {
+    "qnode": "Q12136",
+    "description": [
+      "abnormal condition negatively affecting organisms"
+    ],
+    "label": [
+      "disease"
+    ],
+    "alias": [
+      "medical disorder",
+      "diseases and disorders",
+      "disease or disorder",
+      "disease of anatomical entity",
+      "ailment",
+      "medical condition",
+      "other disease",
+      "diseased condition",
+      "condition",
+      "disorders",
+      "illness",
+      "sickness",
+      "ailments",
+      "disease or disorder, non-neoplastic",
+      "disorder",
+      "diseases"
+    ],
+    "pagerank": 2.8191136055922915e-05,
+    "statements": 239,
+    "score": 5.5911536
+  },
+  {
+    "qnode": "Q23841",
+    "description": [
+      "method of cleaning"
+    ],
+    "label": [
+      "washing"
+    ],
+    "alias": [],
+    "pagerank": 3.705104778579888e-07,
+    "statements": 69,
+    "score": 0.07348565
+  },
+  {
+    "qnode": "Q26398",
+    "description": [
+      "electronic media outlets whose primary mission is public service"
+    ],
+    "label": [
+      "public broadcasting"
+    ],
+    "alias": [
+      "public service broadcasting"
+    ],
+    "pagerank": 1.1662449146478047e-06,
+    "statements": 125,
+    "score": 0.23129931
+  },
+  {
+    "qnode": "Q40231",
+    "description": [
+      "process by which a population chooses an individual to hold public office or some other position, such as in an organization or society"
+    ],
+    "label": [
+      "election"
+    ],
+    "alias": [
+      "elections"
+    ],
+    "pagerank": 3.743778172767429e-05,
+    "statements": 174,
+    "score": 7.425268
+  },
+  {
+    "qnode": "Q42240",
+    "description": [
+      "systematic study undertaken to increase knowledge"
+    ],
+    "label": [
+      "research"
+    ],
+    "alias": [
+      "systematic inquiry"
+    ],
+    "pagerank": 0.00028973721722395034,
+    "statements": 111,
+    "score": 57.46241
+  },
+  {
+    "qnode": "Q42918",
+    "description": [
+      "change of the nucleotide sequence of the genome of an organism"
+    ],
+    "label": [
+      "mutation"
+    ],
+    "alias": [
+      "genetic mutation"
+    ],
+    "pagerank": 2.1872937458120703e-05,
+    "statements": 137,
+    "score": 4.3379717
+  },
+  {
+    "qnode": "Q45382",
+    "description": [
+      "sudden deposition of a government; illegal and overt seizure of a state by the military or other elites within the state apparatus"
+    ],
+    "label": [
+      "coup d\\état"
+    ],
+    "alias": [
+      "coup",
+      "coups",
+      "overthrow",
+      "golpe",
+      "coups d\\état",
+      "putsch"
+    ],
+    "pagerank": 3.0552152862088145e-06,
+    "statements": 170,
+    "score": 0.6059414
+  },
+  {
+    "qnode": "Q52943",
+    "description": [
+      "interactive communication between two or more people"
+    ],
+    "label": [
+      "conversation"
+    ],
+    "alias": [],
+    "pagerank": 2.535927542425318e-07,
+    "statements": 73,
+    "score": 0.05029372
+  },
+  {
+    "qnode": "Q53706",
+    "description": [
+      "taking or attempting to take something of value by force or threat of force or by putting the victim in fear"
+    ],
+    "label": [
+      "robbery"
+    ],
+    "alias": [
+      "rob",
+      "holdup",
+      "stickup",
+      "robbing",
+      "stick-up",
+      "blagging",
+      "mugging",
+      "stick up",
+      "hold-up"
+    ],
+    "pagerank": 2.3013661747610145e-07,
+    "statements": 147,
+    "score": 0.04564304
+  },
+  {
+    "qnode": "Q61509",
+    "description": [
+      "movement of people between relatively distant geographical locations"
+    ],
+    "label": [
+      "travel"
+    ],
+    "alias": [
+      "to travel",
+      "World Travel",
+      "Traveling",
+      "Travelling",
+      "Journey (travel)",
+      "journey"
+    ],
+    "pagerank": 5.8386030070451095e-06,
+    "statements": 136,
+    "score": 1.1579396
+  },
+  {
+    "qnode": "Q83267",
+    "description": [
+      "unlawful act forbidden and punishable by criminal law"
+    ],
+    "label": [
+      "crime"
+    ],
+    "alias": [
+      "hoodlum",
+      "criminal offense",
+      "offense",
+      "criminal offence",
+      "offence"
+    ],
+    "pagerank": 3.212603072791411e-05,
+    "statements": 183,
+    "score": 6.3717556
+  },
+  {
+    "qnode": "Q124757",
+    "description": [
+      "Violent protest"
+    ],
+    "label": [
+      "riot"
+    ],
+    "alias": [
+      "riots"
+    ],
+    "pagerank": 1.2056467044422892e-06,
+    "statements": 108,
+    "score": 0.23912308
+  },
+  {
+    "qnode": "Q165950",
+    "description": [
+      "clandestine acquisition of confidential information"
+    ],
+    "label": [
+      "espionage"
+    ],
+    "alias": [
+      "spying",
+      "spycraft"
+    ],
+    "pagerank": 1.032356413103748e-06,
+    "statements": 126,
+    "score": 0.20474744
+  },
+  {
+    "qnode": "Q166231",
+    "description": [
+      "invasion of and multiplication in a host by disease-causing pathogens or organisms, and the reaction of host tissues"
+    ],
+    "label": [
+      "infection"
+    ],
+    "alias": [
+      "contagion",
+      "infections"
+    ],
+    "pagerank": 2.0288419157090217e-06,
+    "statements": 150,
+    "score": 0.402372
+  },
+  {
+    "qnode": "Q168983",
+    "description": [
+      "large and destructive fire that threatens human life, animal life, health, and/or property"
+    ],
+    "label": [
+      "conflagration"
+    ],
+    "alias": [
+      "great fire",
+      "blaze",
+      "fire",
+      "large fire",
+      "firestorm"
+    ],
+    "pagerank": 4.921086183379603e-06,
+    "statements": 123,
+    "score": 0.97597325
+  },
+  {
+    "qnode": "Q170028",
+    "description": [
+      "act of intentionally propagating beliefs of things that are not true, or not the whole truth"
+    ],
+    "label": [
+      "deception"
+    ],
+    "alias": [
+      "Outright deception",
+      "beguilement",
+      "mystification",
+      "dishonesty",
+      "ruse",
+      "deceit",
+      "subterfuge"
+    ],
+    "pagerank": 2.0375324755761736e-06,
+    "statements": 119,
+    "score": 0.40410423
+  },
+  {
+    "qnode": "Q175111",
+    "description": [
+      "death by suspension of a person by a noose or ligature around the neck"
+    ],
+    "label": [
+      "hanging"
+    ],
+    "alias": [
+      "hanged by the neck until dead",
+      "death by hanging",
+      "hanged"
+    ],
+    "pagerank": 1.8560480141332501e-06,
+    "statements": 101,
+    "score": 0.36812103
+  },
+  {
+    "qnode": "Q175331",
+    "description": [
+      "collective action by people in favor of a cause"
+    ],
+    "label": [
+      "demonstration"
+    ],
+    "alias": [
+      "protest event",
+      "rally",
+      "street protest",
+      "protest"
+    ],
+    "pagerank": 1.0149905814281706e-06,
+    "statements": 103,
+    "score": 0.2013094
+  },
+  {
+    "qnode": "Q177719",
+    "description": [
+      "process to determine or identify a disease or disorder, which would account for a person\\s symptoms and signs"
+    ],
+    "label": [
+      "medical diagnosis"
+    ],
+    "alias": [
+      "diagnostic procedure",
+      "Diagnostic Techniques and Procedures",
+      "medical diagnostic procedure",
+      "diagnosis",
+      "diagnostic technique",
+      "Medical diagnosis"
+    ],
+    "pagerank": 3.3107281362495223e-06,
+    "statements": 129,
+    "score": 0.6566373
+  },
+  {
+    "qnode": "Q178561",
+    "description": [
+      "part of a war which is well defined in duration, area and force commitment"
+    ],
+    "label": [
+      "battle"
+    ],
+    "alias": [
+      "combat",
+      "⚔"
+    ],
+    "pagerank": 4.529112348715646e-05,
+    "statements": 130,
+    "score": 8.982857
+  },
+  {
+    "qnode": "Q179057",
+    "description": [
+      "sudden release of energy through high temperatures and gas expansion"
+    ],
+    "label": [
+      "explosion"
+    ],
+    "alias": [
+      "burst",
+      "boom",
+      "blast",
+      "bang"
+    ],
+    "pagerank": 1.3319157001124465e-06,
+    "statements": 122,
+    "score": 0.2641565
+  },
+  {
+    "qnode": "Q179661",
+    "description": [
+      "attempted medical remediation of a health problem, usually following a diagnosis"
+    ],
+    "label": [
+      "treatment"
+    ],
+    "alias": [
+      "therapy",
+      "therapeutics",
+      "medical treatment",
+      "treating",
+      "intervention"
+    ],
+    "pagerank": 5.857938097987318e-06,
+    "statements": 144,
+    "score": 1.1618396
+  },
+  {
+    "qnode": "Q187939",
+    "description": [
+      "industrial activity producing goods for sale using labor and machines"
+    ],
+    "label": [
+      "manufacturing"
+    ],
+    "alias": [
+      "manufacture",
+      "manufacturing industry",
+      "Manufacturing"
+    ],
+    "pagerank": 1.0711928662438921e-05,
+    "statements": 100,
+    "score": 2.1245635
+  },
+  {
+    "qnode": "Q189760",
+    "description": [
+      "method for a group such as a meeting or an electorate to make a decision or express an opinion"
+    ],
+    "label": [
+      "voting"
+    ],
+    "alias": [
+      "vote"
+    ],
+    "pagerank": 1.3517745012033757e-05,
+    "statements": 155,
+    "score": 2.6810546
+  },
+  {
+    "qnode": "Q192995",
+    "description": [
+      "administration of a vaccine to protect against disease"
+    ],
+    "label": [
+      "vaccination"
+    ],
+    "alias": [],
+    "pagerank": 1.2194367890605835e-07,
+    "statements": 141,
+    "score": 0.02418585
+  },
+  {
+    "qnode": "Q193078",
+    "description": [
+      "physiological wound caused by an external source"
+    ],
+    "label": [
+      "injury"
+    ],
+    "alias": [
+      "trauma",
+      "injuries",
+      "wound",
+      "wounds",
+      "Traumatic Injury",
+      "physical trauma",
+      "wounds and injuries"
+    ],
+    "pagerank": 4.477748143898017e-06,
+    "statements": 154,
+    "score": 0.88805366
+  },
+  {
+    "qnode": "Q193181",
+    "description": [
+      "active acquisition of information from a primary source"
+    ],
+    "label": [
+      "observation"
+    ],
+    "alias": [],
+    "pagerank": 2.3108531262439947e-05,
+    "statements": 80,
+    "score": 4.5830746
+  },
+  {
+    "qnode": "Q201676",
+    "description": [
+      "ceremony for a person who has died"
+    ],
+    "label": [
+      "funeral"
+    ],
+    "alias": [],
+    "pagerank": 1.3201415947914246e-05,
+    "statements": 118,
+    "score": 2.6182394
+  },
+  {
+    "qnode": "Q202875",
+    "description": [
+      "dialogue between two or more people or parties intended to reach a beneficial outcome"
+    ],
+    "label": [
+      "negotiation"
+    ],
+    "alias": [],
+    "pagerank": 4.049832293772899e-06,
+    "statements": 152,
+    "score": 0.80318683
+  },
+  {
+    "qnode": "Q208383",
+    "description": [
+      "temporary stoppage of war"
+    ],
+    "label": [
+      "ceasefire"
+    ],
+    "alias": [],
+    "pagerank": 4.021407687169907e-07,
+    "statements": 77,
+    "score": 0.079754464
+  },
+  {
+    "qnode": "Q210603",
+    "description": [
+      "the surrender of an alleged criminal usually under the provisions of a treaty or statute by one authority (such as a state) to another having jurisdiction to try the charge"
+    ],
+    "label": [
+      "extradition"
+    ],
+    "alias": [],
+    "pagerank": 2.1646062080727455e-08,
+    "statements": 61,
+    "score": 0.004293068
+  },
+  {
+    "qnode": "Q321839",
+    "description": [
+      "understanding, agreement between two or more contracting persons, parties or entities"
+    ],
+    "label": [
+      "agreement"
+    ],
+    "alias": [
+      "treaty",
+      "convenant",
+      "compact",
+      "deal",
+      "pact",
+      "accord",
+      "convention"
+    ],
+    "pagerank": 1.4250896985993629e-05,
+    "statements": 121,
+    "score": 2.8263228
+  },
+  {
+    "qnode": "Q325980",
+    "description": [
+      "practice of forcing another party to act in an involuntary manner by use of threats or force"
+    ],
+    "label": [
+      "coercion"
+    ],
+    "alias": [],
+    "pagerank": 9.272628657686872e-08,
+    "statements": 87,
+    "score": 0.018390955
+  },
+  {
+    "qnode": "Q327000",
+    "description": [
+      "formal decision made by a court"
+    ],
+    "label": [
+      "court decision"
+    ],
+    "alias": [
+      "judicial decisions",
+      "judicial decision",
+      "court decisions"
+    ],
+    "pagerank": 2.8210814251389297e-06,
+    "statements": 88,
+    "score": 0.5595226
+  },
+  {
+    "qnode": "Q327541",
+    "description": [
+      "crime of willfully and maliciously setting fire to property"
+    ],
+    "label": [
+      "arson"
+    ],
+    "alias": [
+      "fire-raising",
+      "arsonry",
+      "fireraising",
+      "incendiarism"
+    ],
+    "pagerank": 3.401640626006781e-07,
+    "statements": 129,
+    "score": 0.06746676
+  },
+  {
+    "qnode": "Q452440",
+    "description": [
+      "combination of two or more political or administrative entities"
+    ],
+    "label": [
+      "merger"
+    ],
+    "alias": [
+      "amalgamation",
+      "consolidation"
+    ],
+    "pagerank": 2.2807862492970047e-06,
+    "statements": 40,
+    "score": 0.45236254
+  },
+  {
+    "qnode": "Q464643",
+    "description": [
+      "penetration with a sharp or pointed object at close range"
+    ],
+    "label": [
+      "stabbing"
+    ],
+    "alias": [],
+    "pagerank": 2.9009607004355673e-07,
+    "statements": 111,
+    "score": 0.057536475
+  },
+  {
+    "qnode": "Q464858",
+    "description": [
+      "compulsory reduction in an employee\\s rank or job title"
+    ],
+    "label": [
+      "demotion"
+    ],
+    "alias": [
+      "degradation",
+      "reduction in rank",
+      "downgrade"
+    ],
+    "pagerank": 2.4491402220685346e-07,
+    "statements": 100,
+    "score": 0.048573367
+  },
+  {
+    "qnode": "Q467011",
+    "description": [
+      "type of military offensive where armed forces of one polity forcibly enter another"
+    ],
+    "label": [
+      "invasion"
+    ],
+    "alias": [
+      "military invasion"
+    ],
+    "pagerank": 1.1956719355351444e-06,
+    "statements": 109,
+    "score": 0.23713785
+  },
+  {
+    "qnode": "Q481609",
+    "description": [
+      "changes introduced into a system that adversely affect its current or future performance"
+    ],
+    "label": [
+      "damage"
+    ],
+    "alias": [],
+    "pagerank": 3.3752296830297195e-06,
+    "statements": 56,
+    "score": 0.66940993
+  },
+  {
+    "qnode": "Q483610",
+    "description": [
+      "type of warfare that involves using the toxic properties of chemical substances as weapons"
+    ],
+    "label": [
+      "chemical warfare"
+    ],
+    "alias": [
+      "CW"
+    ],
+    "pagerank": 1.1954910274970224e-06,
+    "statements": 58,
+    "score": 0.23709546
+  },
+  {
+    "qnode": "Q545861",
+    "description": [
+      "A legal hearing"
+    ],
+    "label": [
+      "legal hearing"
+    ],
+    "alias": [
+      "court hearing",
+      "hearing (law)",
+      "tribunal hearing"
+    ],
+    "pagerank": 5.309286211633406e-07,
+    "statements": 107,
+    "score": 0.10530222
+  },
+  {
+    "qnode": "Q567303",
+    "description": [
+      "printed, spoken, or published statement or notice of an event or other news"
+    ],
+    "label": [
+      "announcement"
+    ],
+    "alias": [],
+    "pagerank": 1.455976815313459e-06,
+    "statements": 66,
+    "score": 0.288758
+  },
+  {
+    "qnode": "Q574433",
+    "description": [
+      "advancement of ranking within a hierarchy"
+    ],
+    "label": [
+      "promotion"
+    ],
+    "alias": [],
+    "pagerank": 5.843169120813599e-08,
+    "statements": 45,
+    "score": 0.011588769
+  },
+  {
+    "qnode": "Q606332",
+    "description": [
+      "urgent movement of people away from the threat or actual occurrence of a hazard"
+    ],
+    "label": [
+      "emergency evacuation"
+    ],
+    "alias": [
+      "evacuation"
+    ],
+    "pagerank": 1.2652731914300605e-07,
+    "statements": 57,
+    "score": 0.025094915
+  },
+  {
+    "qnode": "Q649416",
+    "description": [
+      "activity to dispose of and render safe explosive munitions and other materials"
+    ],
+    "label": [
+      "bomb disposal"
+    ],
+    "alias": [
+      "PSBD",
+      "IEDD",
+      "improvised explosive device disposal",
+      "explosive ordnance disposal",
+      "public safety bomb disposal",
+      "EOD"
+    ],
+    "pagerank": 1.5879990739113496e-07,
+    "statements": 35,
+    "score": 0.031494815
+  },
+  {
+    "qnode": "Q685744",
+    "description": [
+      "end of employment by either the employee or the employer"
+    ],
+    "label": [
+      "termination of employment"
+    ],
+    "alias": [
+      "termination",
+      "end of employment"
+    ],
+    "pagerank": 1.8996661791985634e-06,
+    "statements": 151,
+    "score": 0.37676114
+  },
+  {
+    "qnode": "Q707125",
+    "description": [
+      "one person\\s statement that they intend to harm another, or another\\s property"
+    ],
+    "label": [
+      "threat"
+    ],
+    "alias": [],
+    "pagerank": 7.667106955958812e-08,
+    "statements": 109,
+    "score": 0.015205864
+  },
+  {
+    "qnode": "Q707482",
+    "description": [
+      "in law, voluntary transfer of property from one person (the donor or grantor) to another (the donee or grantee)"
+    ],
+    "label": [
+      "gift"
+    ],
+    "alias": [
+      "donation"
+    ],
+    "pagerank": 4.104839447809067e-05,
+    "statements": 111,
+    "score": 8.141372
+  },
+  {
+    "qnode": "Q791801",
+    "description": [
+      "process of finding an estimate, or approximation, which is a value that is usable for some purpose even if input data may be incomplete, uncertain, or unstable"
+    ],
+    "label": [
+      "estimation process"
+    ],
+    "alias": [
+      "estimating"
+    ],
+    "pagerank": 8.52558274594678e-06,
+    "statements": 65,
+    "score": 1.6909318
+  },
+  {
+    "qnode": "Q796919",
+    "description": [
+      "act of giving up or quitting an office or position"
+    ],
+    "label": [
+      "resignation"
+    ],
+    "alias": [
+      "retirement",
+      "quitting",
+      "voluntary termination of employment",
+      "resigned",
+      "resigning"
+    ],
+    "pagerank": 3.8692299723031164e-07,
+    "statements": 156,
+    "score": 0.076736875
+  },
+  {
+    "qnode": "Q815758",
+    "description": [
+      "fundamental problem of economics where there are limited resources to fulfill society\\s unlimited wants"
+    ],
+    "label": [
+      "scarcity"
+    ],
+    "alias": [],
+    "pagerank": 2.1597007277569836e-07,
+    "statements": 82,
+    "score": 0.042832214
+  },
+  {
+    "qnode": "Q841236",
+    "description": [
+      "restraint of a person\\s liberty by judicial or other detention"
+    ],
+    "label": [
+      "imprisonment"
+    ],
+    "alias": [
+      "captivity"
+    ],
+    "pagerank": 2.7457525965267755e-07,
+    "statements": 99,
+    "score": 0.05445507
+  },
+  {
+    "qnode": "Q891854",
+    "description": [
+      "action whereby a bomb is used to kill one or more people or to damage or destroy objects"
+    ],
+    "label": [
+      "bomb attack"
+    ],
+    "alias": [
+      "bombing"
+    ],
+    "pagerank": 8.764760461820512e-07,
+    "statements": 143,
+    "score": 0.17383695
+  },
+  {
+    "qnode": "Q899277",
+    "description": [
+      "process of attracting, selecting and appointing candidates to a job or other organization"
+    ],
+    "label": [
+      "recruitment"
+    ],
+    "alias": [
+      "recruiting",
+      "scouting",
+      "hiring"
+    ],
+    "pagerank": 3.1444583720643795e-06,
+    "statements": 85,
+    "score": 0.62365997
+  },
+  {
+    "qnode": "Q1145328",
+    "description": [
+      "compression of the neck that may lead to unconsciousness or death"
+    ],
+    "label": [
+      "strangling"
+    ],
+    "alias": [
+      "strangulation"
+    ],
+    "pagerank": 4.288293579454895e-08,
+    "statements": 104,
+    "score": 0.008505239
+  },
+  {
+    "qnode": "Q1145523",
+    "description": [
+      "working together"
+    ],
+    "label": [
+      "collaboration"
+    ],
+    "alias": [
+      "coproduction",
+      "collaboration"
+    ],
+    "pagerank": 0.0006586656631486977,
+    "statements": 59,
+    "score": 130.63707
+  },
+  {
+    "qnode": "Q1174599",
+    "description": [
+      "action to injure another organism"
+    ],
+    "label": [
+      "attack"
+    ],
+    "alias": [],
+    "pagerank": 2.641691265774606e-06,
+    "statements": 44,
+    "score": 0.5239423
+  },
+  {
+    "qnode": "Q1318578",
+    "description": [
+      "action which designates a person to carry out a function(s) as a public official"
+    ],
+    "label": [
+      "appointment"
+    ],
+    "alias": [],
+    "pagerank": 1.2477482222389674e-07,
+    "statements": 21,
+    "score": 0.024746373
+  },
+  {
+    "qnode": "Q1399332",
+    "description": [
+      "submission to a request"
+    ],
+    "label": [
+      "compliance"
+    ],
+    "alias": [],
+    "pagerank": 1.2451178412596712e-07,
+    "statements": 35,
+    "score": 0.02469377
+  },
+  {
+    "qnode": "Q1403016",
+    "description": [
+      "the act of apprehending a person and taking them into custody, usually because they have been suspected of committing or planning a crime."
+    ],
+    "label": [
+      "arrest"
+    ],
+    "alias": [
+      "busting",
+      "collaring",
+      "capture",
+      "collar",
+      "seize",
+      "imprison",
+      "bust",
+      "detain"
+    ],
+    "pagerank": 2.8070828806952194e-07,
+    "statements": 82,
+    "score": 0.05567174
+  },
+  {
+    "qnode": "Q1425577",
+    "description": [
+      "commitment by someone to do or not do something"
+    ],
+    "label": [
+      "promise"
+    ],
+    "alias": [
+      "liability"
+    ],
+    "pagerank": 1.565899455069708e-07,
+    "statements": 50,
+    "score": 0.03105621
+  },
+  {
+    "qnode": "Q1454723",
+    "description": [
+      "the legal result of a verdict of not guilty"
+    ],
+    "label": [
+      "acquittal"
+    ],
+    "alias": [
+      "verdict of not guilty",
+      "not-guilty verdict"
+    ],
+    "pagerank": 3.7604790297906825e-08,
+    "statements": 133,
+    "score": 0.0074580917
+  },
+  {
+    "qnode": "Q1472062",
+    "description": [
+      "communication between two parties in remote locations, either concurrent or non-concurrent; correspondence and telecommunication"
+    ],
+    "label": [
+      "remote communication"
+    ],
+    "alias": [],
+    "pagerank": 3.639637254330934e-07,
+    "statements": 51,
+    "score": 0.07218301
+  },
+  {
+    "qnode": "Q1595418",
+    "description": [
+      "substance or procedure that ends a medical condition"
+    ],
+    "label": [
+      "remedy"
+    ],
+    "alias": [
+      "cure"
+    ],
+    "pagerank": 2.560869947094859e-08,
+    "statements": 65,
+    "score": 0.0050789784
+  },
+  {
+    "qnode": "Q1663054",
+    "description": [
+      "consumption of a substance by an organism"
+    ],
+    "label": [
+      "ingestion"
+    ],
+    "alias": [],
+    "pagerank": 1.0120707907582973e-06,
+    "statements": 58,
+    "score": 0.20072223
+  },
+  {
+    "qnode": "Q1665268",
+    "description": [
+      "message conveying a requirement to perform a certain action"
+    ],
+    "label": [
+      "command"
+    ],
+    "alias": [
+      "directive",
+      "instruction",
+      "imperative sentence",
+      "imperative",
+      "compulsion",
+      "demand",
+      "order"
+    ],
+    "pagerank": 4.122805647640696e-05,
+    "statements": 69,
+    "score": 8.176544
+  },
+  {
+    "qnode": "Q1717246",
+    "description": [
+      "causing an event or condition that would otherwise occur to not occur"
+    ],
+    "label": [
+      "prevention"
+    ],
+    "alias": [
+      "interception",
+      "obstruction",
+      "forestalling",
+      "stopping",
+      "blockage",
+      "avoidance",
+      "hindrance",
+      "deterence",
+      "interruption",
+      "impediment"
+    ],
+    "pagerank": 1.3498504962905801e-05,
+    "statements": 61,
+    "score": 2.6772385
+  },
+  {
+    "qnode": "Q1760704",
+    "description": [
+      "military operation"
+    ],
+    "label": [
+      "withdrawal"
+    ],
+    "alias": [
+      "retreat"
+    ],
+    "pagerank": 1.8955846536017384e-07,
+    "statements": 43,
+    "score": 0.037596308
+  },
+  {
+    "qnode": "Q1763090",
+    "description": [
+      "decree of punishment in law"
+    ],
+    "label": [
+      "sentence"
+    ],
+    "alias": [
+      "sentencing"
+    ],
+    "pagerank": 1.1620992905441014e-06,
+    "statements": 114,
+    "score": 0.23047444
+  },
+  {
+    "qnode": "Q1933595",
+    "description": [],
+    "label": [
+      "hijacking"
+    ],
+    "alias": [
+      "highjacking",
+      "hijack",
+      "highjack"
+    ],
+    "pagerank": 2.067917745648534e-07,
+    "statements": 105,
+    "score": 0.0410143
+  },
+  {
+    "qnode": "Q1964968",
+    "description": [
+      "process that attempts to determine the facts of a crime and circumstances"
+    ],
+    "label": [
+      "criminal investigation"
+    ],
+    "alias": [],
+    "pagerank": 2.0910016611244143e-07,
+    "statements": 102,
+    "score": 0.041472077
+  },
+  {
+    "qnode": "Q2252077",
+    "description": [
+      "act or process of firing firearms or other projectile weapons"
+    ],
+    "label": [
+      "shooting"
+    ],
+    "alias": [
+      "shootings"
+    ],
+    "pagerank": 7.065904425609192e-07,
+    "statements": 68,
+    "score": 0.14013685
+  },
+  {
+    "qnode": "Q2380335",
+    "description": [
+      "attack on a specific objective by military aircraft during an offensive mission"
+    ],
+    "label": [
+      "airstrike"
+    ],
+    "alias": [
+      "air strike",
+      "air-raid",
+      "air raid",
+      "ground attack",
+      "air attack"
+    ],
+    "pagerank": 1.144621358103052e-06,
+    "statements": 79,
+    "score": 0.22701298
+  },
+  {
+    "qnode": "Q2727213",
+    "description": [
+      "act of taking another\\s property without permission or consent"
+    ],
+    "label": [
+      "theft"
+    ],
+    "alias": [
+      "thievery",
+      "stealing",
+      "thieving",
+      "heist"
+    ],
+    "pagerank": 5.349154658919747e-07,
+    "statements": 129,
+    "score": 0.10608988
+  },
+  {
+    "qnode": "Q2827815",
+    "description": [
+      "voluntary transfer of resources from one country to another"
+    ],
+    "label": [
+      "international aid"
+    ],
+    "alias": [
+      "aid",
+      "foreign aid",
+      "overseas aid"
+    ],
+    "pagerank": 2.975224049582318e-07,
+    "statements": 91,
+    "score": 0.059006058
+  },
+  {
+    "qnode": "Q2916183",
+    "description": [
+      "verdict that results when a court of law finds a defendant guilty of a crime"
+    ],
+    "label": [
+      "conviction"
+    ],
+    "alias": [
+      "guilty verdict",
+      "verdict of guilty"
+    ],
+    "pagerank": 3.687789673576465e-08,
+    "statements": 44,
+    "score": 0.0073138443
+  },
+  {
+    "qnode": "Q3030248",
+    "description": [
+      "conversation between two or more people in which they express their point of view on a choosen theme"
+    ],
+    "label": [
+      "discussion"
+    ],
+    "alias": [],
+    "pagerank": 5.333719504324083e-06,
+    "statements": 69,
+    "score": 1.0578698
+  },
+  {
+    "qnode": "Q3075355",
+    "description": [
+      "action of creating an organization or other entity intended to endure"
+    ],
+    "label": [
+      "founding"
+    ],
+    "alias": [
+      "establishment",
+      "foundation"
+    ],
+    "pagerank": 3.812551859761523e-08,
+    "statements": 36,
+    "score": 0.007561234
+  },
+  {
+    "qnode": "Q3237993",
+    "description": [
+      "process of releasing an inmate from prison"
+    ],
+    "label": [
+      "release from prison"
+    ],
+    "alias": [
+      "prison release"
+    ],
+    "pagerank": 9.00114020150865e-08,
+    "statements": 75,
+    "score": 0.017851599
+  },
+  {
+    "qnode": "Q3241045",
+    "description": [
+      "sudden increase in occurrences of a disease in a particular time and place"
+    ],
+    "label": [
+      "disease outbreak"
+    ],
+    "alias": [
+      "outbreak",
+      "disease outbreaks"
+    ],
+    "pagerank": 5.8188048337963644e-06,
+    "statements": 95,
+    "score": 1.1540333
+  },
+  {
+    "qnode": "Q3265221",
+    "description": [
+      "mapping of a known quantity to an unknown entity so as to make it known"
+    ],
+    "label": [
+      "identification"
+    ],
+    "alias": [
+      "identify",
+      "notset",
+      "identifying"
+    ],
+    "pagerank": 2.5159366389021693e-06,
+    "statements": 54,
+    "score": 0.49900135
+  },
+  {
+    "qnode": "Q3406566",
+    "description": [
+      "formal process leading to the approval of a law"
+    ],
+    "label": [
+      "legislative process"
+    ],
+    "alias": [
+      "legislation",
+      "legislative business",
+      "legislative procedure"
+    ],
+    "pagerank": 8.075870907277335e-06,
+    "statements": 109,
+    "score": 1.6016549
+  },
+  {
+    "qnode": "Q3537603",
+    "description": [
+      "violation of a commitment, law, norm or other rule"
+    ],
+    "label": [
+      "transgression"
+    ],
+    "alias": [
+      "contravention",
+      "infringement",
+      "breaking",
+      "offense",
+      "infraction",
+      "violation",
+      "violating"
+    ],
+    "pagerank": 2.6661541938959384e-05,
+    "statements": 66,
+    "score": 5.287942
+  },
+  {
+    "qnode": "Q3625549",
+    "description": [
+      "the act of combining components in manufacturing"
+    ],
+    "label": [
+      "assembly"
+    ],
+    "alias": [
+      "assembling",
+      "process of assembly",
+      "assembly process",
+      "putting together"
+    ],
+    "pagerank": 3.410656649521824e-07,
+    "statements": 61,
+    "score": 0.06764296
+  },
+  {
+    "qnode": "Q3739104",
+    "description": [
+      "manner of death"
+    ],
+    "label": [
+      "natural causes"
+    ],
+    "alias": [
+      "natural death",
+      "natural causes",
+      "death by natural causes",
+      "natural cause",
+      "natural causation"
+    ],
+    "pagerank": 4.001260102708988e-05,
+    "statements": 70,
+    "score": 7.9359365
+  },
+  {
+    "qnode": "Q3769366",
+    "description": [
+      "cessation of fighting by the losing party"
+    ],
+    "label": [
+      "surrender"
+    ],
+    "alias": [],
+    "pagerank": 7.300041982959752e-08,
+    "statements": 29,
+    "score": 0.014478628
+  },
+  {
+    "qnode": "Q3966286",
+    "description": [
+      "homicide as capital punishment"
+    ],
+    "label": [
+      "execution"
+    ],
+    "alias": [],
+    "pagerank": 1.7307430745781904e-06,
+    "statements": 83,
+    "score": 0.34325862
+  },
+  {
+    "qnode": "Q6206738",
+    "description": [
+      "where a company reassigns an employee to work in a different location"
+    ],
+    "label": [
+      "intra-company transfer"
+    ],
+    "alias": [
+      "job transfer",
+      "transfer"
+    ],
+    "pagerank": 5.258302798485357e-09,
+    "statements": 20,
+    "score": 0.00104287
+  },
+  {
+    "qnode": "Q7685924",
+    "description": [
+      "process of selecting objects or installations to be attacked, taken, or destroyed in warfare"
+    ],
+    "label": [
+      "targeting"
+    ],
+    "alias": [],
+    "pagerank": 9.132949945642538e-09,
+    "statements": 24,
+    "score": 0.001811392
+  },
+  {
+    "qnode": "Q7942161",
+    "description": [
+      "effort to influence the outcome of an election by discouraging or preventing specific groups of people from voting"
+    ],
+    "label": [
+      "voter suppression"
+    ],
+    "alias": [],
+    "pagerank": 1.5327504666196056e-08,
+    "statements": 75,
+    "score": 0.0030399994
+  },
+  {
+    "qnode": "Q8016240",
+    "description": [
+      "coming together of parties to a dispute, to present information in a tribunal"
+    ],
+    "label": [
+      "trial"
+    ],
+    "alias": [],
+    "pagerank": 3.1974681472433386e-06,
+    "statements": 132,
+    "score": 0.63417286
+  },
+  {
+    "qnode": "Q8242560",
+    "description": [
+      "use of biological toxins or infectious agents with the intent to kill as an act of war"
+    ],
+    "label": [
+      "biological warfare"
+    ],
+    "alias": [
+      "bacteriological warfare",
+      "BW",
+      "disease warfare",
+      "bacterial warfare",
+      "germ warfare",
+      "biowarfare"
+    ],
+    "pagerank": 7.104423271750518e-07,
+    "statements": 57,
+    "score": 0.14090216
+  },
+  {
+    "qnode": "Q11398090",
+    "description": [
+      "process during which something comes into being and gains its characteristics"
+    ],
+    "label": [
+      "creation"
+    ],
+    "alias": [
+      "formation",
+      "forming",
+      "process of forming",
+      "generation",
+      "production",
+      "creating",
+      "apparition",
+      "act of forming"
+    ],
+    "pagerank": 3.379633392665002e-05,
+    "statements": 62,
+    "score": 6.7030373
+  },
+  {
+    "qnode": "Q11499267",
+    "description": [
+      "loss in a battle or other contest; opposite of victory; act of defeating or being defeated"
+    ],
+    "label": [
+      "defeat"
+    ],
+    "alias": [],
+    "pagerank": 7.710398719564074e-08,
+    "statements": 59,
+    "score": 0.015291899
+  },
+  {
+    "qnode": "Q11822042",
+    "description": [
+      "accident in transportation"
+    ],
+    "label": [
+      "transport accident"
+    ],
+    "alias": [
+      "transport incident",
+      "transportation accident",
+      "traffic incident",
+      "traffic accident"
+    ],
+    "pagerank": 2.5926611302972116e-06,
+    "statements": 64,
+    "score": 0.51421785
+  },
+  {
+    "qnode": "Q16515105",
+    "description": [
+      "a specific problem or obstacle impeding achievement of a goal"
+    ],
+    "label": [
+      "difficulty"
+    ],
+    "alias": [
+      "obstruction",
+      "hinderance",
+      "impediment",
+      "obstacle",
+      "stumbling block"
+    ],
+    "pagerank": 6.764790975089628e-08,
+    "statements": 33,
+    "score": 0.013417031
+  },
+  {
+    "qnode": "Q17052147",
+    "description": [
+      "termination of employment decided unilaterally by employer"
+    ],
+    "label": [
+      "dismissal"
+    ],
+    "alias": [
+      "firing",
+      "terminated",
+      "laying off",
+      "laid off",
+      "sacked",
+      "sacking",
+      "rightsizing",
+      "let go",
+      "forced resignation",
+      "forced retirement",
+      "involuntary termination",
+      "letting go",
+      "downsizing",
+      "fired",
+      "pink slip",
+      "RIF",
+      "reduction-in-force",
+      "layoff"
+    ],
+    "pagerank": 1.1750699648798432e-07,
+    "statements": 111,
+    "score": 0.023304688
+  },
+  {
+    "qnode": "Q17781833",
+    "description": [
+      "concept of damage to an object, system or an idea"
+    ],
+    "label": [
+      "destruction"
+    ],
+    "alias": [
+      "self-destruct",
+      "self-destroy",
+      "destroy",
+      "destroyal",
+      "destroying",
+      "destruct"
+    ],
+    "pagerank": 6.797424745263166e-06,
+    "statements": 50,
+    "score": 1.3481058
+  },
+  {
+    "qnode": "Q19357312",
+    "description": [
+      "act of accusing or charging another with a crime"
+    ],
+    "label": [
+      "accusation"
+    ],
+    "alias": [],
+    "pagerank": 2.0814181733909154e-08,
+    "statements": 64,
+    "score": 0.004128206
+  },
+  {
+    "qnode": "Q20826785",
+    "description": [
+      "key event in election"
+    ],
+    "label": [
+      "elected"
+    ],
+    "alias": [],
+    "pagerank": 4.9431753474650674e-09,
+    "statements": 20,
+    "score": 0.0009804107
+  },
+  {
+    "qnode": "Q21004260",
+    "description": [
+      "process that has the aim of augmenting knowledge, resolving doubt, or solving a problem"
+    ],
+    "label": [
+      "inquiry"
+    ],
+    "alias": [
+      "investigation"
+    ],
+    "pagerank": 2.8510574222450984e-05,
+    "statements": 44,
+    "score": 5.654671
+  },
+  {
+    "qnode": "Q21170798",
+    "description": [
+      "situation in which two or more persons meet"
+    ],
+    "label": [
+      "meeting"
+    ],
+    "alias": [
+      "encounter"
+    ],
+    "pagerank": 5.7878267954173496e-09,
+    "statements": 25,
+    "score": 0.0011479008
+  },
+  {
+    "qnode": "Q21651837",
+    "description": [
+      "transfer of equivalent goods to each other"
+    ],
+    "label": [
+      "exchange of goods"
+    ],
+    "alias": [
+      "exchange",
+      "goods exchange"
+    ],
+    "pagerank": 1.5671710056762304e-06,
+    "statements": 45,
+    "score": 0.31082678
+  },
+  {
+    "qnode": "Q22445448",
+    "description": [
+      "act of asking politely or formally for something"
+    ],
+    "label": [
+      "request"
+    ],
+    "alias": [
+      "inquiry",
+      "requisition",
+      "appeal",
+      "demand",
+      "solicitation",
+      "application"
+    ],
+    "pagerank": 1.4534745254421362e-05,
+    "statements": 51,
+    "score": 2.8826504
+  },
+  {
+    "qnode": "Q23700466",
+    "description": [
+      "discussion within organization or governance"
+    ],
+    "label": [
+      "session"
+    ],
+    "alias": [
+      "meeting"
+    ],
+    "pagerank": 2.2353751732487781e-07,
+    "statements": 57,
+    "score": 0.044333804
+  },
+  {
+    "qnode": "Q28777323",
+    "description": [
+      "damage or breakage event that compromises the functioning of a system or a machine"
+    ],
+    "label": [
+      "breakdown"
+    ],
+    "alias": [
+      "breakage",
+      "machine failure",
+      "system failure",
+      "breaking",
+      "malfunctioning",
+      "failure"
+    ],
+    "pagerank": 1.8058724736785953e-06,
+    "statements": 84,
+    "score": 0.3581694
+  },
+  {
+    "qnode": "Q50384157",
+    "description": [
+      "signing of a treaty, decree, law, etc."
+    ],
+    "label": [
+      "signature"
+    ],
+    "alias": [],
+    "pagerank": 1.000480409105966e-07,
+    "statements": 20,
+    "score": 0.01984315
+  },
+  {
+    "qnode": "Q52161698",
+    "description": [
+      "separation of assembled components of a physical system, either intentionally or not"
+    ],
+    "label": [
+      "disassembly"
+    ],
+    "alias": [
+      "deconstruction",
+      "dismantling",
+      "falling apart",
+      "taking apart",
+      "dismantlement"
+    ],
+    "pagerank": 1.6448788388542573e-06,
+    "statements": 46,
+    "score": 0.32623857
+  },
+  {
+    "qnode": "Q52947181",
+    "description": [
+      "statement made for a public audience"
+    ],
+    "label": [
+      "public statement"
+    ],
+    "alias": [],
+    "pagerank": 3.865850608726719e-08,
+    "statements": 47,
+    "score": 0.007667382
+  },
+  {
+    "qnode": "Q57699905",
+    "description": [
+      "right, permission, or ability to approach, enter, or interact with something"
+    ],
+    "label": [
+      "access"
+    ],
+    "alias": [
+      "entree",
+      "admittance"
+    ],
+    "pagerank": 5.150133324352219e-06,
+    "statements": 76,
+    "score": 1.0213989
+  },
+  {
+    "qnode": "Q60528603",
+    "description": [
+      "presence of an unwanted constituent, harmful substance or impurity in a material, physical body, or environment"
+    ],
+    "label": [
+      "contamination"
+    ],
+    "alias": [],
+    "pagerank": 6.507305290761646e-08,
+    "statements": 40,
+    "score": 0.012905825
+  },
+  {
+    "qnode": "Q66869562",
+    "description": [
+      "rendering pathogens harmless through methods including use of heat, antiseptics and antibacterial agents"
+    ],
+    "label": [
+      "disinfection"
+    ],
+    "alias": [],
+    "pagerank": 2.505946372220699e-07,
+    "statements": 115,
+    "score": 0.049700484
+  },
+  {
+    "qnode": "Q74948922",
+    "description": [
+      "death caused by violence"
+    ],
+    "label": [
+      "violent death"
+    ],
+    "alias": [],
+    "pagerank": 4.130857149512567e-06,
+    "statements": 36,
+    "score": 0.8192986
+  },
+  {
+    "qnode": "Q98398200",
+    "description": [
+      "act of declining to accept an item for approval, consideration, marking etc."
+    ],
+    "label": [
+      "rejection"
+    ],
+    "alias": [
+      "reject publication",
+      "declination",
+      "reject",
+      "reject for publication",
+      "turn down",
+      "decline for publication",
+      "decline"
+    ],
+    "pagerank": 5.009035335691181e-09,
+    "statements": 46,
+    "score": 0.0009934717
+  }
+]

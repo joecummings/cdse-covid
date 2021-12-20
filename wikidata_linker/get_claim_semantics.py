@@ -17,7 +17,8 @@ from cdse_covid.semantic_extraction.utils.amr_extraction_utils import (
     STOP_WORDS,
     create_node_to_token_dict,
 )
-from wikidata_linker.wikidata_linking import disambiguate_kgtk
+from wikidata_linker.linker import WikidataLinkingClassifier
+from wikidata_linker.wikidata_linking import CPU, disambiguate_refvar_kgtk, disambiguate_verb_kgtk
 
 OVERLAY = "overlay"
 MASTER = "master"
@@ -98,14 +99,22 @@ def get_all_labeled_args(
 
 
 def get_wikidata_for_labeled_args(
-    amr: AMR, claim: Claim, args: MutableMapping[str, Any]
+    amr: AMR,
+    claim: Claim,
+    args: MutableMapping[str, Any],
+    linking_model: WikidataLinkingClassifier,
+    device: str = CPU,
 ) -> MutableMapping[str, Any]:
     """Get WikiData for labeled arguments."""
     args_to_qnodes = {}
     for role, arg in args.items():
-        qnode_info = disambiguate_kgtk(" ".join(amr.tokens), arg, no_ss_model=True, k=1)
+        qnode_info = disambiguate_refvar_kgtk(
+            arg, linking_model, " ".join(amr.tokens), k=1, device=device
+        )
         if qnode_info["options"]:
             qnode_selection = qnode_info["options"][0]
+        elif qnode_info["other_options"]:
+            qnode_selection = qnode_info["other_options"][0]
         elif qnode_info["all_options"]:
             qnode_selection = qnode_info["all_options"][0]
         else:
@@ -150,7 +159,12 @@ def load_tables() -> Tuple[Dict[str, Any], Dict[str, Any]]:
 
 
 def get_claim_semantics(
-    amr_sentence: AMR, amr_alignments: List[AMR_Alignment], claim: Claim, spacy_model: Language
+    amr_sentence: AMR,
+    amr_alignments: List[AMR_Alignment],
+    claim: Claim,
+    spacy_model: Language,
+    linking_model: WikidataLinkingClassifier,
+    device: str = CPU,
 ) -> Optional[ClaimSemantics]:
     """Disambiguate AMR sentence according to DWD overlay."""
     # Make both tables
@@ -164,14 +178,20 @@ def get_claim_semantics(
         return None
 
     best_qnode = determine_best_qnode(
-        pb_label_list, pbs_to_qnodes_overlay, pbs_to_qnodes_master, amr_sentence, spacy_model
+        pb_label_list,
+        pbs_to_qnodes_overlay,
+        pbs_to_qnodes_master,
+        amr_sentence,
+        spacy_model,
+        linking_model,
+        device,
     )
 
     wd: MutableMapping[str, Any] = {}
     if best_qnode and best_qnode.get("args"):
         node = get_node_from_pb(amr_sentence, best_qnode["pb"])
         labeled_args = get_all_labeled_args(amr_sentence, amr_alignments, node, best_qnode["args"])
-        wd = get_wikidata_for_labeled_args(amr_sentence, claim, labeled_args)
+        wd = get_wikidata_for_labeled_args(amr_sentence, claim, labeled_args, linking_model, device)
 
     claim_event = ClaimEvent(
         text=best_qnode.get("name"),
@@ -190,6 +210,8 @@ def determine_best_qnode(
     pbs_to_qnodes_master: Dict[str, Any],
     amr: AMR,
     spacy_model: Language,
+    linking_model: WikidataLinkingClassifier,
+    device: str = CPU,
     check_mappings_only: bool = False,
 ) -> Dict[str, Any]:
     """Return list of qnode results from the overlay.
@@ -228,7 +250,9 @@ def determine_best_qnode(
             return ranked_qnodes[0]
     else:
         # Finally, run a KGTK lookup
-        best_kgtk_qnode, kgtk_result_from_root = get_kgtk_result_for_event(pb_label_list, amr)
+        best_kgtk_qnode, kgtk_result_from_root = get_kgtk_result_for_event(
+            pb_label_list, amr, linking_model, device
+        )
         # Prioritize the root if there is one
         if kgtk_result_from_root or not ranked_qnodes:
             return best_kgtk_qnode
@@ -306,14 +330,18 @@ def get_master_result(
     return {}, False
 
 
-def get_kgtk_result_for_event(pb_label_list: List[str], amr: AMR) -> Tuple[Dict[str, Any], bool]:
+def get_kgtk_result_for_event(
+    pb_label_list: List[str], amr: AMR, linking_model: WikidataLinkingClassifier, device: str = CPU
+) -> Tuple[Dict[str, Any], bool]:
     """Get the KGTK result for an event in the claim sentence."""
     for pb_label in pb_label_list:
         is_root = pb_label == amr.nodes[amr.root]
         formatted_pb = pb_label.rsplit("-", 1)[0]
-        qnode_info = disambiguate_kgtk(" ".join(amr.tokens), formatted_pb, no_ss_model=True, k=1)
+        qnode_info = disambiguate_verb_kgtk(formatted_pb, linking_model, k=1, device=device)
         if qnode_info["options"]:
             selected_qnode = qnode_info["options"][0]
+        elif qnode_info["other_options"]:
+            selected_qnode = qnode_info["other_options"][0]
         elif qnode_info["all_options"]:
             selected_qnode = qnode_info["all_options"][0]  # Just selecting the first result
         else:

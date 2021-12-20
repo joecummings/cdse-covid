@@ -13,8 +13,11 @@ if [[ ! -d wikidata_linker/sent_model/ ]]; then
 fi
 
 # Create kgtk cache
-if [[ ! -d wikidata_linker/kgtk_cache/ ]]; then
-    mkdir wikidata_linker/kgtk_cache
+if [[ ! -d wikidata_linker/kgtk_event_cache/ ]]; then
+    mkdir wikidata_linker/kgtk_event_cache
+fi
+if [[ ! -d wikidata_linker/kgtk_refvar_cache/ ]]; then
+    mkdir wikidata_linker/kgtk_refvar_cache
 fi
 
 # Download requirements into Conda or Venv environment
@@ -27,6 +30,24 @@ pip install -r requirements-dev.txt
 # (CONDA_PREFIX is set automatically by conda upon activating an env)
 python -m nltk.downloader -d "$CONDA_PREFIX"/nltk_data wordnet
 python -m nltk.downloader -d "$CONDA_PREFIX"/nltk_data framenet_v17
+python -m nltk.downloader -d "$CONDA_PREFIX"/nltk_data stopwords
+
+# Download wikidata classifier
+STATE_DICT="/nas/gaia/lestat/shared/wikidata_classifier.state_dict"
+
+if [[ ! -e wikidata_linker/wikidata_classifier.state_dict ]]; then
+  echo "Downloading wikidata classifier..."
+  cd wikidata_linker || { echo "Could not navigate to $(pwd)/wikidata_linker"; exit 1; }
+  if [[ $ISI_USERNAME == "" ]]; then
+    echo "Warning: ISI username not provided! Will attempt to copy locally."
+    cp -r $STATE_DICT . || { echo "Failed to copy model over"; exit 1; }
+  else
+    scp -r "$ISI_USERNAME"@minlp-dev-01:"$STATE_DICT" . || { echo "Failed to download model"; exit 1; }
+  fi
+  cd ..
+else
+  echo "Looks like the wikidata classifier is already present"
+fi
 
 # Create this package as a module
 pip install -e .
@@ -140,4 +161,5 @@ if [[ ! -d AMR2.0/ ]]; then
 else
   echo "Looks like the required model is already present"
 fi
+
 echo "Finished downloading model! (5/5)"

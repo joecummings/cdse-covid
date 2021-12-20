@@ -1,28 +1,125 @@
 """Collection of Wikidata linking utils."""
 import argparse
 import json
-import logging
 from pathlib import Path
-from typing import Any, Callable, List, MutableMapping, Sequence, Tuple, Union
+from typing import Any, Callable, List, Mapping, MutableMapping, Sequence, Set, Tuple, Union
 
 from nltk.stem.snowball import SnowballStemmer
 import numpy as np
+from pyinflect import getInflection
 import requests
-
-try:
-    from sentence_transformers import SentenceTransformer, util as ss_util
-except ModuleNotFoundError:
-    logging.warning("Cannot load sentence transformers in this env.")
+from sentence_transformers import SentenceTransformer, util as ss_util
+import spacy
+from spacy.language import Language
 import torch
 
-STEMMER = SnowballStemmer("english")
+from wikidata_linker.linker import WikidataLinkingClassifier
+
+CPU = "cpu"
+CUDA = "cuda"
+nlp = spacy.load("en_core_web_md")
+
 
 BASE = Path(__file__).parent
-PRETRAINED_MODEL = BASE / "sent_model"
+MAX_BATCH_SIZE = 8  # I use 8 using GPU, to avoid OOM events. Could probably handle more. Not sure there will be a huge boost if you use CPU.
+SOFTMAX = torch.nn.Softmax(dim=1)
+
+
+STEMMER = SnowballStemmer("english")
+OVERLAY_PATH = BASE / "resources/xpo_v3.2_freeze.json"
 STEM_MAP_PATH = BASE / "stem_mapping.json"
-KGTK_CACHE = BASE / "kgtk_cache"
-with open(STEM_MAP_PATH, "r", encoding="utf-8") as f:
+KGTK_EVENT_CACHE = BASE / "kgtk_event_cache"
+KGTK_REFVAR_CACHE = BASE / "kgtk_refvar_cache"
+ARG_QNODES_PATH = BASE / "argument_qnodes.json"
+EVENT_QNODES_PATH = BASE / "event_qnodes.json"
+VERBS_ALL = BASE / "verbs-all.json"
+with open(STEM_MAP_PATH, encoding="utf-8") as f:
     STEM_MAP = json.load(f)
+with open(OVERLAY_PATH, encoding="utf-8") as json_ontology_fp:
+    XPO_ONTOLOGY = json.load(json_ontology_fp)
+with open(ARG_QNODES_PATH, encoding="utf-8") as handle:
+    ARGUMENT_QNODES = json.load(handle)
+with open(EVENT_QNODES_PATH, encoding="utf-8") as handle:
+    EVENT_QNODES = json.load(handle)
+
+VERB = "verb"
+REFVAR = "refvar"
+
+
+def get_linker_scores(
+    event_description: str,
+    use_title: bool,
+    candidates: List[MutableMapping[str, Any]],
+    linking_model: WikidataLinkingClassifier,
+    device: str = CPU,
+) -> Any:
+    """Gets predictions from Wikidata linking classification model, given a string and candidate JSONs.
+
+    Returns:
+        A JSON response.
+    """
+    i = 0
+    scores = []
+    candidate_descriptions = []
+    for candidate in candidates:
+        description = candidate["description"][0] if candidate["description"] else ""
+        label = candidate["label"][0] if candidate["label"] else ""
+        if use_title:
+            description = f"{label} - {description}"
+        candidate_descriptions.append(description)
+    while i * MAX_BATCH_SIZE < len(candidates):
+        candidate_batch = candidate_descriptions[i * MAX_BATCH_SIZE : (i + 1) * MAX_BATCH_SIZE]
+        with torch.no_grad():
+            logits = (
+                linking_model.infer(event_description, candidate_batch)[0].detach()
+                if device == CUDA
+                else linking_model.infer(event_description, candidate_batch)[0].detach().cpu()
+            )
+            candidate_batch_scores = SOFTMAX(logits)[:, 2]  # get "entailment" score from model
+            for candidate_batch_score in candidate_batch_scores:
+                scores.append(candidate_batch_score.item())
+            i += 1
+    return {"scores": scores}
+
+
+def get_all_verbs() -> Set[str]:
+    """Returns a large set of verbs and each's form.
+
+    Returns:
+        A set of strings representing verbs.
+    """
+    with open(VERBS_ALL, encoding="unicode_escape") as verbs_all_fp:
+        all_verbs = json.load(verbs_all_fp)
+    flat_list = []
+    for verb_forms in all_verbs:
+        for verb_form in verb_forms:
+            flat_list.append(verb_form)
+    return set(flat_list)
+
+
+verb_set = get_all_verbs()
+
+
+def get_verb_lemmas(spacy_model: Language, sentence: str) -> Tuple[List[str], List[float]]:
+    """Returns the lemma of all verbs (or roots if not verbs found) in the sentence.
+
+    Args:
+        spacy_model: A spaCy English Language model.
+        sentence: An event description.
+        verb_set: A set of verbs and their forms to check words against for additional queries.
+
+    Returns:
+        The lemma of the all verbs and words than can occur as verbs, or an empty array if none can be found.
+        An additional weight score for each word is returned, discounting words that did not occur as a verb.
+    """
+    verb_lemmas = []
+    extra_lemmas = []
+    for token in spacy_model(sentence):
+        if token.pos_ == "VERB":
+            verb_lemmas.append(token.lemma_)
+        elif str(token).lower() in verb_set or str(token.lemma_).lower() in verb_set:
+            extra_lemmas.append(token.lemma_)
+    return verb_lemmas + extra_lemmas, [1.0] * len(verb_lemmas) + [0.9] * len(extra_lemmas)
 
 
 def make_cache_path(directory: Path, filename: str) -> Path:
@@ -59,7 +156,7 @@ def expand_query_nltk_stem(query: str) -> Sequence[str]:
     return stem_set
 
 
-def make_kgtk_candidates_filter(source_str: str) -> Callable[[MutableMapping[str, Any]], bool]:
+def make_kgtk_candidates_filter(source_str: str) -> Callable[[Mapping[str, Any]], bool]:
     """Generates filter function for filtering out unwanted candidates for particular string.
 
     Args:
@@ -69,7 +166,7 @@ def make_kgtk_candidates_filter(source_str: str) -> Callable[[MutableMapping[str
         A filter function particular to source_str.
     """
 
-    def kgtk_candidate_filter(candidate: MutableMapping[str, Any]) -> bool:
+    def kgtk_candidate_filter(candidate: Mapping[str, Any]) -> bool:
         str_found = source_str in candidate["label"][0]
         str_found = str_found or any(source_str in alias for alias in candidate["alias"])
         description_and_casematch = candidate["description"] and candidate["label"][0].islower()
@@ -79,7 +176,7 @@ def make_kgtk_candidates_filter(source_str: str) -> Callable[[MutableMapping[str
 
 
 def get_ss_model_similarity(
-    ss_model: SentenceTransformer, source_str: str, candidates: List[MutableMapping[str, Any]]
+    ss_model: SentenceTransformer, source_str: str, candidates: List[Mapping[str, Any]]
 ) -> Any:
     """Computes cosine similarity between source string (event description or refvar) and candidate descriptions.
 
@@ -99,7 +196,8 @@ def get_ss_model_similarity(
     ]
     all_encodings = ss_model.encode(all_strings, convert_to_tensor=True)
     source_emb, candidate_emb = all_encodings[0], all_encodings[1:]
-    return ss_util.pytorch_cos_sim(source_emb, candidate_emb)[0]
+    sim_scores = ss_util.pytorch_cos_sim(source_emb, candidate_emb)[0]
+    return sim_scores
 
 
 def get_request_kgtk(
@@ -124,8 +222,8 @@ def get_request_kgtk(
     if "/" in query:
         return []
     if cache_file.is_file():
-        with open(cache_file, "r", encoding="utf-8") as file:
-            candidates: List[Any] = json.load(file)
+        with open(cache_file, encoding="utf-8") as cf:
+            candidates: List[Any] = json.load(cf)
             return candidates
     kgtk_request_url = "https://kgtk.isi.edu/api"
     params = {
@@ -142,25 +240,29 @@ def get_request_kgtk(
         return []
     if kgtk_response.status_code != 200:
         return []
-    candidates = list(kgtk_response.json())
-    for candidate in candidates:
-        if not candidate["label"]:
-            candidate["label"] = [""]
-    if filter_results:
-        candidates = list(filter(make_kgtk_candidates_filter(query), candidates))
-    with open(cache_file, "w", encoding="utf-8") as file:
-        json.dump(candidates, file, ensure_ascii=False, indent=2)
-        file.write("\n")
-    return candidates
+    else:
+        candidates = list(kgtk_response.json())
+        for candidate in candidates:
+            if not candidate["label"]:
+                candidate["label"] = [""]
+            if not candidate["description"]:
+                candidate["desription"] = [""]
+            candidate["kgtk_query"] = query
+        if filter_results:
+            candidates = list(filter(make_kgtk_candidates_filter(query), candidates))
+        with open(cache_file, "w", encoding="utf-8") as cf:
+            json.dump(candidates, cf, ensure_ascii=False, indent=2)
+            cf.write("\n")
+        return candidates
 
 
 def wikidata_topk(
     ss_model: Union[SentenceTransformer, None],
     source_str: str,
-    candidates: List[MutableMapping[str, Any]],
+    candidates: List[Mapping[str, Any]],
     k: int,
     thresh: float = 0.15,
-) -> Sequence[MutableMapping[str, Any]]:
+) -> Sequence[Mapping[str, Any]]:
     """Returns top k candidates for string according to scoring function.
 
     Args:
@@ -177,9 +279,6 @@ def wikidata_topk(
         scores = np.array([candidate["score"] for candidate in candidates])
     else:
         scores = get_ss_model_similarity(ss_model, source_str, candidates)
-    # Without this block, wikidata linking crashes if running on a GPU
-    if isinstance(scores, torch.Tensor):
-        scores = scores.cpu().numpy()
     top_k_idx = np.argsort(-scores)[:k]
     top_k_scores = list(zip(top_k_idx, scores[top_k_idx]))
     top_k = [candidates[idx] for idx, score in top_k_scores if score >= thresh]
@@ -200,105 +299,198 @@ def filter_duplicate_candidates(
     label_description_set = set()
     unique_candidates = []
     for candidate in candidates:
-        if candidate["description"]:
-            label_description_tuple: Tuple[Any, ...] = tuple(
-                (candidate["label"][0], candidate["description"][0])
-            )
-            if label_description_tuple not in label_description_set:
-                unique_candidates.append(candidate)
-                label_description_set.add(label_description_tuple)
+        label_description_tuple = (candidate["label"][0], candidate["description"][0])
+        if label_description_tuple not in label_description_set:
+            unique_candidates.append(candidate)
+            label_description_set.add(label_description_tuple)
     return unique_candidates
 
 
-def request_top_n_qnodes(
-    description: str,
-    *,
-    n: int,
-    ss_model: SentenceTransformer,
-    embeddings: torch.FloatTensor,  # pylint: disable=no-member
-    qnodes: Sequence[MutableMapping[str, Any]],
-) -> Sequence[MutableMapping[str, Any]]:
-    """Get the top *n* predicted qnodes from the *ss_model* provided.
+def filter_candidates_with_scores(
+    scores: List[float],
+    candidates: List[MutableMapping[str, Any]],
+    k: int,
+    thresh: float = 0.01,
+) -> List[MutableMapping[str, Any]]:
+    """Returns top k candidates according to scores and threshold.
 
-    Arguments:
-        description: Text to be the basis of the prediction.
-        n: Number of top predictions to be returned.
-        ss_model: SentenceTransformer model to make the predictions.
-        embeddings: Embeddings of a set of qnodes.
-        qnodes: Sequence of qnode dictionaries.
+    Args:
+        scores: A list of floats representing scores for each candidate.
+        candidates: A list of JSON (dict) objects representing candidates.
+        k: The maximum number of top candidates to return.
+        thresh: The minimum cosine similarity to be selected.
 
     Returns:
-        List of predictions (in order of most similar -> least similar) of qnodes.
+        A list of k candidates.
     """
-    # Similarity scoring
-    event_embedding = ss_model.encode([description], convert_to_tensor=True)
-    cosine_scores = ss_util.pytorch_cos_sim(event_embedding, embeddings)
-    sorted_indices = cosine_scores.argsort(descending=True)
-    return [qnodes[idx] for idx in sorted_indices[0][:n]]
+    for (candidate, score) in zip(candidates, scores):
+        candidate["linking_score"] = score
+    np_scores = np.array(scores)
+    top_k_idx = np.argsort(-np_scores)[:k]
+    top_k_scores = list(zip(top_k_idx, np_scores[top_k_idx]))
+    top_k = [candidates[idx] for idx, score in top_k_scores if score >= thresh]
+    return top_k
 
 
-def disambiguate_kgtk(
-    context: str,
-    query: str,
-    no_ss_model: bool = False,
+def disambiguate_verb_kgtk(
+    event_description: str,
+    linking_model: WikidataLinkingClassifier,
     no_expansion: bool = False,
     k: int = 3,
-    thresh: float = 0.15,
-) -> MutableMapping[str, Any]:
+    device: str = CPU,
+) -> Any:
     """Disambiguates verbs from event description and return candidate qnodes.
 
     Returns:
         A JSON response.
     """
-    kgtk_json = []
-    cache_file = make_cache_path(KGTK_CACHE, query)
-    kgtk_json += get_request_kgtk(query, cache_file, filter_results=False)
-    if not no_expansion:
-        expanded_query = expand_query_nltk_stem(query)
-        for q in expanded_query:
-            cache_file = make_cache_path(KGTK_CACHE, q)
-            kgtk_json += get_request_kgtk(q, cache_file)
+    cleaned_description = event_description.replace("/", " ").replace("_", " ")
+    event_verbs, weights = get_verb_lemmas(nlp, cleaned_description)
+    kgtk_json: List[MutableMapping[str, Any]] = []
+    expanded_weights = []
+    for event_verb, weight in zip(event_verbs, weights):
+        kgtk_json_len = len(kgtk_json)
+        cache_file = make_cache_path(KGTK_EVENT_CACHE, event_verb)
+        kgtk_json += get_request_kgtk(event_verb, cache_file)
+        event_verb_participle = getInflection(event_verb, tag="VBG")
+        if event_verb_participle:
+            verb_participle = event_verb_participle[0]
+            cache_file = make_cache_path(KGTK_EVENT_CACHE, verb_participle)
+            kgtk_json += get_request_kgtk(verb_participle, cache_file)
+        if not no_expansion:
+            expanded_query = expand_query_nltk_stem(event_verb)
+            for query in expanded_query:
+                cache_file = make_cache_path(KGTK_EVENT_CACHE, query)
+                kgtk_json += get_request_kgtk(query, cache_file)
+        expanded_weights += [weight] * (len(kgtk_json) - kgtk_json_len)
+    for i, weight in enumerate(expanded_weights):
+        kgtk_json[i]["score_weight"] = weight
     unique_candidates = filter_duplicate_candidates(kgtk_json)
     options = []
-    if no_ss_model:
-        top3 = wikidata_topk(None, context, unique_candidates, k, thresh=thresh)
-    else:
-        ss_model = SentenceTransformer(str(PRETRAINED_MODEL))
-        top3 = wikidata_topk(ss_model, context, unique_candidates, k, thresh=thresh)
+
+    candidate_scores = get_linker_scores(
+        cleaned_description, False, unique_candidates, linking_model, device
+    )["scores"]
+    top3 = filter_candidates_with_scores(candidate_scores, unique_candidates, k=k)
     for candidate in top3:
         option = {
             "qnode": candidate["qnode"],
             "rawName": candidate["label"][0],
-            "definition": candidate["description"][0] if candidate["description"] else "",
+            "definition": candidate["description"][0],
+            "kgtk_query": candidate["kgtk_query"],
         }
         if option not in options:
             options.append(option)
-    return {
-        "context": context,
-        "query": query,
+    option_qnodes = [option["qnode"] for option in options]
+
+    other_candidate_scores = get_linker_scores(
+        cleaned_description, False, EVENT_QNODES, linking_model, device
+    )["scores"]
+    top3_other_qnodes = filter_candidates_with_scores(other_candidate_scores, EVENT_QNODES, k=k)
+    other_options = []
+    for candidate in top3_other_qnodes:
+        # description can be empty sometimes on less popular qnodes
+        definition = candidate["description"][0] if candidate["description"] else ""
+        option = {
+            "qnode": candidate["qnode"],
+            "rawName": candidate["label"][0],
+            "definition": definition,
+        }
+        if option not in other_options and option["qnode"] not in option_qnodes:
+            other_options.append(option)
+    response = {
+        "query": event_description,
         "options": options,
+        "other_options": other_options,
         "all_options": kgtk_json,
     }
+    return response
+
+
+def disambiguate_refvar_kgtk(
+    refvar: str,
+    linking_model: WikidataLinkingClassifier,
+    context: str = "",
+    no_expansion: bool = False,
+    k: int = 3,
+    device: str = CPU,
+) -> Any:
+    """Disambiguates refvar with KGTK webserver API.
+
+    Returns:
+        A JSON response.
+    """
+    cleaned_refvar = refvar.replace("/", " ").replace("_", " ")
+    cache_file = make_cache_path(KGTK_REFVAR_CACHE, cleaned_refvar)
+    kgtk_json = get_request_kgtk(cleaned_refvar, cache_file)
+    if len(cleaned_refvar.split()) < 2:
+        lemma_refvar = nlp(cleaned_refvar)[0].lemma_
+        if lemma_refvar != cleaned_refvar:
+            cache_file = make_cache_path(KGTK_REFVAR_CACHE, lemma_refvar)
+            kgtk_json += get_request_kgtk(lemma_refvar, cache_file)
+        if not no_expansion:
+            expanded_query = expand_query_nltk_stem(cleaned_refvar)
+            for query in expanded_query:
+                cache_file = make_cache_path(KGTK_REFVAR_CACHE, query)
+                kgtk_json += get_request_kgtk(query, cache_file)
+    if not kgtk_json:
+        for token in nlp(cleaned_refvar):
+            lemma_token = token.lemma_
+            cache_file = make_cache_path(KGTK_REFVAR_CACHE, lemma_token)
+            kgtk_json += get_request_kgtk(lemma_token, cache_file)
+    unique_candidates = filter_duplicate_candidates(kgtk_json)
+    options = []
+
+    if context:
+        cleaned_refvar = (
+            refvar + " - " + context
+        )  # this is how it would be done in MASC, since refvars are not
+        # necessarily mentioned in context, otherwise context is probably sufficient
+    candidate_scores = get_linker_scores(
+        cleaned_refvar, False, unique_candidates, linking_model, device
+    )["scores"]
+    top3 = filter_candidates_with_scores(candidate_scores, unique_candidates, k=k)
+    for candidate in top3:
+        # description can be empty sometimes on less popular qnodes
+        definition = candidate["description"][0] if candidate["description"] else ""
+        option = {
+            "qnode": candidate["qnode"],
+            "rawName": candidate["label"][0],
+            "definition": definition,
+        }
+        if option not in options:
+            options.append(option)
+
+    other_candidate_scores = get_linker_scores(
+        cleaned_refvar, False, ARGUMENT_QNODES, linking_model, device
+    )["scores"]
+    top3_other_qnodes = filter_candidates_with_scores(other_candidate_scores, ARGUMENT_QNODES, k=k)
+    other_options = []
+    for candidate in top3_other_qnodes:
+        # description can be empty sometimes on less popular qnodes
+        definition = candidate["description"][0] if candidate["description"] else ""
+        option = {
+            "qnode": candidate["qnode"],
+            "rawName": candidate["label"][0],
+            "definition": definition,
+        }
+        if option not in other_options and option not in options:
+            other_options.append(option)
+    response = {
+        "query": refvar,
+        "options": options,
+        "other_options": other_options,
+        "all_options": kgtk_json,
+    }
+    return response
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "--no_expansion",
-        action="store_true",
-        help="If specified, no query expansion will be performed (expansion is querying all terms that share stem with query term)",
-    )
-    parser.add_argument(
-        "--no_ss_model",
-        action="store_true",
-        help="If specified, will use score from KGTK rather than cosine similarity (withing MASC, this is often useful when dealing with refvars (like common nouns), but not for event verbs)",
-    )
-    parser.add_argument("--k", type=int, default=3, help="Number of options to be returned")
-    parser.add_argument(
-        "--thresh",
-        type=float,
-        default=0.15,
-        help="Threshold score to be used to filter out unlikely scores. We use 0.15 in MACS. If using no_ss_model, scale will be different and harder to tune",
+        "--query_type",
+        type=str,
+        help="There type of query that will be launched. Should be 'verb' or 'refvar'",
     )
     parser.add_argument("--query", type=str, help="Term to be queried for")
     parser.add_argument(
@@ -306,12 +498,31 @@ if __name__ == "__main__":
         type=str,
         help="Surrounding context for query (context isn't used if no_ss_model specified",
     )
-    args = parser.parse_args()
-    print(
-        json.dumps(
-            disambiguate_kgtk(
-                args.context, args.query, args.no_ss_model, args.no_expansion, args.k, args.thresh
-            )["options"],
-            indent=4,
-        )
+    parser.add_argument(
+        "--no_expansion",
+        action="store_true",
+        help="If specified, no query expansion will be performed (expansion is querying all terms that share stem with query term)",
     )
+    parser.add_argument("--k", type=int, default=3, help="Number of options to be returned")
+    parser.add_argument("--device", type=str, default="cpu", help="cpu or cuda")
+    args = parser.parse_args()
+    if args.query_type == VERB:
+        print(
+            json.dumps(
+                disambiguate_verb_kgtk(args.query, args.no_expansion, args.k, args.device)[
+                    "options"
+                ],
+                indent=4,
+            )
+        )
+    elif args.query_type == REFVAR:
+        print(
+            json.dumps(
+                disambiguate_refvar_kgtk(
+                    args.query, args.context, args.no_expansion, args.k, args.device
+                )["options"],
+                indent=4,
+            )
+        )
+    else:
+        print("--query_type should be 'verb' or 'refvar'")
