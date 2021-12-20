@@ -11,7 +11,12 @@ from cdse_covid.pegasus_pipeline.ingesters.edl_output_ingester import (  # pylin
     EDLMention,
 )
 from cdse_covid.semantic_extraction.mentions import Mention, WikidataQnode
-from wikidata_linker.wikidata_linking import KGTK_REFVAR_CACHE, get_request_kgtk, make_cache_path
+from wikidata_linker.wikidata_linking import (
+    KGTK_EVENT_CACHE,
+    KGTK_REFVAR_CACHE,
+    get_request_kgtk,
+    make_cache_path,
+)
 
 type_mapping_to_qnode = {
     "COM": WikidataQnode(
@@ -89,8 +94,10 @@ def find_knowledge_entity(
 
 def create_wikidata_qnode_from_id(mention: Mention, qnode_id: str) -> Optional[WikidataQnode]:
     """Get the rest of the qnode data from KGTK."""
-    cache_file = make_cache_path(KGTK_REFVAR_CACHE, qnode_id)
-    kgtk_json = get_request_kgtk(qnode_id, cache_file, filter_results=False)
+    event_cache_file = make_cache_path(KGTK_EVENT_CACHE, qnode_id)
+    refvar_cache_file = make_cache_path(KGTK_REFVAR_CACHE, qnode_id)
+    kgtk_json = get_request_kgtk(qnode_id, refvar_cache_file, filter_results=False)
+    kgtk_json += get_request_kgtk(qnode_id, event_cache_file, filter_results=False)
     # We assume there will only be one result from a Qnode ID query, if any
     selected_qnode = None
     if kgtk_json:
