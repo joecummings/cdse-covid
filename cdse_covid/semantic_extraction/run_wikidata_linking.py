@@ -113,7 +113,11 @@ def get_best_qnode_for_mention_text(
             claim.claim_sentence, query, REFVAR, linking_model, device
         )
         claim_event_links = find_links(claim.claim_sentence, query, VERB, linking_model, device)
-        all_claim_links = [*claim_variable_links, *claim_event_links]
+        # Combine the results
+        all_claim_links = claim_variable_links
+        all_claim_links["options"].extend(claim_event_links["options"])
+        all_claim_links["other_options"].extend(claim_event_links["other_options"])
+        all_claim_links["all_options"].extend(claim_event_links["all_options"])
         top_link = create_wikidata_qnodes(all_claim_links, mention, claim)
         if top_link:
             return top_link
