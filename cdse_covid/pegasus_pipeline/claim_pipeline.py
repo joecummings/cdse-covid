@@ -174,11 +174,11 @@ def main(params: Parameters) -> None:
     # # Entity unification
     entity_loc = edl_locator / "edl_unified"
 
-    def unify_entities(kvs: ZipKeyValueStore) -> ZipKeyValueStore:
+    def unify_entities(kvs: ZipKeyValueStore, *, output_locator: Locator = None) -> ZipKeyValueStore:
         qnode_freebase_file = edl_params.existing_file("qnode_freebase_file")
         freebase_to_qnodes = edl_params.creatable_file("freebase_to_qnodes")
         ent_python_file = edl_params.existing_file("ent_unification")
-        ent_output_dir = directory_for(entity_loc) / "documents"
+        ent_output_dir = directory_for(entity_loc) / "documents.zip"
         include_contains = edl_params.boolean("include_contains")
         ent_unify_job = run_python_on_args(
             kvs.locator,
