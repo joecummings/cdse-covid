@@ -18,7 +18,7 @@ def structure_claim(
 
 def main(input_dir: Path, output: Path) -> None:
     """Entrypoint to merge script."""
-    claims = ClaimDataset.load_from_dir(input_dir)
+    claims = ClaimDataset.load_from_key_value_store(input_dir)
     structured_claims = [structure_claim(claim) for claim in claims]
 
     with open(output, "w+", encoding="utf-8") as handle:

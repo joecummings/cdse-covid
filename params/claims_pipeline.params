@@ -28,7 +28,7 @@ amr:
     model_path: /Users/jcummings/Desktop/projects/GAIA/transition-amr-parser
     max_tokens: 50
     domain: "covid"
-    device: cpu
+    device: cuda
 
 srl:
     python_file: "%project_root%/cdse_covid/semantic_extraction/run_srl.py"

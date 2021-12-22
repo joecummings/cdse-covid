@@ -160,7 +160,7 @@ def main(
         edl_store = pickle.load(handle)
 
     freebase_to_qnodes = load_freebase_to_qnode_mapping(qnode_freebase_tsv, freebase_to_qnodes_file)
-    claim_ds = ClaimDataset.load_from_dir(claims)
+    claim_ds = ClaimDataset.load_from_key_value_store(claims)
 
     for claim in claim_ds:
         doc_id = claim.doc_id.split(".")[0]
@@ -220,7 +220,7 @@ def main(
                                 arg["identity"] = arg_qnode
                             arg["type"] = type_mapping_to_qnode[arg_mention.parent_entity.ent_type]
 
-    claim_ds.save_to_dir(output)
+    claim_ds.save_to_key_value_store(output)
 
 
 if __name__ == "__main__":

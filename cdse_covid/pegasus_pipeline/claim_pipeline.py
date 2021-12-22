@@ -68,8 +68,12 @@ def main(params: Parameters) -> None:
     amr_max_tokens = amr_params.integer("max_tokens", default=50)
     device = amr_params.string("device")
     if params.string("site") == "saga":
-        larger_resource = SlurmResourceRequest(memory=MemoryAmount.parse("8G"), num_gpus=1)
-        even_larger_resource = SlurmResourceRequest(memory=MemoryAmount.parse("16G"), num_gpus=1)
+        larger_resource = SlurmResourceRequest(
+            memory=MemoryAmount.parse("8G"), num_gpus=1, job_time_in_minutes=720
+        )
+        even_larger_resource = SlurmResourceRequest(
+            memory=MemoryAmount.parse("16G"), num_gpus=1, job_time_in_minutes=720
+        )
         device = CUDA
     else:
         larger_resource = None
@@ -125,10 +129,11 @@ def main(params: Parameters) -> None:
 
     def run_srl(kvs: ZipKeyValueStore) -> ZipKeyValueStore:
         srl_params = params.namespace("srl")
+        output_locator = kvs.locator / "srl"
         srl_python_file = srl_params.existing_file("python_file")
-        srl_output_dir = directory_for(srl_loc) / "documents.zip"
+        srl_output_dir = directory_for(output_locator) / "documents.zip"
         srl_job = run_python_on_args(
-            kvs.locator,
+            output_locator,
             srl_python_file,
             f"""
             --input {kvs.path} \
@@ -137,7 +142,7 @@ def main(params: Parameters) -> None:
             """,
             depends_on=[kvs],
         )
-        return ZipKeyValueStore(path=srl_output_dir, depends_on=[srl_job], locator=srl_loc)
+        return ZipKeyValueStore(path=srl_output_dir, depends_on=[srl_job], locator=output_locator)
 
     srl_output = transform_key_value_store(
         amr_output, run_srl, output_locator=srl_loc, parallelism=10
@@ -147,10 +152,11 @@ def main(params: Parameters) -> None:
 
     def run_wikidata(kvs: ZipKeyValueStore) -> ZipKeyValueStore:
         wikidata_params = params.namespace("wikidata")
+        output_locator = kvs.locator / "wikidata"
         wikidata_python_file = wikidata_params.existing_file("python_file")
-        wikidata_output_dir = directory_for(wikidata_loc) / "documents.zip"
+        wikidata_output_dir = directory_for(output_locator) / "documents.zip"
         wikidata_job = run_python_on_args(
-            kvs.locator,
+            output_locator,
             wikidata_python_file,
             f"""
             --claim-input {kvs.path} \
@@ -165,7 +171,9 @@ def main(params: Parameters) -> None:
             resource_request=larger_resource,
             depends_on=[kvs],
         )
-        return ZipKeyValueStore(path=wikidata_output_dir, depends_on=[wikidata_job])
+        return ZipKeyValueStore(
+            path=wikidata_output_dir, depends_on=[wikidata_job], locator=output_locator
+        )
 
     wikidata_output = transform_key_value_store(
         srl_output, run_wikidata, output_locator=wikidata_loc, parallelism=10
@@ -174,14 +182,14 @@ def main(params: Parameters) -> None:
     # # Entity unification
     entity_loc = edl_locator / "edl_unified"
 
-    def unify_entities(kvs: ZipKeyValueStore, *, output_locator: Locator = None) -> ZipKeyValueStore:
+    def unify_entities(kvs: ZipKeyValueStore, *, output_locator: Locator) -> ZipKeyValueStore:
         qnode_freebase_file = edl_params.existing_file("qnode_freebase_file")
         freebase_to_qnodes = edl_params.creatable_file("freebase_to_qnodes")
         ent_python_file = edl_params.existing_file("ent_unification")
         ent_output_dir = directory_for(entity_loc) / "documents.zip"
         include_contains = edl_params.boolean("include_contains")
         ent_unify_job = run_python_on_args(
-            kvs.locator,
+            output_locator,
             ent_python_file,
             f"""
             --edl {edl_output.value} \
@@ -195,9 +203,7 @@ def main(params: Parameters) -> None:
         )
         return ZipKeyValueStore(path=ent_output_dir, depends_on=[ent_unify_job])
 
-    entities_output = transform_key_value_store(
-        wikidata_output, unify_entities, output_locator=entity_loc, parallelism=1
-    )
+    entities_output = unify_entities(wikidata_output, output_locator=base_locator / "entities")
 
     # Unify everything
     unify_params = params.namespace("unify")

@@ -47,7 +47,7 @@ def main(inputs: Path, output: Path, *, spacy_model: Language) -> None:
                     claim.x_variable = create_x_variable(x_variable, claim)
 
         claim.add_theory("srl", srl_out)
-    claim_ds.load_from_key_value_store(output)
+    claim_ds.save_to_key_value_store(output)
 
     logging.info("Finished saving SRL labels to %s.", output)
 
@@ -59,6 +59,6 @@ if __name__ == "__main__":
     parser.add_argument("--spacy-model", type=Path)
     args = parser.parse_args()
 
-    model = spacy.load(args.spacy_model)
+    model = spacy.load("en_core_web_md")
 
     main(args.input, args.output, spacy_model=model)
