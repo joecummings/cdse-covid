@@ -12,7 +12,7 @@ def load_aida_txt_docs(docs_to_load: Path, output_dir: Path, *, spacy_model: Lan
     for txt_file in docs_to_load.glob("*.txt"):
         with open(txt_file, "r", encoding="utf-8") as handle:
             doc_text = handle.read()
-            doc_id = txt_file.stem
+            doc_id = txt_file.stem.strip(".rsd")
             doc = spacy_model(doc_text)
             doc.to_disk(f"{output_dir / doc_id}.spacy")
 
