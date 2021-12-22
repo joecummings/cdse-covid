@@ -7,7 +7,7 @@ workflow_directory: "%experiments_root%"
 experiment_name: claims
 
 corpus: "%project_root%/data/english_data_large"
-state_dict: "$project_root%/wikidata_linker/wikidata_classifier.state_dict"
+state_dict: "%project_root%/wikidata_linker/wikidata_classifier.state_dict"
 
 from_raw_documents: False
 
@@ -24,11 +24,11 @@ edl:
     include_contains: true
 
 amr:
-    python_file_all: "%project_root%/cdse_covid/pegasus_pipeline/run_amr_parsing_all.py"
     python_file: "%project_root%/cdse_covid/semantic_extraction/run_amr_parsing.py"
     model_path: /Users/jcummings/Desktop/projects/GAIA/transition-amr-parser
     max_tokens: 50
     domain: "covid"
+    device: cpu
 
 srl:
     python_file: "%project_root%/cdse_covid/semantic_extraction/run_srl.py"

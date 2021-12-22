@@ -45,7 +45,7 @@ def main(
     linking_model.load_state_dict(model_ckpt, strict=False)
     linking_model.to(device)
 
-    claim_ds = ClaimDataset.load_from_dir(input_dir)
+    claim_ds = ClaimDataset.load_from_key_value_store(input_dir)
 
     for claim in claim_ds.claims:
         logging.info("Processing claim %s", claim.claim_id)
@@ -96,7 +96,7 @@ def main(
         claim.add_theory("amr", sentence_amr.graph)
         claim.add_theory("alignments", sentence_amr.alignments)
 
-    claim_ds.save_to_dir(output)
+    claim_ds.save_to_key_value_store(output)
 
     logging.info("AMR output saved to %s", output)
 

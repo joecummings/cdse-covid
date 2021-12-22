@@ -33,7 +33,7 @@ def main(claims_file: Path, output: Path) -> None:
             isi_claim_dataset.add_claim(new_claim)
             valid_claims += 1
 
-    isi_claim_dataset.save_to_dir(output)
+    isi_claim_dataset.save_to_key_value_store(output)
     logging.info(
         "Done ingesting claims from UIUC output - %s per valid claims",
         valid_claims / (valid_claims + invalid_claims),

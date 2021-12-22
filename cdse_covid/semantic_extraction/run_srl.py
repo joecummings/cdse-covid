@@ -28,7 +28,7 @@ def reformat_x_variable_in_claim_template(claim_template: str, reference_word: s
 def main(inputs: Path, output: Path, *, spacy_model: Language) -> None:
     """Entrypoint to srl script."""
     srl_model = SRLModel.from_hub("structured-prediction-srl", spacy_model)
-    claim_ds = ClaimDataset.load_from_dir(inputs)
+    claim_ds = ClaimDataset.load_from_key_value_store(inputs)
 
     for claim in claim_ds.claims:
         srl_out = srl_model.predict(claim.claim_text)
@@ -47,7 +47,7 @@ def main(inputs: Path, output: Path, *, spacy_model: Language) -> None:
                     claim.x_variable = create_x_variable(x_variable, claim)
 
         claim.add_theory("srl", srl_out)
-    claim_ds.save_to_dir(output)
+    claim_ds.load_from_key_value_store(output)
 
     logging.info("Finished saving SRL labels to %s.", output)
 

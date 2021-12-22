@@ -126,18 +126,13 @@ def get_best_qnode_for_mention_text(
 
 def main(
     claim_input: Path,
-    srl_input: Path,
-    amr_input: Path,
     state_dict: Path,
     output: Path,
     spacy_model: Language,
     device: str = CPU,
 ) -> None:
     """Entry point to linking script."""
-    ds1 = ClaimDataset.load_from_dir(claim_input)
-    ds2 = ClaimDataset.load_from_dir(srl_input)
-    ds3 = ClaimDataset.load_from_dir(amr_input)
-    claim_dataset = ClaimDataset.from_multiple_claims_ds(ds1, ds2, ds3)
+    claim_dataset = ClaimDataset.load_from_key_value_store(claim_input)
 
     linking_model = WikidataLinkingClassifier()
     model_ckpt = torch.load(state_dict, map_location=torch.device(device))
@@ -166,7 +161,7 @@ def main(
                 claim.claim_sentence,
             )
 
-    claim_dataset.save_to_dir(output)
+    claim_dataset.save_to_key_value_store(output)
 
     logging.info("Saved claims with Wikidata to %s", output)
 
@@ -211,8 +206,6 @@ def create_wikidata_qnodes(link: Any, mention: Mention, claim: Claim) -> Optiona
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--claim-input", type=Path)
-    parser.add_argument("--srl-input", type=Path)
-    parser.add_argument("--amr-input", type=Path)
     parser.add_argument("--state-dict", type=Path, help="Path to `wikidata_classifier.state_dict`")
     parser.add_argument("--output", type=Path)
     parser.add_argument("--device", type=str, default="cpu")
@@ -223,8 +216,6 @@ if __name__ == "__main__":
 
     main(
         args.claim_input,
-        args.srl_input,
-        args.amr_input,
         args.state_dict,
         args.output,
         model,

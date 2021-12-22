@@ -4,3 +4,7 @@ partition: gaia
 
 spack_root: ""
 conda_base_path: ""
+
+spack_packages:
+  - cudnn@7.6.5.32-9.0-linux-x64
+  - cuda@10.1.243
