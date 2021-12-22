@@ -70,7 +70,7 @@ def main(
                 device,
             )
             if best_qnode:
-                claim.claimer_identity_qnode = best_qnode
+                claim.claimer_type_qnode = best_qnode
 
         claim_amr = amr_parser.amr_parse_sentences([tokenized_claim])
 

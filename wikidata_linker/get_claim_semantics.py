@@ -200,7 +200,7 @@ def get_claim_semantics(
         from_query=best_qnode.get("pb"),
         qnode_id=best_qnode.get("qnode"),
     )
-    claim_args = {k: {"identity": w} for k, w in wd.items()}
+    claim_args = {k: {"type": w} for k, w in wd.items()}
     return ClaimSemantics(event=claim_event, args=claim_args)
 
 

@@ -170,6 +170,8 @@ def main(
                 all_kes, claim.x_variable.span, include_contains
             )
             if x_variable_mention:
+                # The x-variable is an entity, so make its qnode the identity qnode
+                claim.x_variable_identity_qnode = claim.x_variable_type_qnode
                 claim.x_variable.entity = x_variable_mention.parent_entity
                 entity_freebase = claim.x_variable.entity.freebase_link
                 entity_qnode = freebase_to_qnodes.get(entity_freebase)
@@ -184,11 +186,12 @@ def main(
         if claim.claimer:
             claimer_mention = find_knowledge_entity(all_kes, claim.claimer.span, include_contains)
             if claimer_mention:
+                # The claimer is an entity, so make its qnode the identity qnode
+                claim.claimer_identity_qnode = claim.claimer_type_qnode
                 claim.claimer.entity = claimer_mention.parent_entity
                 entity_freebase = claim.claimer.entity.freebase_link
                 entity_qnode = freebase_to_qnodes.get(entity_freebase)
                 if entity_qnode:
-                    print(f"Found an entity qnode for {claim.claimer.text}: {entity_qnode}")
                     claim.claimer_identity_qnode = create_wikidata_qnode_from_id(
                         claim.claimer, entity_qnode
                     )
@@ -199,26 +202,21 @@ def main(
         if claim.claim_semantics:
             for _, arg in claim.claim_semantics.args.items():
                 if arg:
-                    identity_arg = arg["identity"]
-                    if identity_arg:
+                    type_arg = arg["type"]
+                    if type_arg:
                         arg_mention = find_knowledge_entity(
-                            all_kes, identity_arg.span, include_contains
+                            all_kes, type_arg.span, include_contains
                         )
                         if arg_mention:
+                            arg["identity"] = type_arg
                             arg["identity"].entity = arg_mention.parent_entity
                             entity_freebase = arg["identity"].entity.freebase_link
-                            entity_qnode = freebase_to_qnodes.get(entity_freebase)
-                            if entity_qnode:
-                                print(
-                                    f"Found an entity qnode for arg {arg_mention.text}: {entity_qnode}"
-                                )
+                            entity_qnode_id = freebase_to_qnodes.get(entity_freebase)
+                            if entity_qnode_id:
                                 arg_qnode = create_wikidata_qnode_from_id(
-                                    arg["identity"], entity_qnode
+                                    arg["identity"], entity_qnode_id
                                 )
-                                if arg_qnode:
-                                    claim.x_variable_identity_qnode = create_wikidata_qnode_from_id(
-                                        arg["identity"], entity_qnode
-                                    )
+                                arg["identity"] = arg_qnode
                             arg["type"] = type_mapping_to_qnode[arg_mention.parent_entity.ent_type]
 
     claim_ds.save_to_dir(output)
