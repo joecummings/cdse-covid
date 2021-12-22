@@ -85,16 +85,15 @@ def get_all_labeled_args(
             if arg_node:
                 framenet_arg = get_framenet_arg_role(arg[1])
                 if qnode_args.get(framenet_arg):
-                    role = qnode_args[framenet_arg]["text_role"]
                     node_label = amr.nodes[arg_node]
                     token_of_node = node_labels_to_tokens.get(arg_node)
                     if not token_of_node:
-                        labeled_args[role] = node_label.rsplit("-", 1)[0]
+                        labeled_args[framenet_arg] = node_label.rsplit("-", 1)[0]
                     elif any(token_of_node.endswith(f" {stop_word}") for stop_word in STOP_WORDS):
                         # Sometimes the extracted token or part of it is irrelevant
-                        labeled_args[role] = token_of_node.rsplit(" ")[0]
+                        labeled_args[framenet_arg] = token_of_node.rsplit(" ")[0]
                     else:
-                        labeled_args[role] = token_of_node
+                        labeled_args[framenet_arg] = token_of_node
     return labeled_args
 
 
@@ -193,15 +192,18 @@ def get_claim_semantics(
         labeled_args = get_all_labeled_args(amr_sentence, amr_alignments, node, best_qnode["args"])
         wd = get_wikidata_for_labeled_args(amr_sentence, claim, labeled_args, linking_model, device)
 
-    claim_event = ClaimEvent(
-        text=best_qnode.get("name"),
-        doc_id=claim.doc_id,
-        description=best_qnode.get("definition"),
-        from_query=best_qnode.get("pb"),
-        qnode_id=best_qnode.get("qnode"),
-    )
-    claim_args = {k: {"identity": w} for k, w in wd.items()}
-    return ClaimSemantics(event=claim_event, args=claim_args)
+    if best_qnode:
+        claim_event = ClaimEvent(
+            text=best_qnode.get("name"),
+            doc_id=claim.doc_id,
+            description=best_qnode.get("definition"),
+            from_query=best_qnode.get("pb"),
+            qnode_id=best_qnode.get("qnode"),
+        )
+
+        claim_args = {k: {"type": w} for k, w in wd.items()}
+        return ClaimSemantics(event=claim_event, args=claim_args)
+    return None
 
 
 def determine_best_qnode(

@@ -159,7 +159,7 @@ def main(
                     device,
                 )
                 if best_qnode:
-                    claim.x_variable_identity_qnode = best_qnode
+                    claim.x_variable_type_qnode = best_qnode
         else:
             logging.warning(
                 "Could not load AMR or alignments for claim sentence '%s'",
@@ -174,15 +174,24 @@ def main(
 def create_wikidata_qnodes(link: Any, mention: Mention, claim: Claim) -> Optional[WikidataQnode]:
     """Create WikiData Qnodes from links."""
     if len(link["options"]) < 1:
-        all_options = link["all_options"]
-        if len(all_options) < 1:
-            logging.warning("No WikiData links found for '%s'.", link["query"])
-            return None
-        else:
-            first_option = all_options[0]
-            text = first_option["label"][0] if first_option["label"] else None
+        other_options = link["other_options"]
+        if len(other_options) > 1:
+            first_option = other_options[0]
+            text = first_option["rawName"][0] if first_option["rawName"] else None
             qnode = first_option["qnode"][0] if first_option["qnode"] else None
-            description = first_option["description"][0] if first_option["description"] else None
+            description = first_option["definition"][0] if first_option["definition"] else None
+        else:
+            all_options = link["all_options"]
+            if len(all_options) < 1:
+                logging.warning("No WikiData links found for '%s'.", link["query"])
+                return None
+            else:
+                first_option = all_options[0]
+                text = first_option["label"][0] if first_option["label"] else None
+                qnode = first_option["qnode"] if first_option["qnode"] else None
+                description = (
+                    first_option["description"][0] if first_option["description"] else None
+                )
     else:
         text = link["options"][0]["rawName"]
         qnode = link["options"][0]["qnode"]
