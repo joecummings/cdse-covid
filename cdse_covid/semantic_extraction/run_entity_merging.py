@@ -170,7 +170,8 @@ def main(
                 all_kes, claim.x_variable.span, include_contains
             )
             if x_variable_mention:
-                # The x-variable is an entity, so make its qnode the identity qnode
+                # The x-variable is an entity, so make its qnode the identity qnode.
+                # The _type_qnode will be replaced later, so we don't bother removing it.
                 claim.x_variable_identity_qnode = claim.x_variable_type_qnode
                 claim.x_variable.entity = x_variable_mention.parent_entity
                 entity_freebase = claim.x_variable.entity.freebase_link

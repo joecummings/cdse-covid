@@ -188,8 +188,10 @@ def create_wikidata_qnodes(link: Any, mention: Mention, claim: Claim) -> Optiona
             else:
                 first_option = all_options[0]
                 text = first_option["label"][0] if first_option["label"] else None
-                qnode = first_option["qnode"][0] if first_option["qnode"] else None
-                description = first_option["description"][0] if first_option["description"] else None
+                qnode = first_option["qnode"] if first_option["qnode"] else None
+                description = (
+                    first_option["description"][0] if first_option["description"] else None
+                )
     else:
         text = link["options"][0]["rawName"]
         qnode = link["options"][0]["qnode"]
