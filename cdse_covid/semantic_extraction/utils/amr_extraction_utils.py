@@ -12,7 +12,7 @@ from nltk.corpus import stopwords
 from cdse_covid.claim_detection.claim import Claim, create_id
 from cdse_covid.semantic_extraction.mentions import XVariable
 
-PROPBANK_PATTERN = r"[a-z]*-[0-9]{2}"  # e.g. have-name-91
+PROPBANK_PATTERN = r"[a-z, -]*-[0-9]{2}"  # e.g. have-name-91
 PRONOUNS = {
     "he",
     "she",
