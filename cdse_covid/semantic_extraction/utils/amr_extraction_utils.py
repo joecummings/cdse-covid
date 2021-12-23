@@ -50,6 +50,7 @@ def get_full_description(
     amr_dict: Dict[str, Dict[str, List[str]]],
     nodes_to_labels: Dict[str, str],
     nodes_to_strings: Dict[str, str],
+    tokens_to_indices: Dict[str, int],
     focus_node: str,
     ignore_focus_node: bool = False,
 ) -> str:
@@ -68,7 +69,17 @@ def get_full_description(
     The resulting string will be in this order:
     <ARG1-of> <consist-of> <mod>* <focus_node> <op1> <ARG1>
     """
-    descr_strings = []
+    descr_strings = {}
+
+    def add_strings_to_full_description(string_to_add: str) -> None:
+        string_tokens = string_to_add.split(" ")
+        for token in string_tokens:
+            token_idx = tokens_to_indices.get(token)
+            if token_idx is not None:  # possible index 0 is a falsey value
+                descr_strings[token_idx] = token
+            else:
+                print(f"No token index for {token}")
+
     focus_string = nodes_to_strings.get(focus_node)
     if not focus_string:
         logging.warning(
@@ -77,21 +88,22 @@ def get_full_description(
             nodes_to_strings,
         )
         return ""
+    print(f"Focus string: {focus_string}")
     if re.match(PROPBANK_PATTERN, nodes_to_labels[focus_node]):
         node_args = amr_dict[focus_node]
         for arg_role, arg_node_list in node_args.items():
             # Only check ARG1 to avoid grabbing extraneous arguments
             if arg_role == ":ARG1":
                 arg_description = get_full_description(
-                    amr_dict, nodes_to_labels, nodes_to_strings, arg_node_list[0]
+                    amr_dict, nodes_to_labels, nodes_to_strings, tokens_to_indices, arg_node_list[0]
                 )
                 if arg_description:
-                    descr_strings.append(arg_description)
+                    add_strings_to_full_description(arg_description)
                     break
         # Duplicate tokens are naturally uncommon, so avoid adding them
         # since they are probably due to a cyclical AMR graph
-        if focus_string not in descr_strings:
-            descr_strings.insert(0, focus_string)
+        # if focus_string not in descr_strings:
+        #     descr_strings.insert(0, focus_string)
     else:
 
         def add_sentence_text_to_variable(arg_role: str) -> None:
@@ -99,8 +111,8 @@ def get_full_description(
             if arg_list:
                 # Only use the first one
                 first_arg_option = nodes_to_strings.get(arg_list[0])
-                if first_arg_option and first_arg_option not in descr_strings:
-                    descr_strings.insert(0, first_arg_option)
+                if first_arg_option:  # and first_arg_option not in descr_strings:
+                    add_strings_to_full_description(first_arg_option)
                 elif not first_arg_option:
                     logging.warning(
                         "Couldn't get source text of AMR node %s.\n" "nodes_to_strings: %s",
@@ -114,7 +126,7 @@ def get_full_description(
             for mod in mods_of_focus_node:
                 mod_string = nodes_to_strings.get(mod)
                 if mod_string:
-                    descr_strings.insert(0, mod_string)
+                    add_strings_to_full_description(mod_string)
                 else:
                     logging.warning(
                         "Couldn't get source text of AMR node %s.\n" "nodes_to_strings: %s",
@@ -129,14 +141,14 @@ def get_full_description(
 
         op_of = amr_dict[focus_node].get(":op1")
         # If no mods have been found yet, try op1
-        descr_string_set = set(descr_strings)
-        if op_of and not descr_string_set:
+        # descr_string_set = set(descr_strings)
+        if op_of and not descr_strings:
             # Add focus node text before op1
-            if not ignore_focus_node and focus_string not in descr_strings:
-                descr_strings.append(focus_string)
+            # if not ignore_focus_node and focus_string not in descr_strings:
+            #     descr_strings.append(focus_string)
             op_of_string = nodes_to_strings.get(op_of[0])
             if op_of_string:
-                descr_strings.append(op_of_string)
+                add_strings_to_full_description(op_of_string)
             else:
                 logging.warning(
                     "Couldn't get source text of AMR node %s.\n" "nodes_to_strings: %s",
@@ -144,9 +156,14 @@ def get_full_description(
                     nodes_to_strings,
                 )
         # Else, just add focus node text here
-        elif not ignore_focus_node and focus_string not in descr_strings:
-            descr_strings.append(focus_string)
-    return " ".join(descr_strings)
+        # elif not ignore_focus_node and focus_string not in descr_strings:
+        #     descr_strings.append(focus_string)
+    # Sort and join strings
+    if not ignore_focus_node:
+        add_strings_to_full_description(focus_string)
+    print(f"Final descr strings: {descr_strings}")
+    descr_string_list = [descr_strings[i] for i in sorted(descr_strings)]
+    return " ".join(descr_string_list)
 
 
 def create_node_to_token_dict(amr: AMR, alignments: List[AMR_Alignment]) -> Dict[str, str]:
@@ -166,6 +183,11 @@ def create_node_to_token_dict(amr: AMR, alignments: List[AMR_Alignment]) -> Dict
                 if token_text not in string.punctuation:
                     nodes_to_token_lists[node].append(token_text)
     return {node: " ".join(token_list) for node, token_list in nodes_to_token_lists.items()}
+
+
+def create_tokens_to_indices(amr_tokens: List[str]) -> Dict[str, int]:
+    """Create a mapping of tokens to their indices in a sentence or claim."""
+    return {token: index for index, token in enumerate(amr_tokens)}
 
 
 def remove_preceding_trailing_stop_words(text: str) -> Optional[str]:
@@ -210,6 +232,8 @@ def identify_x_variable_covid(
     amr_dict = amr.edge_mapping()
     nodes_to_labels = amr.nodes
     nodes_to_source_strings = create_node_to_token_dict(amr, alignments)
+    tokens_to_indices = create_tokens_to_indices(amr.tokens)
+    print(f"Tokens to indices for AMR graph: {tokens_to_indices}")
 
     # For claims with "location-X" templates, locate a FAC/GPE/LOC
     if any(f"{place_term}-X" in claim_template for place_term in place_variables):
@@ -223,7 +247,11 @@ def identify_x_variable_covid(
                     if location_name
                     else create_x_variable(
                         get_full_description(
-                            amr_dict, nodes_to_labels, nodes_to_source_strings, child
+                            amr_dict,
+                            nodes_to_labels,
+                            nodes_to_source_strings,
+                            tokens_to_indices,
+                            child,
                         ),
                         claim,
                     )
@@ -243,7 +271,9 @@ def identify_x_variable_covid(
     if claim_template.endswith("is X"):
         # In such cases, X is usually the root of the claim graph.
         return create_x_variable(
-            get_full_description(amr_dict, nodes_to_labels, nodes_to_source_strings, amr.root),
+            get_full_description(
+                amr_dict, nodes_to_labels, nodes_to_source_strings, tokens_to_indices, amr.root
+            ),
             claim,
         )
     if claim_template.startswith("X was the target"):
@@ -260,6 +290,7 @@ def identify_x_variable_covid(
                             amr_dict,
                             nodes_to_labels,
                             nodes_to_source_strings,
+                            tokens_to_indices,
                             child,
                             ignore_focus_node=True,
                         ),
@@ -276,6 +307,7 @@ def identify_x_variable_covid(
                         amr_dict,
                         nodes_to_labels,
                         nodes_to_source_strings,
+                        tokens_to_indices,
                         parent,
                         ignore_focus_node=True,
                     ),
@@ -314,7 +346,9 @@ def identify_x_variable_covid(
         for node, node_label in nodes_to_labels.items():
             if node_label == "date-entity":
                 return create_x_variable(
-                    get_full_description(amr_dict, nodes_to_labels, nodes_to_source_strings, node),
+                    get_full_description(
+                        amr_dict, nodes_to_labels, nodes_to_source_strings, tokens_to_indices, node
+                    ),
                     claim,
                 )
     # This covers "treatment-X" template cases
@@ -328,7 +362,9 @@ def identify_x_variable_covid(
                 or (treatment_is_approved(nodes_to_labels, parent, role))
             ):
                 return create_x_variable(
-                    get_full_description(amr_dict, nodes_to_labels, nodes_to_source_strings, child),
+                    get_full_description(
+                        amr_dict, nodes_to_labels, nodes_to_source_strings, tokens_to_indices, child
+                    ),
                     claim,
                 )
     if "medication X" in claim_template:
@@ -337,7 +373,9 @@ def identify_x_variable_covid(
         for parent, role, child in amr.edges:
             if nodes_to_labels[parent] == "safe-01" and role == ":ARG1":
                 return create_x_variable(
-                    get_full_description(amr_dict, nodes_to_labels, nodes_to_source_strings, child),
+                    get_full_description(
+                        amr_dict, nodes_to_labels, nodes_to_source_strings, tokens_to_indices, child
+                    ),
                     claim,
                 )
     if "Animal-X" in claim_template:
@@ -350,7 +388,11 @@ def identify_x_variable_covid(
             # Get only one
             return create_x_variable(
                 get_full_description(
-                    amr_dict, nodes_to_labels, nodes_to_source_strings, arg1_values[0]
+                    amr_dict,
+                    nodes_to_labels,
+                    nodes_to_source_strings,
+                    tokens_to_indices,
+                    arg1_values[0],
                 ),
                 claim,
             )
@@ -365,7 +407,9 @@ def identify_x_variable_covid(
                 if agent_name:
                     return create_x_variable(agent_name, claim)
                 return create_x_variable(
-                    get_full_description(amr_dict, nodes_to_labels, nodes_to_source_strings, child),
+                    get_full_description(
+                        amr_dict, nodes_to_labels, nodes_to_source_strings, tokens_to_indices, child
+                    ),
                     claim,
                 )
     # Likewise, if X is the last item in the template,
@@ -377,7 +421,9 @@ def identify_x_variable_covid(
                 if patient_name:
                     return create_x_variable(patient_name, claim)
                 return create_x_variable(
-                    get_full_description(amr_dict, nodes_to_labels, nodes_to_source_strings, child),
+                    get_full_description(
+                        amr_dict, nodes_to_labels, nodes_to_source_strings, tokens_to_indices, child
+                    ),
                     claim,
                 )
     return None
@@ -396,7 +442,7 @@ def prevents_death(nodes_to_labels: MutableMapping[str, Any], parent: str, role:
 
 
 def shortens_infection(nodes_to_labels: MutableMapping[str, Any], parent: str, role: str) -> bool:
-    """If treatment is in ARG) and verb is shorten."""
+    """If treatment is in ARG0 and verb is shorten."""
     return nodes_to_labels[parent] == "shorten-01" and role == ":ARG0"
 
 
@@ -426,6 +472,7 @@ def identify_x_variable(
     amr_dict = amr.edge_mapping()
     nodes_to_labels = amr.nodes
     nodes_to_source_strings = create_node_to_token_dict(amr, alignments)
+    tokens_to_indices = create_tokens_to_indices(amr.tokens)
 
     # First use entity labels as clues for what the X-variable is
     for _, label in claim_ents.items():
@@ -455,7 +502,11 @@ def identify_x_variable(
                 if parent_label in place_types:
                     return create_x_variable(
                         get_full_description(
-                            amr_dict, nodes_to_labels, nodes_to_source_strings, parent
+                            amr_dict,
+                            nodes_to_labels,
+                            nodes_to_source_strings,
+                            tokens_to_indices,
+                            parent,
                         ),
                         claim,
                     )
@@ -464,14 +515,22 @@ def identify_x_variable(
                     if claim_pos.get(nodes_to_source_strings[child]) == "ADJ":
                         return create_x_variable(
                             get_full_description(
-                                amr_dict, nodes_to_labels, nodes_to_source_strings, parent
+                                amr_dict,
+                                nodes_to_labels,
+                                nodes_to_source_strings,
+                                tokens_to_indices,
+                                parent,
                             ),
                             claim,
                         )
                     else:
                         return create_x_variable(
                             get_full_description(
-                                amr_dict, nodes_to_labels, nodes_to_source_strings, child
+                                amr_dict,
+                                nodes_to_labels,
+                                nodes_to_source_strings,
+                                tokens_to_indices,
+                                child,
                             ),
                             claim,
                         )
@@ -498,13 +557,17 @@ def identify_x_variable(
                 return create_x_variable(location_name, claim)
             else:
                 return create_x_variable(
-                    get_full_description(amr_dict, nodes_to_labels, nodes_to_source_strings, child),
+                    get_full_description(
+                        amr_dict, nodes_to_labels, nodes_to_source_strings, tokens_to_indices, child
+                    ),
                     claim,
                 )
         # If there is a date-entity in the AMR graph, that may be the X-variable
         elif parent_label == "date-entity":
             return create_x_variable(
-                get_full_description(amr_dict, nodes_to_labels, nodes_to_source_strings, parent),
+                get_full_description(
+                    amr_dict, nodes_to_labels, nodes_to_source_strings, tokens_to_indices, parent
+                ),
                 claim,
             )
     return None
