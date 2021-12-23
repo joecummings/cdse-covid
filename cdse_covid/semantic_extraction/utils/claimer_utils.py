@@ -122,7 +122,6 @@ def get_argument_node(
     nodes = amr.nodes
     nodes_to_strings = create_node_to_token_dict(amr, alignments)
     tokens_to_indices = create_tokens_to_indices(amr.tokens)
-    print(f"Tokens to indices for AMR graph: {tokens_to_indices}")
     amr_dict = amr.edge_mapping()
     node_args = amr_dict.get(claim_node)
     if node_args:

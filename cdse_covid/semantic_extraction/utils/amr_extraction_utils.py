@@ -66,8 +66,9 @@ def get_full_description(
     If the focus node label is a PropBank frame ("drink-01"),
     it will attempt to get the text of its "patient" argument.
 
-    The resulting string will be in this order:
-    <ARG1-of> <consist-of> <mod>* <focus_node> <op1> <ARG1>
+    The final string will be ordered based on their index in the soruce text.
+    Any modifiers found that are not adjacent to the focus text or other
+    modifiers will be cut.
     """
     descr_strings = {}
 
@@ -77,8 +78,6 @@ def get_full_description(
             token_idx = tokens_to_indices.get(token)
             if token_idx is not None:  # possible index 0 is a falsey value
                 descr_strings[token_idx] = token
-            else:
-                print(f"No token index for {token}")
 
     focus_string = nodes_to_strings.get(focus_node)
     if not focus_string:
@@ -88,7 +87,6 @@ def get_full_description(
             nodes_to_strings,
         )
         return ""
-    print(f"Focus string: {focus_string}")
     if re.match(PROPBANK_PATTERN, nodes_to_labels[focus_node]):
         node_args = amr_dict[focus_node]
         for arg_role, arg_node_list in node_args.items():
@@ -100,10 +98,6 @@ def get_full_description(
                 if arg_description:
                     add_strings_to_full_description(arg_description)
                     break
-        # Duplicate tokens are naturally uncommon, so avoid adding them
-        # since they are probably due to a cyclical AMR graph
-        # if focus_string not in descr_strings:
-        #     descr_strings.insert(0, focus_string)
     else:
 
         def add_sentence_text_to_variable(arg_role: str) -> None:
@@ -111,7 +105,7 @@ def get_full_description(
             if arg_list:
                 # Only use the first one
                 first_arg_option = nodes_to_strings.get(arg_list[0])
-                if first_arg_option:  # and first_arg_option not in descr_strings:
+                if first_arg_option:
                     add_strings_to_full_description(first_arg_option)
                 elif not first_arg_option:
                     logging.warning(
@@ -141,11 +135,7 @@ def get_full_description(
 
         op_of = amr_dict[focus_node].get(":op1")
         # If no mods have been found yet, try op1
-        # descr_string_set = set(descr_strings)
         if op_of and not descr_strings:
-            # Add focus node text before op1
-            # if not ignore_focus_node and focus_string not in descr_strings:
-            #     descr_strings.append(focus_string)
             op_of_string = nodes_to_strings.get(op_of[0])
             if op_of_string:
                 add_strings_to_full_description(op_of_string)
@@ -155,14 +145,31 @@ def get_full_description(
                     op_of,
                     nodes_to_strings,
                 )
-        # Else, just add focus node text here
-        # elif not ignore_focus_node and focus_string not in descr_strings:
-        #     descr_strings.append(focus_string)
     # Sort and join strings
     if not ignore_focus_node:
         add_strings_to_full_description(focus_string)
-    print(f"Final descr strings: {descr_strings}")
     descr_string_list = [descr_strings[i] for i in sorted(descr_strings)]
+
+    # Handle "X and Y" claimer values
+    if len(descr_string_list) == 3 and descr_string_list[1] == "and":
+        # Select only the first claimer as this causes less confusion finding qnodes
+        descr_string_list = descr_string_list[:1]
+
+    # Eliminate tokens with an index not adjacent to the focus token(s)
+    if len(descr_string_list) > 1 and not ignore_focus_node:
+        first_focus_token = focus_string.split(" ")[0]
+        first_focus_token_idx = tokens_to_indices[first_focus_token]
+        descr_list_idx = descr_string_list.index(first_focus_token)
+        i = 0
+        to_remove = []
+        for idx, descr_token in sorted(descr_strings.items()):
+            # Compare mod-focus distances between the source text
+            # and the calculated string -- they should be the same.
+            if abs(idx - first_focus_token_idx) != abs(i - descr_list_idx):
+                to_remove.append(descr_token)
+            i += 1
+        for faraway_token in to_remove:
+            descr_string_list.remove(faraway_token)
     return " ".join(descr_string_list)
 
 
@@ -233,7 +240,6 @@ def identify_x_variable_covid(
     nodes_to_labels = amr.nodes
     nodes_to_source_strings = create_node_to_token_dict(amr, alignments)
     tokens_to_indices = create_tokens_to_indices(amr.tokens)
-    print(f"Tokens to indices for AMR graph: {tokens_to_indices}")
 
     # For claims with "location-X" templates, locate a FAC/GPE/LOC
     if any(f"{place_term}-X" in claim_template for place_term in place_variables):

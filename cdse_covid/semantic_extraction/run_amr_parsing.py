@@ -53,7 +53,6 @@ def main(
             claim.claim_sentence, spacy_model.tokenizer, max_tokens
         )
         sentence_amr = amr_parser.amr_parse_sentences([tokenized_sentence])
-        print(sentence_amr.graph.graph_string())
         tokenized_claim = tokenize_sentence(claim.claim_text, spacy_model.tokenizer, max_tokens)
         possible_claimer = identify_claimer(
             claim, tokenized_claim, sentence_amr.graph, sentence_amr.alignments
