@@ -10,10 +10,13 @@ from pathlib import Path
 import pickle
 from typing import Any, Dict, List
 
+from pegasus_wrapper.key_value import ZipKeyValueStore
 import spacy
 from spacy.language import Language
 from spacy.matcher import Matcher
 from spacy.tokens import Span
+from vistautils.key_value import byte_key_value_sink_from_params, byte_key_value_source_from_params
+from vistautils.parameters import Parameters
 
 from cdse_covid.claim_detection.claim import TOKEN_OFFSET_THEORY, Claim, create_id
 from cdse_covid.dataset import AIDADataset
@@ -81,16 +84,43 @@ class ClaimDataset:
             with open(claim_file, "rb") as handle:
                 claim = pickle.load(handle)
                 claims.append(claim)
+        if not claims:
+            logging.warning(
+                "No claims found in dir: %s. Did you mean to load from a key value store?", path
+            )
         return ClaimDataset(claims)
 
     def save_to_dir(self, path: Path) -> None:
         """Save all claims in dataset to given *path*."""
         if not self.claims:
-            logging.warning("No claims found.")
+            logging.warning("No claims to save.")
+            return None
         path.mkdir(exist_ok=True)
         for claim in self.claims:
             with open(f"{path / str(claim.claim_id)}.claim", "wb+") as handle:
                 pickle.dump(claim, handle, pickle.HIGHEST_PROTOCOL)
+
+    @staticmethod
+    def load_from_key_value_store(kvs_path: Path) -> "ClaimDataset":
+        """Load ClaimDataset from a ZipKeyValueStore."""
+        local_params = Parameters.from_mapping({"input": {"type": "zip", "path": str(kvs_path)}})
+
+        claims = []
+        with byte_key_value_source_from_params(local_params) as source:
+            for _, claim in source.items():
+                claims.append(pickle.loads(claim))
+
+        return ClaimDataset(claims)
+
+    def save_to_key_value_store(self, kvs_path: Path) -> ZipKeyValueStore:
+        """Save ClaimDataset to a ZipKeyValueStore."""
+        local_params = Parameters.from_mapping({"output": {"type": "zip", "path": str(kvs_path)}})
+
+        with byte_key_value_sink_from_params(local_params) as sink:
+            for claim in self.claims:
+                sink[claim.claim_id] = pickle.dumps(claim, pickle.HIGHEST_PROTOCOL)
+
+        return ZipKeyValueStore(path=kvs_path)
 
     def print_out_claim_sentences(self, path: Path) -> None:
         """Print out the actual text of the existing claims."""
@@ -189,7 +219,7 @@ def main(input_corpus: Path, patterns: Path, out_dir: Path, *, spacy_model: Lang
         claim.topic = template["topic"]
         claim.subtopic = template["subtopic"]
 
-    matches.save_to_dir(out_dir)
+    matches.save_to_key_value_store(out_dir)
 
     logging.info("Saved matches to %s", out_dir)
 

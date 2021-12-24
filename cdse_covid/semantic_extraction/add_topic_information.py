@@ -44,14 +44,14 @@ def main(claims: Path, templates_file: Path, ss_model: str, output: Path) -> Non
             topics_info[key] = {"topic": row[2], "subtopic": row[1]}
     template_identifier = TemplateIdentifier(model, list(topics_info.keys()))
 
-    claims_dataset = ClaimDataset.load_from_dir(claims)
+    claims_dataset = ClaimDataset.load_from_key_value_store(claims)
     for claim in tqdm(claims_dataset, total=len(claims_dataset.claims)):
         template = template_identifier.identify_template(claim.claim_text)
         claim.claim_template = template
         claim.topic = topics_info[claim.claim_template]["topic"]
         claim.subtopic = topics_info[claim.claim_template]["subtopic"]
 
-    claims_dataset.save_to_dir(output)
+    claims_dataset.save_to_key_value_store(output)
 
 
 if __name__ == "__main__":
