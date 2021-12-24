@@ -22,7 +22,7 @@ h5py==3.4.0
 hydra-core==1.1.1
 idna==3.3
 immutablecollections==0.12.0
-importlib-resources==5.2.2
+importlib-resources==1.4.0
 ipdb==0.13.9
 ipython==7.28.0
 jedi==0.18.0
@@ -49,10 +49,14 @@ Pygments==2.10.0
 pyinflect==0.5.1
 pyinstrument==4.0.4
 pyparsing==2.4.7
-PyYAML==6.0
+pegasus-wms.api==5.0.0
+pegasus-wms.common==5.0.1
+pegasus-wrapper==0.4.0
+PyYAML==5.4
 regex==2018.1.10
 requests==2.26.0
 sacrebleu==2.0.0
+saga-tools @ git+https://github.com/isi-vista/saga-tools.git@b4c4d409f9b2f7e7bd578dc536fc30eb5de56f1c
 sentence-transformers==0.3.8
 six==1.16.0
 smatch==1.0.4

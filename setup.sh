@@ -64,6 +64,10 @@ set -u  # /hack
 
 echo "Installing packages for transition-amr-parser..."
 pip install -r amr-requirements-lock.txt
+
+# Create this package as a module
+pip install -e .
+
 echo "Finished installing amr requirements (1/5)"
 
 # Download wordnet & framenet to the currently active conda env

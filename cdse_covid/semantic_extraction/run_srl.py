@@ -56,9 +56,9 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--input", help="Input docs", type=Path)
     parser.add_argument("--output", help="Out file", type=Path)
-    parser.add_argument("--spacy-model", type=Path)
     args = parser.parse_args()
 
+    # Would like to change this back to using the saved model at some point
     model = spacy.load("en_core_web_md")
 
     main(args.input, args.output, spacy_model=model)

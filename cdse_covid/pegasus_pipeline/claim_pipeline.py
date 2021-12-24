@@ -72,7 +72,10 @@ def main(params: Parameters) -> None:
             memory=MemoryAmount.parse("8G"), num_gpus=1, job_time_in_minutes=720
         )
         even_larger_resource = SlurmResourceRequest(
-            memory=MemoryAmount.parse("16G"), num_gpus=1, job_time_in_minutes=720
+            partition="ephemeral",
+            memory=MemoryAmount.parse("16G"),
+            num_gpus=1,
+            job_time_in_minutes=720,
         )
         device = CUDA
     else:
@@ -121,7 +124,7 @@ def main(params: Parameters) -> None:
         claim_detection_output,
         amr_as_func,
         output_locator=amr_loc,
-        parallelism=10,
+        parallelism=15,
     )
 
     # SRL
@@ -138,7 +141,6 @@ def main(params: Parameters) -> None:
             f"""
             --input {kvs.path} \
             --output {srl_output_dir} \
-            --spacy-model {model_path} \
             """,
             depends_on=[kvs],
         )
