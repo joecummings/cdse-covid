@@ -4,14 +4,20 @@ import json
 import logging
 from pathlib import Path
 import re
-from typing import Any, Dict, List, MutableMapping, Optional, Set, Tuple
+from typing import Any, Dict, List, MutableMapping, Optional, Set, Tuple, Union
 
 from amr_utils.alignments import AMR_Alignment
 from amr_utils.amr import AMR  # pylint: disable=import-error
 from spacy.language import Language
 
 from cdse_covid.claim_detection.claim import Claim
-from cdse_covid.semantic_extraction.mentions import ClaimArg, ClaimEvent, ClaimSemantics
+from cdse_covid.semantic_extraction.mentions import (
+    ClaimArg,
+    ClaimEvent,
+    ClaimSemantics,
+    Mention,
+    WikidataQnode,
+)
 from cdse_covid.semantic_extraction.utils.amr_extraction_utils import (
     PROPBANK_PATTERN,
     STOP_WORDS,
@@ -97,40 +103,128 @@ def get_all_labeled_args(
     return labeled_args
 
 
+def is_pb_label(label: str) -> bool:
+    """Determine whether the AMR graph label is a PropBank frame label."""
+    return re.match(PROPBANK_PATTERN, label) is not None
+
+
+def get_best_qnode_for_mention_text(
+    mention_or_text: Union[str, Mention],
+    claim: Claim,
+    amr: AMR,
+    alignments: List[AMR_Alignment],
+    spacy_model: Language,
+    linking_model: WikidataLinkingClassifier,
+    device: str,
+) -> Optional[WikidataQnode]:
+    """Return the best WikidataQnode for a string within the claim sentence.
+
+    First, if the string comes from a propbank frame, try a DWD lookup.
+    Otherwise, run KGTK.
+    """
+    mention_text = None
+    mention_id = None
+    mention_span = None
+    if isinstance(mention_or_text, str):
+        mention_text = mention_or_text
+    elif isinstance(mention_or_text, Mention):
+        mention_text = mention_or_text.text
+        mention_id = mention_or_text.mention_id
+        mention_span = mention_or_text.span
+    if not mention_text:
+        return None
+    # Make both tables
+    pbs_to_qnodes_master, pbs_to_qnodes_overlay = load_tables()
+
+    # Find the label associated with the last token of the variable text
+    # (any tokens before it are likely modifiers)
+    variable_node_label = None
+    claim_variable_tokens = [
+        mention_token
+        for mention_token in mention_text.split(" ")
+        if mention_token not in STOP_WORDS
+    ]
+    claim_variable_tokens.reverse()
+
+    # Locate the AMR node label associated with the mention text
+    for node in amr.nodes:
+        token_list_for_node = amr.get_tokens_from_node(node, alignments)
+        # Try to match the last token since it is most likely to point to the correct node
+        if claim_variable_tokens[0] in token_list_for_node:
+            variable_node_label = amr.nodes[node].strip('"')
+
+    if not variable_node_label:
+        logging.warning(
+            "DWD lookup: could not find AMR node corresponding with XVariable/Claimer '%s'",
+            mention_text,
+        )
+        node_label_is_pb = False
+    else:
+        node_label_is_pb = is_pb_label(variable_node_label)
+
+    if variable_node_label and node_label_is_pb:
+        best_qnode = determine_best_qnode(
+            [variable_node_label],
+            pbs_to_qnodes_overlay,
+            pbs_to_qnodes_master,
+            amr,
+            spacy_model,
+            linking_model,
+            check_mappings_only=True,
+        )
+        if best_qnode:
+            return WikidataQnode(
+                text=best_qnode.get("name"),
+                mention_id=mention_id,
+                doc_id=claim.doc_id,
+                span=mention_span,
+                description=best_qnode.get("definition"),
+                from_query=best_qnode.get("pb"),
+                qnode_id=best_qnode.get("qnode"),
+            )
+    # If no Qnode was found, try KGTK
+    query_list: List[Optional[str]] = [mention_text, *claim_variable_tokens]
+    for query in list(filter(None, query_list)):
+        claim_variable_links = disambiguate_refvar_kgtk(
+            query, linking_model, claim.claim_sentence, k=1, device=device
+        )
+        claim_event_links = disambiguate_verb_kgtk(query, linking_model, k=1, device=device)
+        # Combine the results
+        all_claim_links = claim_variable_links
+        all_claim_links["options"].extend(claim_event_links["options"])
+        all_claim_links["other_options"].extend(claim_event_links["other_options"])
+        all_claim_links["all_options"].extend(claim_event_links["all_options"])
+        top_link = create_wikidata_qnodes(all_claim_links, claim, mention_id, mention_span)
+        if top_link:
+            return top_link
+    return None
+
+
 def get_wikidata_for_labeled_args(
     amr: AMR,
+    alignments: List[AMR_Alignment],
     claim: Claim,
     args: MutableMapping[str, Any],
+    spacy_model: Language,
     linking_model: WikidataLinkingClassifier,
     device: str = CPU,
 ) -> MutableMapping[str, Any]:
     """Get WikiData for labeled arguments."""
     args_to_qnodes = {}
     for role, arg in args.items():
-        qnode_info = disambiguate_refvar_kgtk(
-            arg, linking_model, " ".join(amr.tokens), k=1, device=device
+        qnode_selection = get_best_qnode_for_mention_text(
+            arg, claim, amr, alignments, spacy_model, linking_model, device
         )
-        if qnode_info["options"]:
-            qnode_selection = qnode_info["options"][0]
-        elif qnode_info["other_options"]:
-            qnode_selection = qnode_info["other_options"][0]
-        elif qnode_info["all_options"]:
-            qnode_selection = qnode_info["all_options"][0]
-        else:
-            qnode_selection = None
-
-        claim_arg = None
         if qnode_selection:
-            claim_arg = ClaimArg(
-                text=qnode_selection.get("rawName"),
-                doc_id=claim.doc_id,
-                span=claim.get_offsets_for_text(arg),
-                qnode_id=qnode_selection["qnode"],
-                description=qnode_selection.get("definition"),
-                from_query=arg,
+            args_to_qnodes[role] = ClaimArg(
+                text=qnode_selection.text,
+                mention_id=qnode_selection.mention_id,
+                doc_id=qnode_selection.doc_id,
+                span=qnode_selection.span,
+                qnode_id=qnode_selection.qnode_id,
+                description=qnode_selection.description,
+                from_query=qnode_selection.from_query,
             )
-
-        args_to_qnodes[role] = claim_arg
     return args_to_qnodes
 
 
@@ -190,7 +284,9 @@ def get_claim_semantics(
     if best_qnode and best_qnode.get("args"):
         node = get_node_from_pb(amr_sentence, best_qnode["pb"])
         labeled_args = get_all_labeled_args(amr_sentence, amr_alignments, node, best_qnode["args"])
-        wd = get_wikidata_for_labeled_args(amr_sentence, claim, labeled_args, linking_model, device)
+        wd = get_wikidata_for_labeled_args(
+            amr_sentence, amr_alignments, claim, labeled_args, spacy_model, linking_model, device
+        )
 
     if best_qnode:
         claim_event = ClaimEvent(
@@ -267,6 +363,57 @@ def determine_best_qnode(
         return best_kgtk_qnode
     logging.warning("Couldn't find a qnode for pbs %s", pb_label_list)
     return {}
+
+
+def create_wikidata_qnodes(
+    link: Any,
+    claim: Claim,
+    mention_id: Optional[str] = None,
+    mention_span: Optional[Tuple[int, int]] = None,
+) -> Optional[WikidataQnode]:
+    """Create WikiData Qnodes from links."""
+    options = link["options"]
+    other_options = link["other_options"]
+    all_options = link["all_options"]
+    best_option = None
+    top_score = 0
+    text = None
+    qnode = None
+    description = None
+    if len(options) > 0:
+        # For options and other_options, grab the first in the list
+        best_option = options[0]
+    elif len(other_options) > 0:
+        best_option = other_options[0]
+
+    if best_option:
+        text = best_option["rawName"] if best_option["rawName"] else None
+        qnode = best_option["qnode"] if best_option["qnode"] else None
+        description = best_option["definition"] if best_option["definition"] else None
+    elif len(all_options) > 0:
+        for option in all_options:
+            score = option.get("linking_score", 0)
+            if score > top_score:
+                top_score = score
+                best_option = option
+        if best_option:
+            text = best_option["label"][0] if best_option["label"] else None
+            qnode = best_option["qnode"] if best_option["qnode"] else None
+            description = best_option["description"][0] if best_option["description"] else None
+
+    if best_option:
+        return WikidataQnode(
+            text=text,
+            mention_id=mention_id,
+            doc_id=claim.doc_id,
+            span=mention_span,
+            qnode_id=qnode,
+            description=description,
+            from_query=link["query"],
+        )
+
+    logging.warning("No WikiData links found for '%s'.", link["query"])
+    return None
 
 
 def get_overlay_result(

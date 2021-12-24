@@ -107,7 +107,6 @@ def create_wikidata_qnode_from_id(mention: Mention, qnode_id: str) -> Optional[W
             "rawName": kgtk_result["label"][0],
             "definition": kgtk_result["description"][0] if kgtk_result["description"] else "",
         }
-    print(f"Qnode info for {qnode_id}:\n{selected_qnode}")
 
     if selected_qnode:
         return WikidataQnode(

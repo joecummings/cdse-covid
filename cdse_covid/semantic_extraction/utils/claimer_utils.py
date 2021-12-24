@@ -11,6 +11,7 @@ from cdse_covid.claim_detection.claim import Claim, create_id
 from cdse_covid.semantic_extraction.mentions import Claimer
 from cdse_covid.semantic_extraction.utils.amr_extraction_utils import (
     create_node_to_token_dict,
+    create_tokens_to_indices,
     get_full_description,
     get_full_name_value,
     remove_preceding_trailing_stop_words,
@@ -120,6 +121,7 @@ def get_argument_node(
     """Get all argument (claimer) nodes of the claim node."""
     nodes = amr.nodes
     nodes_to_strings = create_node_to_token_dict(amr, alignments)
+    tokens_to_indices = create_tokens_to_indices(amr.tokens)
     amr_dict = amr.edge_mapping()
     node_args = amr_dict.get(claim_node)
     if node_args:
@@ -129,5 +131,7 @@ def get_argument_node(
             claimer_label = nodes.get(claimer_node)
             if claimer_label in ["person", "organization"]:
                 return get_full_name_value(amr_dict, nodes_to_strings, claimer_node)
-            return get_full_description(amr_dict, nodes, nodes_to_strings, claimer_node)
+            return get_full_description(
+                amr_dict, nodes, nodes_to_strings, tokens_to_indices, claimer_node
+            )
     return None
