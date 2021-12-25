@@ -150,7 +150,7 @@ def get_best_qnode_for_mention_text(
     for node in amr.nodes:
         token_list_for_node = amr.get_tokens_from_node(node, alignments)
         # Try to match the last token since it is most likely to point to the correct node
-        if claim_variable_tokens[0] in token_list_for_node:
+        if claim_variable_tokens and claim_variable_tokens[0] in token_list_for_node:
             variable_node_label = amr.nodes[node].strip('"')
 
     if not variable_node_label:
