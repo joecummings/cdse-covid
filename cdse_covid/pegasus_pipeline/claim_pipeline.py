@@ -7,6 +7,7 @@ from pegasus_wrapper import (
     directory_for,
     initialize_vista_pegasus_wrapper,
     run_python_on_args,
+    run_python_on_parameters,
     write_workflow_description,
 )
 from pegasus_wrapper.artifact import ValueArtifact
@@ -212,7 +213,7 @@ def main(params: Parameters) -> None:
     unify_loc = base_locator / "unify"
     unify_python_job = unify_params.existing_file("python_file")
     output_file = unify_params.creatable_file("output")
-    run_python_on_args(
+    unify_output = run_python_on_args(
         unify_loc,
         unify_python_job,
         f"""
@@ -220,6 +221,17 @@ def main(params: Parameters) -> None:
         --output {output_file} \
         """,
         depends_on=[entities_output],
+    )
+
+    # Convert output to AIF
+    aif_params = params.namespace("aif")
+    aif_loc = base_locator / "aif"
+    json_to_aif_python_job = aif_params.existing_file("python_file")
+    run_python_on_parameters(
+        aif_loc,
+        json_to_aif_python_job,
+        params,
+        depends_on=[unify_output],
     )
 
     write_workflow_description()
