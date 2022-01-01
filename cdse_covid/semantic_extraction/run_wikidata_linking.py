@@ -14,11 +14,7 @@ from wikidata_linker.wikidata_linking import CPU
 
 
 def main(
-    claim_input: Path,
-    state_dict: Path,
-    output: Path,
-    spacy_model: Language,
-    device: str = CPU,
+    claim_input: Path, state_dict: Path, output: Path, spacy_model: Language, device: str = CPU
 ) -> None:
     """Entry point to linking script."""
     claim_dataset = ClaimDataset.load_from_key_value_store(claim_input)
@@ -46,8 +42,7 @@ def main(
                     claim.x_variable_type_qnode = best_qnode
         else:
             logging.warning(
-                "Could not load AMR or alignments for claim sentence '%s'",
-                claim.claim_sentence,
+                "Could not load AMR or alignments for claim sentence '%s'", claim.claim_sentence
             )
 
     claim_dataset.save_to_key_value_store(output)
@@ -66,10 +61,4 @@ if __name__ == "__main__":
 
     model = spacy.load("en_core_web_md")
 
-    main(
-        args.claim_input,
-        args.state_dict,
-        args.output,
-        model,
-        args.device,
-    )
+    main(args.claim_input, args.state_dict, args.output, model, args.device)

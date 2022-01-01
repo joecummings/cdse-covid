@@ -85,12 +85,7 @@ def main(params: Parameters) -> None:
 
     if amr_params.optional_existing_file("python_file_all"):
         _ = amr_over_all_docs(
-            params,
-            input_corpus_dir,
-            base_locator,
-            amr_params,
-            amr_max_tokens,
-            larger_resource,
+            params, input_corpus_dir, base_locator, amr_params, amr_max_tokens, larger_resource
         )
 
     # AMR parsing for claims
@@ -122,10 +117,7 @@ def main(params: Parameters) -> None:
         return ZipKeyValueStore(path=amr_output_dir, depends_on=[amr_job], locator=output_locator)
 
     amr_output = transform_key_value_store(
-        claim_detection_output,
-        amr_as_func,
-        output_locator=amr_loc,
-        parallelism=15,
+        claim_detection_output, amr_as_func, output_locator=amr_loc, parallelism=15
     )
 
     # SRL
@@ -227,12 +219,7 @@ def main(params: Parameters) -> None:
     aif_params = params.namespace("aif")
     aif_loc = base_locator / "aif"
     json_to_aif_python_job = aif_params.existing_file("python_file")
-    run_python_on_parameters(
-        aif_loc,
-        json_to_aif_python_job,
-        params,
-        depends_on=[unify_output],
-    )
+    run_python_on_parameters(aif_loc, json_to_aif_python_job, params, depends_on=[unify_output])
 
     write_workflow_description()
 

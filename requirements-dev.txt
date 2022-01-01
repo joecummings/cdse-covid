@@ -1,7 +1,7 @@
 black
 flake8
 isort
-mypy
+mypy==0.910
 pydocstyle
 pylint
 types-certifi

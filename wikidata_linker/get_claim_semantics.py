@@ -618,12 +618,7 @@ def generate_master_dict(master_table_path: Path, pb_master: Path) -> None:
                 "text_role": "-".join(arg_parts[1:]),
             }
 
-        qnode_summary = {
-            "qnode": qnode,
-            "name": qname,
-            "definition": qdescr,
-            "args": final_args,
-        }
+        qnode_summary = {"qnode": qnode, "name": qname, "definition": qdescr, "args": final_args}
 
         pb = str(qnode_dict["pb"]).replace(".", "-")
         pbs_to_qnodes[pb].append(qnode_summary)

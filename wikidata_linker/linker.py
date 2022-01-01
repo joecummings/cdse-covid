@@ -1,10 +1,9 @@
 """Module of class model for RoBERTa classifier used for Wikidata linking classification."""
 from typing import Any, Optional, Sequence
 
+# from torch.utils.data import DataLoader
 import torch
 import torch.multiprocessing
-
-# from torch.utils.data import DataLoader
 from transformers import PreTrainedTokenizer, RobertaForSequenceClassification, RobertaTokenizerFast
 
 
