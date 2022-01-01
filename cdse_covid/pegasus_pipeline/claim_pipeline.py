@@ -335,7 +335,7 @@ def amr_over_all_docs(
 
 def isi_claim_detection(
     params: Parameters, base_locator: Locator, model_path: Path, preprocessed_docs: ValueArtifact
-) -> ValueArtifact:
+) -> ZipKeyValueStore:
     """Detect claims from SpaCy docs using ISI claim detection."""
     claim_params = params.namespace("claim_detection")
     claim_loc = base_locator / "claim_detection"
@@ -353,7 +353,9 @@ def isi_claim_detection(
         """,
         depends_on=[preprocessed_docs],
     )
-    return ValueArtifact(value=claim_output_dir, depends_on=[claim_detection_job])
+    return ZipKeyValueStore(
+        path=claim_output_dir, depends_on=[claim_detection_job], locator=claim_loc
+    )
 
 
 if __name__ == "__main__":

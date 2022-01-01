@@ -14,8 +14,8 @@ def convert_json_file_to_aif(params: Parameters) -> None:
     """Convert the claim data from the output json into AIF files."""
     unify_params = params.namespace("unify")
     aif_params = params.namespace("aif")
-    claims_file = unify_params.string("output")
-    aif_dir = aif_params.string("aif_output_dir")
+    claims_file = unify_params.existing_file("output")
+    aif_dir = aif_params.creatable_directory("aif_output_dir")
     log.info("READING: %s WRITING: %s", claims_file, aif_dir)
     cf = open(claims_file, encoding="utf-8")
     claims_data = json.load(cf)
