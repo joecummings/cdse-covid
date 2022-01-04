@@ -20,6 +20,8 @@ def convert_json_file_to_aif(params: Parameters) -> None:
     cf = open(claims_file, encoding="utf-8")
     claims_data = json.load(cf)
 
+    cdse_system = "http://www.isi.edu/cdse"
+
     prior_source = ""
     x_count = 0
 
@@ -44,7 +46,7 @@ def convert_json_file_to_aif(params: Parameters) -> None:
             claim_id = make_xml_safe(str(data["claim_id"]))
             claim_name = (
                 "<"
-                + make_xml_safe("http://www.isi.edu/gaia/" + source + "/claim_id/" + claim_id)
+                + make_xml_safe(cdse_system + source + "/claim_id/" + claim_id)
                 + ">"
             )
             af.write(claim_name + " a aida:Claim ;\n")
@@ -59,6 +61,8 @@ def convert_json_file_to_aif(params: Parameters) -> None:
             af.write('\taida:subtopic "' + str(data["subtopic"]) + '"^^xsd:string ;\n')
             af.write('\taida:claimTemplate "' + str(data["claim_template"]) + '"^^xsd:string ;\n')
 
+            associated_kes = []
+
             has_x_variable = data["x_variable_type_qnode"] is not None
             x_variable_name = "None"
             x_variable_entity_name = "None"
@@ -68,7 +72,7 @@ def convert_json_file_to_aif(params: Parameters) -> None:
                 x_variable_name = (
                     "<"
                     + make_xml_safe(
-                        "http://www.isi.edu/gaia/"
+                        cdse_system + "/"
                         + source
                         + "/claim/"
                         + claim_id
@@ -80,7 +84,7 @@ def convert_json_file_to_aif(params: Parameters) -> None:
                 x_variable_entity_name = (
                     "<"
                     + make_xml_safe(
-                        "http://www.isi.edu/gaia/"
+                        cdse_system + "/"
                         + source
                         + "/claim/"
                         + claim_id
@@ -95,7 +99,7 @@ def convert_json_file_to_aif(params: Parameters) -> None:
                     x_variable_justification_name = (
                         "<"
                         + make_xml_safe(
-                            "http://www.isi.edu/gaia/"
+                            cdse_system
                             + source
                             + "/x_variable/justification"
                             + str(x_count)
@@ -108,6 +112,7 @@ def convert_json_file_to_aif(params: Parameters) -> None:
                     )
                 x_count += 1
                 af.write("\taida:xVariable " + x_variable_name + " ;\n")
+                associated_kes.append(x_variable_name)
 
             af.write(
                 '\taida:naturalLanguageDescription "'
@@ -126,12 +131,38 @@ def convert_json_file_to_aif(params: Parameters) -> None:
                 claim_semantics = (
                     "<"
                     + make_xml_safe(
-                        "http://www.isi.edu/gaia/events/isi/qnode/claim-semantics-"
+                        cdse_system + "/clusters/isi/events/qnode/claim-semantics-"
                         + str(data["claim_semantics"]["event"]["qnode_id"])
                     )
                     + ">"
                 )
-                af.write("\taida:claimSemantics " + claim_semantics + " ;\n")
+                af.write("\taida:claimSemantics " + claim_semantics)
+                associated_kes.append(claim_semantics)
+
+            has_claim_arguments = (
+                has_claim_semantics
+                and data["claim_semantics"]["args"] is not None
+            )
+            claim_arguments = {}
+            if has_claim_arguments:
+                argument_objects = data["claim_semantics"]["args"]
+                af.write(",\n")
+                total_arguments = len(argument_objects)
+                for arg_number, (role, arg_qnodes) in enumerate(argument_objects.items()):
+                    if data["claim_semantics"]["args"][f"{role}"]["type"]["qnode_id"] is not None:
+                        claim_argument = (
+                            "<"
+                            + make_xml_safe(
+                                cdse_system + "/events/isi/qnode/EventArgument-"
+                                + str(data["claim_semantics"]["args"][f"{role}"]["type"]["qnode_id"])
+                            )
+                            + ">"
+                        )
+                        claim_arguments[claim_argument] = data["claim_semantics"]["args"][f"{role}"]
+                        associated_kes.append(claim_argument)
+                        end_punc = "" if arg_number + 1 == total_arguments else ",\n"
+                        af.write("\t\t" + claim_argument + end_punc)
+            af.write(" ;\n")
 
             has_claimer = data["claimer_type_qnode"] is not None
             claimer_name = "None"
@@ -139,7 +170,7 @@ def convert_json_file_to_aif(params: Parameters) -> None:
                 claimer_name = (
                     "<"
                     + make_xml_safe(
-                        "http://www.isi.edu/gaia/"
+                        cdse_system
                         + source
                         + "/claimer/"
                         + str(data["claimer_type_qnode"]["qnode_id"])
@@ -147,6 +178,7 @@ def convert_json_file_to_aif(params: Parameters) -> None:
                     + ">"
                 )
                 af.write("\taida:claimer " + claimer_name + " ;\n")
+                associated_kes.append(claimer_name)
             # Not supported optional: claimerAffiliation
             # TODO: check epistemic status is one of:
             # True_Certain, True_Uncertain, False_Certain, False_Uncertain, Unknown
@@ -172,7 +204,7 @@ def convert_json_file_to_aif(params: Parameters) -> None:
             claim_justification_name = (
                 "<"
                 + make_xml_safe(
-                    "http://www.isi.edu/gaia/claims/justifications/"
+                    cdse_system + "/claims/justifications/"
                     + source
                     + "/"
                     + str(start_offset)
@@ -182,15 +214,26 @@ def convert_json_file_to_aif(params: Parameters) -> None:
                 + ">"
             )
 
+            if associated_kes:
+                af.write('\taida:associatedKEs ')
+                len_associated_kes = len(associated_kes)
+                for i, ke in enumerate(associated_kes):
+                    end_punc = " ;\n" if i + 1 == len_associated_kes else ",\n"
+                    if i == 0:
+                        af.write(ke + end_punc)
+                    else:
+                        af.write('\t\t' + ke + end_punc)
+
             af.write("\taida:justifiedBy " + claim_justification_name + " ;\n")
             # NOTE: claimText is not in AIF spec, but included for completeness
-            af.write('\taida:claimText "' + str(data["claim_text"]) + '"^^xsd:string .\n\n')
+            af.write('\taida:claimText "' + str(data["claim_text"]) + '"^^xsd:string ;\n')
+            af.write('\taida:system <' + cdse_system + '> .\n\n')
 
             af.write(claim_justification_name + " a aida:TextJustification ;\n")
             af.write('\taida:endOffsetInclusive "' + str(end_offset_inclusive) + '"^^xsd:int ;\n')
             af.write('\taida:source "' + source + '"^^xsd:string ;\n')
             af.write('\taida:startOffset "' + str(start_offset) + '"^^xsd:int ;\n')
-            af.write("\taida:system <http://www.isi.edu> . \n\n")
+            af.write(f"\taida:system <{cdse_system}> . \n\n")
 
             if has_x_variable:
                 af.write(x_variable_name + " a aida:ClaimComponent ;\n")
@@ -217,8 +260,9 @@ def convert_json_file_to_aif(params: Parameters) -> None:
                 af.write(
                     '\taida:privateData "['
                     + reduce_whitespace(str(data["x_variable_type_qnode"]))
-                    + ']"^^xsd:string .\n\n'
+                    + ']"^^xsd:string ;\n'
                 )
+                af.write('\taida:system <' + cdse_system + '> .\n\n')
 
                 af.write(x_variable_entity_name + " a aida:Entity ;\n")
                 af.write(
@@ -239,7 +283,7 @@ def convert_json_file_to_aif(params: Parameters) -> None:
                         + ']"^^xsd:string ;\n'
                     )
                 # TODO add x_variable_type_qnode
-                af.write("\taida:system <https://www.isi.edu> . \n\n")
+                af.write("\taida:system <" + cdse_system + "> .\n\n")
 
                 if data["x_variable_type_qnode"]["span"] is not None:
                     start_offset = data["x_variable_type_qnode"]["span"][0]
@@ -250,7 +294,7 @@ def convert_json_file_to_aif(params: Parameters) -> None:
                     )
                     af.write('\taida:source "' + source + '"^^xsd:string ;\n')
                     af.write('\taida:startOffset "' + str(start_offset) + '"^^xsd:int ;\n')
-                af.write("\taida:system <http://www.isi.edu> . \n\n")
+                af.write("\taida:system <" + cdse_system + "> .\n\n")
 
             # <http://www.isi.edu/gaia/entities/uiuc/L0C04959A/L0C04959A-author> a aida:Entity ;
             #    aida:confidence [ a aida:Confidence ;
@@ -297,6 +341,7 @@ def convert_json_file_to_aif(params: Parameters) -> None:
                     + reduce_whitespace(str(data["claimer_type_qnode"]))
                     + ']"^^xsd:string .\n\n'
                 )
+                af.write("\taida:system <" + cdse_system + "> .\n\n")
 
             if has_claim_location:
                 af.write("aida:" + claim_location + " a aida:ClaimComponent ;\n")
@@ -308,8 +353,20 @@ def convert_json_file_to_aif(params: Parameters) -> None:
                     + str(data["claim_location_qnode"])
                     + '"^^xsd:string .\n\n'
                 )
+                af.write("\taida:system <" + cdse_system + "> .\n\n")
 
             if has_claim_semantics:
+                # SameAsCluster
+                af.write(claim_semantics + " a aida:SameAsCluster ;\n")
+                claim_semantics_event = make_xml_safe(
+                    cdse_system
+                    + "/events/isi/qnode/claim-semantics-"
+                    + str(data["claim_semantics"]["event"]["qnode_id"])
+                )
+                af.write('\taida:prototype <' + claim_semantics_event + '> ;\n')
+                af.write("\taida:system <" + cdse_system + "> .\n\n")
+
+                # Event
                 af.write(claim_semantics + " a aida:Event ;\n")
                 af.write(
                     '\taida:componentName "'
@@ -326,8 +383,36 @@ def convert_json_file_to_aif(params: Parameters) -> None:
                 af.write(
                     '\taida:privateData "['
                     + reduce_whitespace(str(data["claim_semantics"])).replace('"', "")
-                    + ']"^^xsd:string .\n\n'
+                    + ']"^^xsd:string ;\n'
                 )
+                af.write("\taida:system <" + cdse_system + "> .\n\n")
+
+                for argument, arg_data in claim_arguments.items():
+                    af.write(argument + " a aida:EventArgument ;\n")
+                    af.write(
+                        '\taida:componentName "'
+                        + make_xml_safe(str(arg_data["type"]["text"]))
+                        + '"^^xsd:string ;\n'
+                    )
+                    af.write(
+                        '\taida:componentType "'
+                        + str(arg_data["type"]["qnode_id"])
+                        + '"^^xsd:string ;\n'
+                    )
+                    if arg_data.get("identity") is not None and arg_data["identity"]["qnode_id"] is not None:
+                        af.write(
+                            '\taida:componentIdentity "'
+                            + str(arg_data["identity"]["qnode_id"])
+                            + '"^^xsd:string ;\n'
+                        )
+                    # TODO: args|source-patient/var|:identity:qnode_id or type
+
+                    af.write(
+                        '\taida:privateData "['
+                        + reduce_whitespace(str(arg_data)).replace('"', "")
+                        + ']"^^xsd:string ;\n'
+                    )
+                    af.write("\taida:system <" + cdse_system + "> .\n\n")
 
     if af:
         af.close()
