@@ -2,7 +2,7 @@
 import argparse
 import csv
 from pathlib import Path
-from typing import List
+from typing import List, Tuple
 
 import numpy as np
 from sentence_transformers import SentenceTransformer, util
@@ -24,13 +24,13 @@ class TemplateIdentifier(object):
         """Encode templates using the SentenceBERT model."""
         self.encoded_templates = self.similarity_model.encode(templates, convert_to_tensor=True)
 
-    def identify_template(self, claim_text: str) -> str:
+    def identify_template(self, claim_text: str) -> Tuple[str, float]:
         """Encode and compare claim text to encoded templates to find most similar one."""
         encoded_text = self.similarity_model.encode(claim_text, convert_to_tensor=True)
         cos_matrix = util.pytorch_cos_sim(encoded_text, self.encoded_templates)
         sim_row = cos_matrix[0]
         # Currently taking the highest value but we might want to have a None if all of them suck
-        return self.templates[int(np.argmax(sim_row))]
+        return self.templates[int(np.argmax(sim_row))], np.max(sim_row)
 
 
 def main(claims: Path, templates_file: Path, ss_model: str, output: Path) -> None:
@@ -46,10 +46,12 @@ def main(claims: Path, templates_file: Path, ss_model: str, output: Path) -> Non
 
     claims_dataset = ClaimDataset.load_from_key_value_store(claims)
     for claim in tqdm(claims_dataset, total=len(claims_dataset.claims)):
-        template = template_identifier.identify_template(claim.claim_text)
+        template, confidence = template_identifier.identify_template(claim.claim_text)
         claim.claim_template = template
         claim.topic = topics_info[claim.claim_template]["topic"]
         claim.subtopic = topics_info[claim.claim_template]["subtopic"]
+
+        claim.add_theory("template_confidence_score", confidence)
 
     claims_dataset.save_to_key_value_store(output)
 

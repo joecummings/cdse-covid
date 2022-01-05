@@ -296,6 +296,7 @@ def get_claim_semantics(
             description=best_qnode.get("definition"),
             from_query=best_qnode.get("pb"),
             qnode_id=best_qnode.get("qnode"),
+            confidence=best_qnode.get("score")
         )
 
         claim_args = {k: {"type": w} for k, w in wd.items()}
@@ -391,6 +392,7 @@ def create_wikidata_qnodes(
         text = best_option["rawName"] if best_option["rawName"] else None
         qnode = best_option["qnode"] if best_option["qnode"] else None
         description = best_option["definition"] if best_option["definition"] else None
+        score = None
     elif len(all_options) > 0:
         for option in all_options:
             score = option.get("linking_score", 0)
@@ -399,9 +401,9 @@ def create_wikidata_qnodes(
                 best_option = option
         if best_option:
             text = best_option["label"][0] if best_option["label"] else None
+            score = top_score
             qnode = best_option["qnode"] if best_option["qnode"] else None
             description = best_option["description"][0] if best_option["description"] else None
-
     if best_option:
         return WikidataQnode(
             text=text,
@@ -411,6 +413,7 @@ def create_wikidata_qnodes(
             qnode_id=qnode,
             description=description,
             from_query=link["query"],
+            confidence=score,
         )
 
     logging.warning("No WikiData links found for '%s'.", link["query"])
@@ -437,8 +440,9 @@ def get_overlay_result(
                 return appended_qnode_data, is_root
             # If there is more than one, do string similarity
             # (It's unlikely that there will be a ton)
-            best_qnode = get_best_qnode_by_semantic_similarity(label, qnode_dicts, spacy_model)
+            best_qnode, score = get_best_qnode_by_semantic_similarity(label, qnode_dicts, spacy_model)
             if best_qnode:
+                appended_qnode_data["score"] = score
                 appended_qnode_data.update(best_qnode)
         if len(appended_qnode_data) > 1:
             return appended_qnode_data, is_root
@@ -465,7 +469,7 @@ def get_master_result(
             # Else, try to find the "best" result
             # First find the qnode with the best string similarity
             # (to be used as backup)
-            qnode_with_best_name = get_best_qnode_by_semantic_similarity(
+            qnode_with_best_name, score = get_best_qnode_by_semantic_similarity(
                 label, qnode_dicts, spacy_model
             )
             # Next, try to find the most general qnode
@@ -474,6 +478,7 @@ def get_master_result(
                 appended_qnode_data.update(most_general_qnode)
                 return appended_qnode_data, is_root
             elif qnode_with_best_name:
+                appended_qnode_data["score"] = score
                 appended_qnode_data.update(qnode_with_best_name)
                 return appended_qnode_data, is_root
 
@@ -499,6 +504,7 @@ def get_kgtk_result_for_event(
 
         if selected_qnode:
             definition = selected_qnode.get("definition")
+            score = selected_qnode.get("score")
             if not definition and selected_qnode.get("description"):
                 definition = selected_qnode["description"][0]
             return {
@@ -506,13 +512,14 @@ def get_kgtk_result_for_event(
                 "name": selected_qnode.get("rawName") or selected_qnode["label"][0],
                 "qnode": selected_qnode["qnode"],
                 "definition": definition,
+                "score": score
             }, is_root
     return {}, False
 
 
 def get_best_qnode_by_semantic_similarity(
     pb: str, qnode_dicts: List[Dict[str, str]], spacy_model: Language
-) -> Optional[Dict[str, str]]:
+) -> Optional[Tuple[Dict[str, str], float]]:
     """Return the best qnode name for the given PropBank frame ID.
 
     This computes semantic similarity between two strings by
@@ -536,7 +543,7 @@ def get_best_qnode_by_semantic_similarity(
             best_qname = qnode_name
     if best_score == 0.0:
         logging.warning("No best score found for %s.", pb)
-    return qnames_to_dicts.get(best_qname)
+    return qnames_to_dicts.get(best_qname), best_score
 
 
 def get_most_general_qnode(

@@ -14,6 +14,7 @@ class Mention:
     entity: Optional[EDLEntity] = None
     doc_id: Optional[str] = None
     span: Optional[Tuple[int, int]] = None
+    confidence: Optional[float] = 1.0
 
 
 @dataclass
