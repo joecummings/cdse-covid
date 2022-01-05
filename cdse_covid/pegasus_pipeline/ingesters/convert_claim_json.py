@@ -2,6 +2,8 @@
 import json
 import logging
 import os
+from random import randint
+from typing import Tuple, Any
 
 from aida_tools.utils import make_xml_safe, reduce_whitespace
 from vistautils.parameters import Parameters
@@ -23,10 +25,166 @@ def convert_json_file_to_aif(params: Parameters) -> None:
     cdse_system = "http://www.isi.edu/cdse"
 
     prior_source = ""
-    x_count = 0
 
     af = None
     aif_file = None
+
+    var_types_to_aida_classes = {
+        "x_variable": "xVariable",
+        "claimer": "claimer"
+    }
+
+    def get_name_data(data: Any, var_type: str, source: str, claim_id: str) -> Tuple[str, str, str]:
+        """Get a variable's name, entity name, and justification name."
+        var_type can be 'x_variable' or 'claimer'
+        """
+        var_count = 0
+        variable_justification_name = "None"
+        variable_name = (
+            "<"
+            + make_xml_safe(
+                cdse_system + "/"
+                + source
+                + "/claim/"
+                + claim_id
+                + f"/{var_type}/"
+                + str(var_count)
+            )
+            + ">"
+        )
+        variable_entity_name = (
+            "<"
+            + make_xml_safe(
+                cdse_system + "/"
+                + source
+                + "/claim/"
+                + claim_id
+                + f"/{var_type}/entity/"
+                + str(var_count)
+            )
+            + ">"
+        )
+        if (
+                data[f"{var_type}_identity_qnode"] is not None
+                and data[f"{var_type}_identity_qnode"]["span"] is not None
+        ):
+            start_offset = data[f"{var_type}_identity_qnode"]["span"][0]
+            end_offset_inclusive = data[f"{var_type}_identity_qnode"]["span"][1]
+            variable_justification_name = (
+                "<"
+                + make_xml_safe(
+                    cdse_system
+                    + source
+                    + f"/{var_type}/justification"
+                    + str(var_count)
+                    + "/"
+                    + str(start_offset)
+                    + "/"
+                    + str(end_offset_inclusive)
+                )
+                + ">"
+            )
+        elif data[f"{var_type}_type_qnode"]["span"] is not None:
+            start_offset = data[f"{var_type}_type_qnode"]["span"][0]
+            end_offset_inclusive = data[f"{var_type}_type_qnode"]["span"][1]
+            variable_justification_name = (
+                "<"
+                + make_xml_safe(
+                    cdse_system
+                    + source
+                    + f"/{var_type}/justification"
+                    + str(var_count)
+                    + "/"
+                    + str(start_offset)
+                    + "/"
+                    + str(end_offset_inclusive)
+                )
+                + ">"
+            )
+        var_count += 1
+        af.write(f"\taida:{var_types_to_aida_classes[var_type]} " + variable_name + " ;\n")
+        associated_kes.append(variable_entity_name)
+        return variable_name, variable_entity_name, variable_justification_name
+
+    def generate_nil_id() -> str:
+        """Return a NILX ID to use if a component lacks an entity qnode."""
+        digits = []
+        for _ in range(7):
+            digits.append(str(randint(0, 9)))
+        return "NIL" + "".join(digits)
+
+    def write_qnode_data(
+            data: Any,
+            var_type: str,
+            variable_name: str,
+            variable_entity_name: str,
+            variable_justification_name: str
+    ) -> None:
+        """Write the component, entity, and justifications for the variable."""
+        af.write(variable_name + " a aida:ClaimComponent ;\n")
+        af.write(
+            '\taida:componentName "'
+            + make_xml_safe(str(data[f"{var_type}_type_qnode"]["text"]))
+            + '"^^xsd:string ;\n'
+        )
+        af.write(
+            '\taida:componentType "'
+            + str(data[f"{var_type}_type_qnode"]["qnode_id"])
+            + '"^^xsd:string ;\n'
+        )
+        if (
+                data[f"{var_type}_identity_qnode"] is not None
+                and data[f"{var_type}_identity_qnode"]["qnode_id"] is not None
+        ):
+            variable_entity_data = data[f"{var_type}_identity_qnode"]
+            variable_entity_qnode = variable_entity_data["qnode_id"]
+            af.write(
+                '\taida:componentIdentity "'
+                + str(variable_entity_qnode)
+                + '"^^xsd:string ;\n'
+            )
+        else:
+            variable_entity_data = data[f"{var_type}_type_qnode"]
+            variable_entity_qnode = generate_nil_id()
+        af.write("\taida:componentKE " + variable_entity_name + " ;\n")
+        af.write(
+            '\taida:privateData "['
+            + reduce_whitespace(str(variable_entity_data))
+            + ']"^^xsd:string ;\n'
+        )
+        af.write('\taida:system <' + cdse_system + '> .\n\n')
+
+        af.write(variable_entity_name + " a aida:Entity ;\n")
+        af.write(
+            '\taida:text "'
+            + make_xml_safe(str(variable_entity_data["text"]))
+            + '"^^xsd:string ;\n'
+        )
+        af.write(
+            '\taida:name "'
+            + str(variable_entity_qnode)
+            + '"^^xsd:string ;\n'
+        )
+        af.write("\taida:justifiedBy " + variable_justification_name + " ;\n")
+        if data[var_type]["entity"] is not None:
+            af.write(
+                '\taida:privateData "['
+                + reduce_whitespace(str(data[var_type]["entity"]))
+                + ']"^^xsd:string ;\n'
+            )
+        af.write("\taida:system <" + cdse_system + "> .\n\n")
+
+        if variable_entity_data["span"] is not None:
+            start_offset = variable_entity_data["span"][0]
+            end_offset_inclusive = variable_entity_data["span"][1]
+            af.write(variable_justification_name + " a aida:TextJustification ;\n")
+            af.write(
+                '\taida:endOffsetInclusive "' + str(end_offset_inclusive) + '"^^xsd:int ;\n'
+            )
+            af.write('\taida:source "' + source + '"^^xsd:string ;\n')
+            af.write('\taida:startOffset "' + str(start_offset) + '"^^xsd:int ;\n')
+            af.write("\taida:system <" + cdse_system + "> .\n\n")
+
     for data in claims_data:
         source = os.path.splitext(str(data["doc_id"]))[0]
 
@@ -40,7 +198,8 @@ def convert_json_file_to_aif(params: Parameters) -> None:
                 "@prefix aida: <https://raw.githubusercontent.com/NextCenturyCorporation/AIDA-Interchange-Format/develop/java/src/main/resources/com/ncc/aif/aida_ontology.shacl> .\n"
             )
             af.write("@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .\n\n")
-            x_count = 0
+            event_count = 0
+            arg_count = 0
             prior_source = source
         if af:
             claim_id = make_xml_safe(str(data["claim_id"]))
@@ -69,50 +228,9 @@ def convert_json_file_to_aif(params: Parameters) -> None:
             x_variable_justification_name = "None"
 
             if has_x_variable:
-                x_variable_name = (
-                    "<"
-                    + make_xml_safe(
-                        cdse_system + "/"
-                        + source
-                        + "/claim/"
-                        + claim_id
-                        + "/x_variable/"
-                        + str(x_count)
-                    )
-                    + ">"
+                x_variable_name, x_variable_entity_name, x_variable_justification_name = (
+                    get_name_data(data, "x_variable", source, claim_id)
                 )
-                x_variable_entity_name = (
-                    "<"
-                    + make_xml_safe(
-                        cdse_system + "/"
-                        + source
-                        + "/claim/"
-                        + claim_id
-                        + "/x_variable/entity/"
-                        + str(x_count)
-                    )
-                    + ">"
-                )
-                if data["x_variable_type_qnode"]["span"] is not None:
-                    start_offset = data["x_variable_type_qnode"]["span"][0]
-                    end_offset_inclusive = data["x_variable_type_qnode"]["span"][1]
-                    x_variable_justification_name = (
-                        "<"
-                        + make_xml_safe(
-                            cdse_system
-                            + source
-                            + "/x_variable/justification"
-                            + str(x_count)
-                            + "/"
-                            + str(start_offset)
-                            + "/"
-                            + str(end_offset_inclusive)
-                        )
-                        + ">"
-                    )
-                x_count += 1
-                af.write("\taida:xVariable " + x_variable_name + " ;\n")
-                associated_kes.append(x_variable_name)
 
             af.write(
                 '\taida:naturalLanguageDescription "'
@@ -160,25 +278,21 @@ def convert_json_file_to_aif(params: Parameters) -> None:
                         )
                         claim_arguments[claim_argument] = data["claim_semantics"]["args"][f"{role}"]
                         associated_kes.append(claim_argument)
-                        end_punc = "" if arg_number + 1 == total_arguments else ",\n"
+                        end_punc = " ;\n" if arg_number + 1 == total_arguments else ",\n"
                         af.write("\t\t" + claim_argument + end_punc)
-            af.write(" ;\n")
+            else:
+                af.write(" ;\n")
 
             has_claimer = data["claimer_type_qnode"] is not None
             claimer_name = "None"
+            claimer_entity_name = "None"
+            claimer_justification_name = "None"
+
             if has_claimer:
-                claimer_name = (
-                    "<"
-                    + make_xml_safe(
-                        cdse_system
-                        + source
-                        + "/claimer/"
-                        + str(data["claimer_type_qnode"]["qnode_id"])
-                    )
-                    + ">"
+                claimer_name, claimer_entity_name, claimer_justification_name = (
+                    get_name_data(data, "claimer", source, claim_id)
                 )
-                af.write("\taida:claimer " + claimer_name + " ;\n")
-                associated_kes.append(claimer_name)
+
             # Not supported optional: claimerAffiliation
             # TODO: check epistemic status is one of:
             # True_Certain, True_Uncertain, False_Certain, False_Uncertain, Unknown
@@ -236,65 +350,13 @@ def convert_json_file_to_aif(params: Parameters) -> None:
             af.write(f"\taida:system <{cdse_system}> . \n\n")
 
             if has_x_variable:
-                af.write(x_variable_name + " a aida:ClaimComponent ;\n")
-                af.write(
-                    '\taida:componentName "'
-                    + make_xml_safe(str(data["x_variable_type_qnode"]["text"]))
-                    + '"^^xsd:string ;\n'
+                write_qnode_data(
+                    data,
+                    "x_variable",
+                    x_variable_name,
+                    x_variable_entity_name,
+                    x_variable_justification_name
                 )
-                af.write(
-                    '\taida:componentType "'
-                    + str(data["x_variable_type_qnode"]["qnode_id"])
-                    + '"^^xsd:string ;\n'
-                )
-                if (
-                    data["x_variable_identity_qnode"] is not None
-                    and data["x_variable_identity_qnode"]["qnode_id"] is not None
-                ):
-                    af.write(
-                        '\taida:componentIdentity "'
-                        + str(data["x_variable_identity_qnode"]["qnode_id"])
-                        + '"^^xsd:string ;\n'
-                    )
-                af.write("\taida:componentKE " + x_variable_entity_name + " ;\n")
-                af.write(
-                    '\taida:privateData "['
-                    + reduce_whitespace(str(data["x_variable_type_qnode"]))
-                    + ']"^^xsd:string ;\n'
-                )
-                af.write('\taida:system <' + cdse_system + '> .\n\n')
-
-                af.write(x_variable_entity_name + " a aida:Entity ;\n")
-                af.write(
-                    '\taida:text "'
-                    + make_xml_safe(str(data["x_variable_type_qnode"]["text"]))
-                    + '"^^xsd:string ;\n'
-                )
-                af.write(
-                    '\taida:name "'
-                    + str(data["x_variable_type_qnode"]["qnode_id"])
-                    + '"^^xsd:string ;\n'
-                )
-                af.write("\taida:justifiedBy " + x_variable_justification_name + " ;\n")
-                if data["x_variable"]["entity"] is not None:
-                    af.write(
-                        '\taida:privateData "['
-                        + reduce_whitespace(str(data["x_variable"]["entity"]))
-                        + ']"^^xsd:string ;\n'
-                    )
-                # TODO add x_variable_type_qnode
-                af.write("\taida:system <" + cdse_system + "> .\n\n")
-
-                if data["x_variable_type_qnode"]["span"] is not None:
-                    start_offset = data["x_variable_type_qnode"]["span"][0]
-                    end_offset_inclusive = data["x_variable_type_qnode"]["span"][1]
-                    af.write(x_variable_justification_name + " a aida:TextJustification ;\n")
-                    af.write(
-                        '\taida:endOffsetInclusive "' + str(end_offset_inclusive) + '"^^xsd:int ;\n'
-                    )
-                    af.write('\taida:source "' + source + '"^^xsd:string ;\n')
-                    af.write('\taida:startOffset "' + str(start_offset) + '"^^xsd:int ;\n')
-                af.write("\taida:system <" + cdse_system + "> .\n\n")
 
             # <http://www.isi.edu/gaia/entities/uiuc/L0C04959A/L0C04959A-author> a aida:Entity ;
             #    aida:confidence [ a aida:Confidence ;
@@ -316,32 +378,13 @@ def convert_json_file_to_aif(params: Parameters) -> None:
             #      "span": [1744, 1776]
 
             if has_claimer:
-                af.write(claimer_name + " a aida:ClaimComponent ;\n")
-                af.write(
-                    '\taida:componentName "'
-                    + str(data["claimer_type_qnode"]["text"])
-                    + '"^^xsd:string ;\n'
+                write_qnode_data(
+                    data,
+                    "claimer",
+                    claimer_name,
+                    claimer_entity_name,
+                    claimer_justification_name
                 )
-                af.write(
-                    '\taida:componentIdentity "'
-                    + str(data["claimer_type_qnode"]["qnode_id"])
-                    + '"^^xsd:string ;\n'
-                )
-                if (
-                    data["claimer_identity_qnode"] is not None
-                    and data["claimer_identity_qnode"]["qnode_id"] is not None
-                ):
-                    af.write(
-                        '\taida:componentIdentity "'
-                        + str(data["claimer_identity_qnode"]["qnode_id"])
-                        + '"^^xsd:string ;\n'
-                    )
-                af.write(
-                    '\taida:privateData "['
-                    + reduce_whitespace(str(data["claimer_type_qnode"]))
-                    + ']"^^xsd:string .\n\n'
-                )
-                af.write("\taida:system <" + cdse_system + "> .\n\n")
 
             if has_claim_location:
                 af.write("aida:" + claim_location + " a aida:ClaimComponent ;\n")
@@ -358,16 +401,20 @@ def convert_json_file_to_aif(params: Parameters) -> None:
             if has_claim_semantics:
                 # SameAsCluster
                 af.write(claim_semantics + " a aida:SameAsCluster ;\n")
-                claim_semantics_event = make_xml_safe(
-                    cdse_system
-                    + "/events/isi/qnode/claim-semantics-"
-                    + str(data["claim_semantics"]["event"]["qnode_id"])
+                claim_semantics_event = (
+                    "<"
+                    + make_xml_safe(
+                        cdse_system
+                        + "/events/isi/qnode/claim-semantics-"
+                        + str(data["claim_semantics"]["event"]["qnode_id"])
+                    )
+                    + ">"
                 )
-                af.write('\taida:prototype <' + claim_semantics_event + '> ;\n')
+                af.write('\taida:prototype ' + claim_semantics_event + ' ;\n')
                 af.write("\taida:system <" + cdse_system + "> .\n\n")
 
                 # Event
-                af.write(claim_semantics + " a aida:Event ;\n")
+                af.write(claim_semantics_event + " a aida:Event ;\n")
                 af.write(
                     '\taida:componentName "'
                     + make_xml_safe(str(data["claim_semantics"]["event"]["text"]))
