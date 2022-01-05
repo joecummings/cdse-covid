@@ -6,6 +6,7 @@ from typing import List, Tuple
 
 import numpy as np
 from sentence_transformers import SentenceTransformer, util
+import torch
 from tqdm import tqdm
 
 from cdse_covid.claim_detection.run_claim_detection import ClaimDataset
@@ -30,7 +31,7 @@ class TemplateIdentifier(object):
         cos_matrix = util.pytorch_cos_sim(encoded_text, self.encoded_templates)
         sim_row = cos_matrix[0]
         # Currently taking the highest value but we might want to have a None if all of them suck
-        return self.templates[int(np.argmax(sim_row))], np.max(sim_row)
+        return self.templates[int(np.argmax(sim_row))], float(torch.max(sim_row))
 
 
 def main(claims: Path, templates_file: Path, ss_model: str, output: Path) -> None:
