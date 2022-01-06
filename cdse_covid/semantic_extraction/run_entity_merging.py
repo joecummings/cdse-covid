@@ -179,9 +179,9 @@ def main(
                     claim.x_variable_identity_qnode = create_wikidata_qnode_from_id(
                         claim.x_variable, entity_qnode
                     )
-                claim.x_variable_type_qnode = type_mapping_to_qnode[
+                claim.x_variable_type_qnode = type_mapping_to_qnode.get(
                     x_variable_mention.parent_entity.ent_type
-                ]
+                )
 
         if claim.claimer:
             claimer_mention = find_knowledge_entity(all_kes, claim.claimer.span, include_contains)
@@ -195,9 +195,9 @@ def main(
                     claim.claimer_identity_qnode = create_wikidata_qnode_from_id(
                         claim.claimer, entity_qnode
                     )
-                claim.claimer_type_qnode = type_mapping_to_qnode[
+                claim.claimer_type_qnode = type_mapping_to_qnode.get(
                     claimer_mention.parent_entity.ent_type
-                ]
+                )
 
         if claim.claim_semantics:
             for _, arg in claim.claim_semantics.args.items():
@@ -217,7 +217,9 @@ def main(
                                     arg["identity"], entity_qnode_id
                                 )
                                 arg["identity"] = arg_qnode
-                            arg["type"] = type_mapping_to_qnode[arg_mention.parent_entity.ent_type]
+                            arg["type"] = type_mapping_to_qnode.get(
+                                arg_mention.parent_entity.ent_type
+                            )
 
     claim_ds.save_to_key_value_store(output)
 
