@@ -296,7 +296,7 @@ def get_claim_semantics(
             description=best_qnode.get("definition"),
             from_query=best_qnode.get("pb"),
             qnode_id=best_qnode.get("qnode"),
-            confidence=best_qnode.get("score")
+            confidence=best_qnode.get("score"),
         )
 
         claim_args = {k: {"type": w} for k, w in wd.items()}
@@ -440,9 +440,11 @@ def get_overlay_result(
                 return appended_qnode_data, is_root
             # If there is more than one, do string similarity
             # (It's unlikely that there will be a ton)
-            best_qnode, score = get_best_qnode_by_semantic_similarity(label, qnode_dicts, spacy_model)
+            best_qnode, score = get_best_qnode_by_semantic_similarity(
+                label, qnode_dicts, spacy_model
+            )
             if best_qnode:
-                appended_qnode_data["score"] = score
+                appended_qnode_data["score"] = score  # type: ignore
                 appended_qnode_data.update(best_qnode)
         if len(appended_qnode_data) > 1:
             return appended_qnode_data, is_root
@@ -478,7 +480,7 @@ def get_master_result(
                 appended_qnode_data.update(most_general_qnode)
                 return appended_qnode_data, is_root
             elif qnode_with_best_name:
-                appended_qnode_data["score"] = score
+                appended_qnode_data["score"] = score  # type: ignore
                 appended_qnode_data.update(qnode_with_best_name)
                 return appended_qnode_data, is_root
 
@@ -512,14 +514,14 @@ def get_kgtk_result_for_event(
                 "name": selected_qnode.get("rawName") or selected_qnode["label"][0],
                 "qnode": selected_qnode["qnode"],
                 "definition": definition,
-                "score": score
+                "score": score,
             }, is_root
     return {}, False
 
 
 def get_best_qnode_by_semantic_similarity(
     pb: str, qnode_dicts: List[Dict[str, str]], spacy_model: Language
-) -> Optional[Tuple[Dict[str, str], float]]:
+) -> Tuple[Optional[Dict[str, str]], float]:
     """Return the best qnode name for the given PropBank frame ID.
 
     This computes semantic similarity between two strings by
