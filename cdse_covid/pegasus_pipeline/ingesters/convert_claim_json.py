@@ -234,10 +234,6 @@ def convert_json_file_to_aif(params: Parameters) -> None:
             af.write('\taida:sourceDocument "' + str(data["doc_id"]) + '"^^xsd:string ;\n')
             claim_id = make_xml_safe(str(data["claim_id"]))
             af.write('\taida:claimId "' + claim_id + '"^^xsd:string ;\n')
-            # Not supported: queryId
-            #      af.write('\taida:queryId "None" ;\n')
-            # Not supported: importance
-            #      af.write('\taida:importance "0.0"^^xsd:double ;\n')
             af.write('\taida:topic "' + str(data["topic"]) + '"^^xsd:string ;\n')
             af.write('\taida:subtopic "' + str(data["subtopic"]) + '"^^xsd:string ;\n')
             af.write('\taida:claimTemplate "' + str(data["claim_template"]) + '"^^xsd:string ;\n')
@@ -265,7 +261,6 @@ def convert_json_file_to_aif(params: Parameters) -> None:
                 and data["claim_semantics"]["event"] is not None
                 and data["claim_semantics"]["event"]["qnode_id"] is not None
             )
-            # alternative key check syntax: 'qnode_id' in data['claim_semantics']['event']
             claim_semantics = "None"
             claim_semantics_id = "None"
             claim_arguments = {}
@@ -318,14 +313,6 @@ def convert_json_file_to_aif(params: Parameters) -> None:
                     get_name_data(data, "claimer", source, claim_id)
                 )
 
-            # Not supported optional: claimerAffiliation
-            # TODO: check epistemic status is one of:
-            # True_Certain, True_Uncertain, False_Certain, False_Uncertain, Unknown
-            # STRING?      af.write('\taida:epistemic aida:' + '"Unknown"^^xsd:string' + ' ;\n')
-            # TODO: check sentiment status is one of:
-            # Positive, Negative, Mixed, Neutral_Unknown
-            # STRING?      af.write('\taida:sentiment aida:' + '"NeutralUnknown"^^xsd:string' + ' ;\n')
-
             has_claim_date_time = data["claim_date_time"] is not None
             if has_claim_date_time:
                 # TODO: no claim_date_time values have been sent, they will need to be converted to LDCTime
@@ -336,7 +323,6 @@ def convert_json_file_to_aif(params: Parameters) -> None:
             if has_claim_location:
                 claim_location = make_xml_safe(data["claim_location_qnode"])
                 af.write("\taida:claimLocation aida:" + claim_location + " ;\n")
-            # Not supported: associatedKEs, identicalClaims, relatedClaims, supportingClaims, refutingClaims
 
             start_offset = data["claim_span"][0]
             end_offset_inclusive = data["claim_span"][1]
@@ -364,7 +350,6 @@ def convert_json_file_to_aif(params: Parameters) -> None:
                         af.write('\t\t' + ke + end_punc)
 
             af.write("\taida:justifiedBy " + claim_justification_name + " ;\n")
-            # NOTE: claimText is not in AIF spec, but included for completeness
             af.write('\taida:claimText "' + str(data["claim_text"]) + '"^^xsd:string ;\n')
             write_system()
 
@@ -382,25 +367,6 @@ def convert_json_file_to_aif(params: Parameters) -> None:
                     x_variable_entity_name,
                     x_variable_justification_name
                 )
-
-            # <http://www.isi.edu/gaia/entities/uiuc/L0C04959A/L0C04959A-author> a aida:Entity ;
-            #    aida:confidence [ a aida:Confidence ;
-            #            aida:confidenceValue 1e+00 ;
-            #            aida:system <http://www.uiuc.edu> ] ;
-            #    aida:link [ a aida:LinkAssertion ;
-            #            aida:confidence [ a aida:Confidence ;
-            #                    aida:confidenceValue 1e+00 ;
-            #                    aida:system <http://www.uiuc.edu> ] ;
-            #            aida:linkTarget "NIL000000055"^^xsd:string ;
-            #            aida:system <http://www.uiuc.edu> ] ;
-            #    aida:system <https://www.isi.edu> .
-
-            #    "x_variable": {
-            #      "text": "transmissible infectious disease",
-            #      "mention_id": null,
-            #      "entity": { "ent_id": "0016164", "ent_type": "MHI" },
-            #      "doc_id": "L0C04ATRE.rsd",
-            #      "span": [1744, 1776]
 
             if has_claimer:
                 write_qnode_data(
