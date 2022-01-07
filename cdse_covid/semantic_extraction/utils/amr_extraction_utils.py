@@ -187,7 +187,7 @@ def create_node_to_token_dict(amr: AMR, alignments: List[AMR_Alignment]) -> Dict
             for token in tokens:
                 token_text = amr_tokens[int(token)]
                 # ignore punctuation
-                if token_text not in string.punctuation:
+                if token_text not in string.punctuation and token_text is not "<ROOT>":
                     nodes_to_token_lists[node].append(token_text)
     return {node: " ".join(token_list) for node, token_list in nodes_to_token_lists.items()}
 
