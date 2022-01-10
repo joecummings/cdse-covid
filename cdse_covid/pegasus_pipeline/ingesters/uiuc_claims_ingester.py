@@ -29,10 +29,7 @@ def main(claims_file: Path, output: Path) -> None:
             local_idx = 0
             sentence: str = claim["sentence"].split()
             for token_idx, sentence_token in enumerate(sentence):
-                claim_sentence_tokens_to_offsets[sentence_token] = (
-                    idx,
-                    idx + len(sentence_token),
-                )
+                claim_sentence_tokens_to_offsets[sentence_token] = (idx, idx + len(sentence_token))
                 local_idx += len(sentence_token)
                 if token_idx + 1 < len(sentence):
                     idx += claim["sentence"].find(

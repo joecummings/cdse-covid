@@ -41,6 +41,10 @@ unify:
     output: "%experiments_root%/output.json"
     python_file: "%project_root%/cdse_covid/pegasus_pipeline/merge.py"
 
+aif:
+    python_file: "%project_root%/cdse_covid/pegasus_pipeline/ingesters/convert_claim_json.py"
+    aif_output_dir: "%experiments_root%/aif_output
+
 uiuc_claims:
     json_file_of_claims: "%project_root%/data/claim_all.json"
     ingester: "%project_root%/cdse_covid/pegasus_pipeline/ingesters/uiuc_claims_ingester.py"

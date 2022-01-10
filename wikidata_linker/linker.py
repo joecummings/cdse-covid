@@ -3,8 +3,6 @@ from typing import Any, Optional, Sequence
 
 import torch
 import torch.multiprocessing
-
-# from torch.utils.data import DataLoader
 from transformers import PreTrainedTokenizer, RobertaForSequenceClassification, RobertaTokenizerFast
 
 

@@ -307,10 +307,7 @@ def filter_duplicate_candidates(
 
 
 def filter_candidates_with_scores(
-    scores: List[float],
-    candidates: List[MutableMapping[str, Any]],
-    k: int,
-    thresh: float = 0.01,
+    scores: List[float], candidates: List[MutableMapping[str, Any]], k: int, thresh: float = 0.01
 ) -> List[MutableMapping[str, Any]]:
     """Returns top k candidates according to scores and threshold.
 
