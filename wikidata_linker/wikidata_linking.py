@@ -465,7 +465,9 @@ def disambiguate_refvar_kgtk(
         other_candidate_scores = get_linker_scores(
             cleaned_refvar, False, ARGUMENT_QNODES, linking_model, device
         )["scores"]
-        top3_other_qnodes = filter_candidates_with_scores(other_candidate_scores, ARGUMENT_QNODES, k=k)
+        top3_other_qnodes = filter_candidates_with_scores(
+            other_candidate_scores, ARGUMENT_QNODES, k=k
+        )
         for candidate in top3_other_qnodes:
             # description can be empty sometimes on less popular qnodes
             definition = candidate["description"][0] if candidate["description"] else ""
