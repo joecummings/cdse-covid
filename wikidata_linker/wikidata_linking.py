@@ -380,21 +380,23 @@ def disambiguate_verb_kgtk(
             options.append(option)
     option_qnodes = [option["qnode"] for option in options]
 
-    # other_candidate_scores = get_linker_scores(
-    #     cleaned_description, False, EVENT_QNODES, linking_model, device
-    # )["scores"]
-    # top3_other_qnodes = filter_candidates_with_scores(other_candidate_scores, EVENT_QNODES, k=k)
     other_options = []
-    # for candidate in top3_other_qnodes:
-    #     # description can be empty sometimes on less popular qnodes
-    #     definition = candidate["description"][0] if candidate["description"] else ""
-    #     option = {
-    #         "qnode": candidate["qnode"],
-    #         "rawName": candidate["label"][0],
-    #         "definition": definition,
-    #     }
-    #     if option not in other_options and option["qnode"] not in option_qnodes:
-    #         other_options.append(option)
+    if device == CUDA:
+        # Take advantage of the GPU and check the event qnode list
+        other_candidate_scores = get_linker_scores(
+            cleaned_description, False, EVENT_QNODES, linking_model, device
+        )["scores"]
+        top3_other_qnodes = filter_candidates_with_scores(other_candidate_scores, EVENT_QNODES, k=k)
+        for candidate in top3_other_qnodes:
+            # description can be empty sometimes on less popular qnodes
+            definition = candidate["description"][0] if candidate["description"] else ""
+            option = {
+                "qnode": candidate["qnode"],
+                "rawName": candidate["label"][0],
+                "definition": definition,
+            }
+            if option not in other_options and option["qnode"] not in option_qnodes:
+                other_options.append(option)
     response = {
         "query": event_description,
         "options": options,
@@ -457,22 +459,23 @@ def disambiguate_refvar_kgtk(
         }
         if option not in options:
             options.append(option)
-
-    # other_candidate_scores = get_linker_scores(
-    #     cleaned_refvar, False, ARGUMENT_QNODES, linking_model, device
-    # )["scores"]
-    # top3_other_qnodes = filter_candidates_with_scores(other_candidate_scores, ARGUMENT_QNODES, k=k)
     other_options = []
-    # for candidate in top3_other_qnodes:
-    #     # description can be empty sometimes on less popular qnodes
-    #     definition = candidate["description"][0] if candidate["description"] else ""
-    #     option = {
-    #         "qnode": candidate["qnode"],
-    #         "rawName": candidate["label"][0],
-    #         "definition": definition,
-    #     }
-    #     if option not in other_options and option not in options:
-    #         other_options.append(option)
+    if device == CUDA:
+        # Take advantage of the GPU and check the argument qnode list
+        other_candidate_scores = get_linker_scores(
+            cleaned_refvar, False, ARGUMENT_QNODES, linking_model, device
+        )["scores"]
+        top3_other_qnodes = filter_candidates_with_scores(other_candidate_scores, ARGUMENT_QNODES, k=k)
+        for candidate in top3_other_qnodes:
+            # description can be empty sometimes on less popular qnodes
+            definition = candidate["description"][0] if candidate["description"] else ""
+            option = {
+                "qnode": candidate["qnode"],
+                "rawName": candidate["label"][0],
+                "definition": definition,
+            }
+            if option not in other_options and option not in options:
+                other_options.append(option)
     response = {
         "query": refvar,
         "options": options,
