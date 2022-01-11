@@ -16,10 +16,8 @@ claim_detection:
     patterns: "%project_root%/cdse_covid/claim_detection/topics.json"
 
 edl:
-    edl_output_dir: "%project_root%/data/uiuc_edl_2021_11_11"
+    edl_output_file: "%project_root%/data/final_entity.cs"
     ingester: "%project_root%/cdse_covid/pegasus_pipeline/ingesters/edl_output_ingester.py"
-    qnode_freebase_file: "%project_root%/data/qnode-freebase.tsv"
-    freebase_to_qnodes: "%project_root%/data/freebase_to_qnodes.pkl"
     ent_unification: "%project_root%/cdse_covid/semantic_extraction/run_entity_merging.py"
     include_contains: true
 
