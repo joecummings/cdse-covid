@@ -30,7 +30,7 @@ PRONOUNS = {
     "I",
     "me",
 }
-STOP_WORDS = set(stopwords.words("english")).union({"like", "<ROOT>"}) - PRONOUNS
+STOP_WORDS = set(stopwords.words("english")).union({"like"}) - PRONOUNS
 
 
 def get_full_name_value(
@@ -42,8 +42,7 @@ def get_full_name_value(
         name_strings = list(
             filter(None, [nodes_to_strings.get(name_node) for name_node in name_nodes])
         )
-        full_name_string = " ".join(name_strings)
-        return full_name_string.replace("<ROOT>", "").strip()
+        return " ".join(name_strings)
     return None
 
 
@@ -171,8 +170,7 @@ def get_full_description(
             i += 1
         for faraway_token in to_remove:
             descr_string_list.remove(faraway_token)
-    full_description = " ".join(descr_string_list)
-    return full_description.replace("<ROOT>", "").strip()
+    return " ".join(descr_string_list)
 
 
 def create_node_to_token_dict(amr: AMR, alignments: List[AMR_Alignment]) -> Dict[str, str]:
@@ -189,7 +187,7 @@ def create_node_to_token_dict(amr: AMR, alignments: List[AMR_Alignment]) -> Dict
             for token in tokens:
                 token_text = amr_tokens[int(token)]
                 # ignore punctuation
-                if token_text not in string.punctuation:
+                if token_text not in string.punctuation and token_text != "<ROOT>":
                     nodes_to_token_lists[node].append(token_text)
     return {node: " ".join(token_list) for node, token_list in nodes_to_token_lists.items()}
 
