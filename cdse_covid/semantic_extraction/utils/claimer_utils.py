@@ -6,6 +6,7 @@ from amr_utils.alignments import AMR_Alignment  # pylint: disable=import-error
 from amr_utils.amr import AMR  # pylint: disable=import-error
 from nltk.corpus import framenet
 from nltk.stem import WordNetLemmatizer
+from spacy.language import Language
 
 from cdse_covid.claim_detection.claim import Claim, create_id
 from cdse_covid.semantic_extraction.mentions import Claimer
@@ -33,7 +34,11 @@ for concept in framenet_concepts:
 
 
 def identify_claimer(
-    claim: Claim, claim_tokens: List[str], amr: AMR, alignments: List[AMR_Alignment]
+    claim: Claim,
+    claim_tokens: List[str],
+    amr: AMR,
+    alignments: List[AMR_Alignment],
+    spacy_model: Language,
 ) -> Optional[Claimer]:
     """Identify the claimer of the span.
 
@@ -50,7 +55,8 @@ def identify_claimer(
         return None
 
     claim_node = get_claim_node(claim_tokens, amr)
-    arg_node = get_argument_node(amr, alignments, claim_node)
+    spacied_claim_sentence = spacy_model(claim.claim_sentence)
+    arg_node = get_argument_node(amr, alignments, claim_node, spacied_claim_sentence)
     if arg_node:
         final_arg_node = remove_preceding_trailing_stop_words(arg_node)
         if final_arg_node:
@@ -115,8 +121,32 @@ def search_for_claim_node(graph_nodes: MutableMapping[str, Any]) -> Optional[str
     return None
 
 
+def remove_speech_tags(
+    claimer: Optional[str], spacied_claim_sentence: Optional[Any]
+) -> Optional[str]:
+    """Remove the 'speech tag' from the end of the claimer text if one exists.
+
+    Example: "he wrote" --> "he"
+    """
+    if not claimer:
+        return None
+    tokenized_claimer = claimer.split()
+    if len(tokenized_claimer) >= 2 and spacied_claim_sentence:
+        # Get POS labels from claimer
+        last_claim_token = tokenized_claimer[-1]
+        parts_of_speech = {token.text: token.pos_ for token in spacied_claim_sentence}
+        if parts_of_speech.get(last_claim_token):
+            if parts_of_speech[last_claim_token] in {"VERB", "AUX"}:
+                tokenized_claimer = tokenized_claimer[:-1]
+        return " ".join(tokenized_claimer)
+    return claimer
+
+
 def get_argument_node(
-    amr: AMR, alignments: List[AMR_Alignment], claim_node: Optional[str]
+    amr: AMR,
+    alignments: List[AMR_Alignment],
+    claim_node: Optional[str],
+    spacied_claim_sentence: Optional[Any],
 ) -> Optional[str]:
     """Get all argument (claimer) nodes of the claim node."""
     nodes = amr.nodes
@@ -130,8 +160,10 @@ def get_argument_node(
             claimer_node = claimer_nodes[0]  # only get one
             claimer_label = nodes.get(claimer_node)
             if claimer_label in ["person", "organization"]:
-                return get_full_name_value(amr_dict, nodes_to_strings, claimer_node)
-            return get_full_description(
-                amr_dict, nodes, nodes_to_strings, tokens_to_indices, claimer_node
-            )
+                full_claimer = get_full_name_value(amr_dict, nodes_to_strings, claimer_node)
+            else:
+                full_claimer = get_full_description(
+                    amr_dict, nodes, nodes_to_strings, tokens_to_indices, claimer_node
+                )
+            return remove_speech_tags(full_claimer, spacied_claim_sentence)
     return None
