@@ -59,26 +59,44 @@ def get_claim_semantics_data(
     claim_arguments = {}
     argument_names_to_roles = {}
     has_claim_arguments = data["claim_semantics"]["args"] is not None
+    has_arg_qnodes = False
     if has_claim_arguments:
         argument_objects = data["claim_semantics"]["args"]
-        aif_file.write(",\n")
         total_arguments = len(argument_objects)
         for arg_number, (role, arg_qnodes) in enumerate(argument_objects.items()):
-            if arg_qnodes["type"]["qnode_id"] is not None:
-                claim_argument = (
-                    "<"
-                    + make_xml_safe(
-                        CDSE_SYSTEM
-                        + "/events/isi/qnode/EventArgument-"
-                        + str(arg_qnodes["type"]["qnode_id"])
+            claim_argument = None
+            if arg_qnodes.get("type"):
+                if arg_qnodes["type"]["qnode_id"] is not None:
+                    claim_argument = (
+                        "<"
+                        + make_xml_safe(
+                            CDSE_SYSTEM
+                            + "/events/isi/qnode/EventArgument-"
+                            + str(arg_qnodes["type"]["qnode_id"])
+                        )
+                        + ">"
                     )
-                    + ">"
-                )
+            elif arg_qnodes.get("identity"):
+                if arg_qnodes["identity"]["qnode_id"] is not None:
+                    claim_argument = (
+                        "<"
+                        + make_xml_safe(
+                            CDSE_SYSTEM
+                            + "/events/isi/qnode/EventArgument-"
+                            + str(arg_qnodes["identity"]["qnode_id"])
+                        )
+                        + ">"
+                    )
+            if claim_argument:
+                has_arg_qnodes = True
                 claim_arguments[claim_argument] = arg_qnodes
                 argument_names_to_roles[claim_argument] = role
-                end_punc = " ;\n" if arg_number + 1 == total_arguments else ",\n"
-                aif_file.write("\t\t" + claim_argument + end_punc)
-    else:
+                end_punc = " ;\n" if arg_number + 1 == total_arguments else ""
+                aif_file.write(",\n\t\t" + claim_argument + end_punc)
+            elif arg_number + 1 == total_arguments:
+                aif_file.write(" ;\n")
+
+    if not has_arg_qnodes:
         aif_file.write(" ;\n")
     return claim_semantics_id, claim_semantics, claim_arguments, argument_names_to_roles
 
@@ -129,27 +147,34 @@ def write_claim_semantics_argument(
     claim_semantics_id: str,
 ) -> None:
     """Add an event argument and link it to its event."""
+    # Check if there's type/identity data
+    # Most args should have a type
+    arg_type_data = arg_data.get("type")
+    arg_identity_data = arg_data.get("identity")
+    if not arg_type_data:
+        logging.warning("No argument type data in %s", arg_data)
+        if not arg_identity_data:
+            return
     aif_file.write(argument + " a aida:EventArgument ;\n")
-    aif_file.write(
-        '\taida:componentName "'
-        + make_xml_safe(str(arg_data["type"]["text"]))
-        + '"^^xsd:string ;\n'
-    )
-    aif_file.write(
-        '\taida:componentType "' + str(arg_data["type"]["qnode_id"]) + '"^^xsd:string ;\n'
-    )
-    defining_arg_qnode = str(arg_data["type"]["qnode_id"])
-    if arg_data.get("identity") is not None and arg_data["identity"]["qnode_id"] is not None:
+    if arg_type_data:
         aif_file.write(
-            '\taida:componentIdentity "'
-            + str(arg_data["identity"]["qnode_id"])
+            '\taida:componentName "'
+            + make_xml_safe(str(arg_type_data["text"]))
             + '"^^xsd:string ;\n'
         )
-        defining_arg_qnode = arg_data["identity"]["qnode_id"]
-    else:
+        aif_file.write(
+            '\taida:componentType "' + str(arg_type_data["qnode_id"]) + '"^^xsd:string ;\n'
+        )
+        defining_arg_qnode = str(arg_type_data["qnode_id"])
+    if arg_identity_data and arg_identity_data["qnode_id"] is not None:
+        aif_file.write(
+            '\taida:componentIdentity "' + str(arg_identity_data["qnode_id"]) + '"^^xsd:string ;\n'
+        )
+        defining_arg_qnode = arg_identity_data["qnode_id"]
+    elif arg_type_data:
         aif_file.write(
             '\taida:componentIdentity "'
-            + get_nil_id_for_entity(arg_data["type"]["text"])
+            + get_nil_id_for_entity(arg_type_data["text"])
             + '"^^xsd:string ;\n'
         )
 
