@@ -148,8 +148,6 @@ def load_freebase_to_qnode_mapping(
 
 def main(
     edl: Path,
-    qnode_freebase_tsv: Path,
-    freebase_to_qnodes_file: Path,
     claims: Path,
     output: Path,
     include_contains: bool,
@@ -158,7 +156,6 @@ def main(
     with open(edl, "rb") as handle:
         edl_store = pickle.load(handle)
 
-    freebase_to_qnodes = load_freebase_to_qnode_mapping(qnode_freebase_tsv, freebase_to_qnodes_file)
     claim_ds = ClaimDataset.load_from_key_value_store(claims)
 
     for claim in claim_ds:
@@ -173,15 +170,20 @@ def main(
                 # The _type_qnode will be replaced later, so we don't bother removing it.
                 claim.x_variable_identity_qnode = claim.x_variable_type_qnode
                 claim.x_variable.entity = x_variable_mention.parent_entity
-                entity_freebase = claim.x_variable.entity.freebase_link
-                entity_qnode = freebase_to_qnodes.get(entity_freebase)
+                entity_qnode = claim.x_variable.entity.ent_link
+                entity_type_qnode = claim.x_variable.entity.type_link
                 if entity_qnode:
                     claim.x_variable_identity_qnode = create_wikidata_qnode_from_id(
                         claim.x_variable, entity_qnode
                     )
-                claim.x_variable_type_qnode = type_mapping_to_qnode.get(
-                    x_variable_mention.parent_entity.ent_type
-                )
+                if entity_type_qnode:
+                    claim.x_variable_type_qnode = create_wikidata_qnode_from_id(
+                        claim.x_variable, entity_type_qnode
+                    )
+                else:
+                    # Get a qnode corresponding to the entity type
+                    base_type = x_variable_mention.parent_entity.ent_type.split(".")[0]
+                    claim.x_variable_type_qnode = type_mapping_to_qnode.get(base_type)
 
         if claim.claimer:
             claimer_mention = find_knowledge_entity(all_kes, claim.claimer.span, include_contains)
@@ -189,15 +191,20 @@ def main(
                 # The claimer is an entity, so make its qnode the identity qnode
                 claim.claimer_identity_qnode = claim.claimer_type_qnode
                 claim.claimer.entity = claimer_mention.parent_entity
-                entity_freebase = claim.claimer.entity.freebase_link
-                entity_qnode = freebase_to_qnodes.get(entity_freebase)
+                entity_qnode = claim.claimer.entity.ent_link
+                entity_type_qnode = claim.claimer.entity.type_link
                 if entity_qnode:
                     claim.claimer_identity_qnode = create_wikidata_qnode_from_id(
                         claim.claimer, entity_qnode
                     )
-                claim.claimer_type_qnode = type_mapping_to_qnode.get(
-                    claimer_mention.parent_entity.ent_type
-                )
+                if entity_type_qnode:
+                    claim.claimer_type_qnode = create_wikidata_qnode_from_id(
+                        claim.claimer, entity_type_qnode
+                    )
+                else:
+                    # Get a qnode corresponding to the entity type
+                    base_type = claimer_mention.parent_entity.ent_type.split(".")[0]
+                    claim.claimer_type_qnode = type_mapping_to_qnode.get(base_type)
 
         if claim.claim_semantics:
             for _, arg in claim.claim_semantics.args.items():
@@ -210,16 +217,21 @@ def main(
                         if arg_mention:
                             arg["identity"] = type_arg
                             arg["identity"].entity = arg_mention.parent_entity
-                            entity_freebase = arg["identity"].entity.freebase_link
-                            entity_qnode_id = freebase_to_qnodes.get(entity_freebase)
+                            entity_qnode_id = arg["identity"].entity.ent_link
+                            entity_type_qnode_id = arg["identity"].entity.type_link
                             if entity_qnode_id:
                                 arg_qnode = create_wikidata_qnode_from_id(
                                     arg["identity"], entity_qnode_id
                                 )
                                 arg["identity"] = arg_qnode
-                            arg["type"] = type_mapping_to_qnode.get(
-                                arg_mention.parent_entity.ent_type
-                            )
+                            if entity_type_qnode_id:
+                                arg_type_qnode = create_wikidata_qnode_from_id(
+                                    arg["type"], entity_type_qnode_id
+                                )
+                                arg["type"] = arg_type_qnode
+                            else:
+                                base_type = arg_mention.parent_entity.ent_type.split(".")[0]
+                                arg["type"] = type_mapping_to_qnode.get(base_type)
 
     claim_ds.save_to_key_value_store(output)
 
@@ -227,8 +239,6 @@ def main(
 if __name__ == "__main__":
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("--edl", help="option help", type=Path)
-    p.add_argument("--qnode-freebase", help="Qnode-freebase tsv mapping", type=Path)
-    p.add_argument("--freebase-to-qnodes", help="Path to freebase-to-qnode mapping", type=Path)
     p.add_argument("--claims", help="Claim information", type=Path)
     p.add_argument("--output", help="Path to output file.", type=Path)
     p.add_argument(
@@ -239,8 +249,6 @@ if __name__ == "__main__":
     args = p.parse_args()
     main(
         args.edl,
-        args.qnode_freebase,
-        args.freebase_to_qnodes,
         args.claims,
         args.output,
         args.include_contains,

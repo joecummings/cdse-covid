@@ -178,8 +178,6 @@ def main(params: Parameters) -> None:
     entity_loc = edl_locator / "edl_unified"
 
     def unify_entities(kvs: ZipKeyValueStore, *, output_locator: Locator) -> ZipKeyValueStore:
-        qnode_freebase_file = edl_params.existing_file("qnode_freebase_file")
-        freebase_to_qnodes = edl_params.creatable_file("freebase_to_qnodes")
         ent_python_file = edl_params.existing_file("ent_unification")
         ent_output_dir = directory_for(entity_loc) / "documents.zip"
         include_contains = edl_params.boolean("include_contains")
@@ -188,8 +186,6 @@ def main(params: Parameters) -> None:
             ent_python_file,
             f"""
             --edl {edl_output.value} \
-            --qnode-freebase {qnode_freebase_file} \
-            --freebase-to-qnodes {freebase_to_qnodes} \
             --claims {kvs.path} \
             --output {ent_output_dir} \
             {'--include-contains' if include_contains else ''}
@@ -228,7 +224,7 @@ def ingest_edl_data(edl_params: Parameters, edl_locator: Locator) -> ValueArtifa
     """Ingest EDL data from UIUC and return mapping as ValueArtifact."""
     edl_ingester = edl_params.existing_file("ingester")
     edl_mapping_file = directory_for(edl_locator) / "edl_mapping.pkl"
-    edl_final = edl_params.existing_directory("edl_output_dir")
+    edl_final = edl_params.existing_file("edl_output_file")
     edl_job = run_python_on_args(
         edl_locator,
         edl_ingester,
