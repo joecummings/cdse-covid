@@ -156,6 +156,7 @@ def write_claim_semantics_argument(
         if not arg_identity_data:
             return
     aif_file.write(argument + " a aida:EventArgument ;\n")
+    defining_arg_qnode = ""
     if arg_type_data:
         aif_file.write(
             '\taida:componentName "'
@@ -297,10 +298,19 @@ def convert_json_file_to_aif(params: Parameters) -> None:
         variable_justification_name: str,
     ) -> None:
         """Write the component, entity, and justifications for the variable."""
+        if (
+                data[f"{var_type}_identity_qnode"] is not None
+                and data[f"{var_type}_identity_qnode"]["qnode_id"] is not None
+        ):
+            variable_entity_data = data[f"{var_type}_identity_qnode"]
+            variable_entity_qnode = variable_entity_data["qnode_id"]
+        else:
+            variable_entity_data = data[f"{var_type}_type_qnode"]
+            variable_entity_qnode = get_nil_id_for_entity(variable_entity_data["text"])
         aif_file.write(variable_name + " a aida:ClaimComponent ;\n")
         aif_file.write(
             '\taida:componentName "'
-            + make_xml_safe(str(data[f"{var_type}_type_qnode"]["text"]))
+            + make_xml_safe(str(variable_entity_data["text"]))
             + '"^^xsd:string ;\n'
         )
         aif_file.write(
@@ -308,15 +318,6 @@ def convert_json_file_to_aif(params: Parameters) -> None:
             + str(data[f"{var_type}_type_qnode"]["qnode_id"])
             + '"^^xsd:string ;\n'
         )
-        if (
-            data[f"{var_type}_identity_qnode"] is not None
-            and data[f"{var_type}_identity_qnode"]["qnode_id"] is not None
-        ):
-            variable_entity_data = data[f"{var_type}_identity_qnode"]
-            variable_entity_qnode = variable_entity_data["qnode_id"]
-        else:
-            variable_entity_data = data[f"{var_type}_type_qnode"]
-            variable_entity_qnode = get_nil_id_for_entity(variable_entity_data["text"])
         aif_file.write(
             '\taida:componentIdentity "' + str(variable_entity_qnode) + '"^^xsd:string ;\n'
         )
