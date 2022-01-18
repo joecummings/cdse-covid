@@ -46,6 +46,60 @@ def get_nil_id_for_entity(entity_text: str) -> str:
     return nil_id
 
 
+def write_entity_data(
+    aif_file: TextIO,
+    source: str,
+    var_type: str,
+    entity_name: str,
+    entity_qnode: str,
+    entity_data: Any,
+    var_count: int,
+) -> None:
+    """Write the entity data."""
+    justification_name = None
+    start_offset = None
+    end_offset_inclusive = None
+    if entity_data.get("span") is not None:
+        start_offset = entity_data["span"][0]
+        end_offset_inclusive = entity_data["span"][1]
+        justification_name = (
+            "<"
+            + make_xml_safe(
+                CDSE_SYSTEM
+                + "/" + source
+                + f"/{var_type}/justification"
+                + str(var_count)
+                + "/" + str(start_offset)
+                + "/" + str(end_offset_inclusive)
+            )
+            + ">"
+        )
+
+    # Entity
+    aif_file.write(entity_name + " a aida:Entity ;\n")
+    aif_file.write('\taida:text "' + make_xml_safe(str(entity_data["text"])) + '"^^xsd:string ;\n')
+    aif_file.write('\taida:name "' + str(entity_qnode) + '"^^xsd:string ;\n')
+    if justification_name:
+        aif_file.write("\taida:justifiedBy " + str(justification_name) + " ;\n")
+    if entity_data["entity"] is not None:
+        write_private_data(aif_file, entity_data["entity"])
+    write_system(aif_file)
+
+    # TextJustification
+    if justification_name:
+        aif_file.write(justification_name + " a aida:TextJustification ;\n")
+        if entity_data.get("confidence") and entity_data["confidence"] is not None:
+            aif_file.write("\taida:confidence [ a aida:Confidence ;\n")
+            aif_file.write(
+                "\t\taida:confidenceValue " + f"{entity_data['confidence']:.2E}" + " ;\n"
+            )
+            aif_file.write("\t\taida:system <" + CDSE_SYSTEM + "> ] ;\n")
+        aif_file.write('\taida:endOffsetInclusive "' + str(end_offset_inclusive) + '"^^xsd:int ;\n')
+        aif_file.write('\taida:source "' + source + '"^^xsd:string ;\n')
+        aif_file.write('\taida:startOffset "' + str(start_offset) + '"^^xsd:int ;\n')
+        write_system(aif_file)
+
+
 def get_claim_semantics_data(
     aif_file: TextIO, data: Any
 ) -> Tuple[str, str, Dict[str, Any], Dict[str, str]]:
@@ -60,6 +114,7 @@ def get_claim_semantics_data(
     argument_names_to_roles = {}
     has_claim_arguments = data["claim_semantics"]["args"] is not None
     has_arg_qnodes = False
+    arg_count = 0
     if has_claim_arguments:
         argument_objects = data["claim_semantics"]["args"]
         total_arguments = len(argument_objects)
@@ -93,6 +148,7 @@ def get_claim_semantics_data(
                 argument_names_to_roles[claim_argument] = role
                 end_punc = " ;\n" if arg_number + 1 == total_arguments else ""
                 aif_file.write(",\n\t\t" + claim_argument + end_punc)
+                arg_count += 1
             elif arg_number + 1 == total_arguments:
                 aif_file.write(" ;\n")
 
@@ -145,6 +201,7 @@ def write_claim_semantics_argument(
     arg_data: Any,
     claim_semantics_event: str,
     claim_semantics_id: str,
+    arg_count: int,
 ) -> None:
     """Add an event argument and link it to its event."""
     # Check if there's type/identity data
@@ -155,32 +212,25 @@ def write_claim_semantics_argument(
         logging.warning("No argument type data in %s", arg_data)
         if not arg_identity_data:
             return
-    aif_file.write(argument + " a aida:EventArgument ;\n")
     defining_arg_qnode = ""
+    defining_arg_data = {}
+    # Writing entity fields
     if arg_type_data:
-        aif_file.write(
-            '\taida:componentName "'
-            + make_xml_safe(str(arg_type_data["text"]))
-            + '"^^xsd:string ;\n'
-        )
-        aif_file.write(
-            '\taida:componentType "' + str(arg_type_data["qnode_id"]) + '"^^xsd:string ;\n'
-        )
+        defining_arg_data = arg_type_data
         defining_arg_qnode = str(arg_type_data["qnode_id"])
     if arg_identity_data and arg_identity_data["qnode_id"] is not None:
-        aif_file.write(
-            '\taida:componentIdentity "' + str(arg_identity_data["qnode_id"]) + '"^^xsd:string ;\n'
-        )
         defining_arg_qnode = arg_identity_data["qnode_id"]
-    elif arg_type_data:
-        aif_file.write(
-            '\taida:componentIdentity "'
-            + get_nil_id_for_entity(arg_type_data["text"])
-            + '"^^xsd:string ;\n'
-        )
+        defining_arg_data = arg_identity_data
 
-    write_private_data(aif_file, arg_data)
-    write_system(aif_file)
+    write_entity_data(
+        aif_file,
+        source,
+        argument_role,
+        argument,
+        defining_arg_qnode,
+        defining_arg_data,
+        arg_count,
+    )
 
     aif_file.write(
         "<"
@@ -219,14 +269,13 @@ def convert_json_file_to_aif(params: Parameters) -> None:
     var_types_to_aida_classes = {"x_variable": "xVariable", "claimer": "claimer"}
 
     def get_name_data(
-        aida_file: TextIO, data: Any, var_type: str, source: str, claim_id: str
-    ) -> Tuple[str, str, str]:
+        aida_file: TextIO, var_type: str, source: str, claim_id: str
+    ) -> Tuple[str, str]:
         """Get a variable's name, entity name, and justification name.
 
         var_type can be 'x_variable' or 'claimer'
         """
         var_count = 0
-        variable_justification_name = "None"
         variable_name = (
             "<"
             + make_xml_safe(
@@ -247,47 +296,10 @@ def convert_json_file_to_aif(params: Parameters) -> None:
             )
             + ">"
         )
-        if (
-            data[f"{var_type}_identity_qnode"] is not None
-            and data[f"{var_type}_identity_qnode"]["span"] is not None
-        ):
-            start_offset = data[f"{var_type}_identity_qnode"]["span"][0]
-            end_offset_inclusive = data[f"{var_type}_identity_qnode"]["span"][1]
-            variable_justification_name = (
-                "<"
-                + make_xml_safe(
-                    CDSE_SYSTEM
-                    + source
-                    + f"/{var_type}/justification"
-                    + str(var_count)
-                    + "/"
-                    + str(start_offset)
-                    + "/"
-                    + str(end_offset_inclusive)
-                )
-                + ">"
-            )
-        elif data[f"{var_type}_type_qnode"]["span"] is not None:
-            start_offset = data[f"{var_type}_type_qnode"]["span"][0]
-            end_offset_inclusive = data[f"{var_type}_type_qnode"]["span"][1]
-            variable_justification_name = (
-                "<"
-                + make_xml_safe(
-                    CDSE_SYSTEM
-                    + source
-                    + f"/{var_type}/justification"
-                    + str(var_count)
-                    + "/"
-                    + str(start_offset)
-                    + "/"
-                    + str(end_offset_inclusive)
-                )
-                + ">"
-            )
         var_count += 1
         aida_file.write(f"\taida:{var_types_to_aida_classes[var_type]} " + variable_name + " ;\n")
         associated_kes.append(variable_entity_name)
-        return variable_name, variable_entity_name, variable_justification_name
+        return variable_name, variable_entity_name
 
     def write_qnode_data(
         aif_file: TextIO,
@@ -295,12 +307,12 @@ def convert_json_file_to_aif(params: Parameters) -> None:
         var_type: str,
         variable_name: str,
         variable_entity_name: str,
-        variable_justification_name: str,
+        var_count: int,
     ) -> None:
         """Write the component, entity, and justifications for the variable."""
         if (
-                data[f"{var_type}_identity_qnode"] is not None
-                and data[f"{var_type}_identity_qnode"]["qnode_id"] is not None
+            data[f"{var_type}_identity_qnode"] is not None
+            and data[f"{var_type}_identity_qnode"]["qnode_id"] is not None
         ):
             variable_entity_data = data[f"{var_type}_identity_qnode"]
             variable_entity_qnode = variable_entity_data["qnode_id"]
@@ -325,39 +337,16 @@ def convert_json_file_to_aif(params: Parameters) -> None:
         write_private_data(aif_file, variable_entity_data)
         write_system(aif_file)
 
-        # Entity
-        aif_file.write(variable_entity_name + " a aida:Entity ;\n")
-        aif_file.write(
-            '\taida:text "' + make_xml_safe(str(variable_entity_data["text"])) + '"^^xsd:string ;\n'
+        # Entity and justification
+        write_entity_data(
+            aif_file,
+            source,
+            var_type,
+            variable_entity_name,
+            variable_entity_qnode,
+            variable_entity_data,
+            var_count,
         )
-        aif_file.write('\taida:name "' + str(variable_entity_qnode) + '"^^xsd:string ;\n')
-        aif_file.write("\taida:justifiedBy " + variable_justification_name + " ;\n")
-        if data[var_type]["entity"] is not None:
-            write_private_data(aif_file, data[var_type]["entity"])
-        write_system(aif_file)
-
-        # TextJustification
-        if variable_entity_data["span"] is not None:
-            start_offset = variable_entity_data["span"][0]
-            end_offset_inclusive = variable_entity_data["span"][1]
-            aif_file.write(variable_justification_name + " a aida:TextJustification ;\n")
-            if (
-                variable_entity_data.get("confidence")
-                and variable_entity_data["confidence"] is not None
-            ):
-                aif_file.write("\taida:confidence [ a aida:Confidence ;\n")
-                aif_file.write(
-                    "\t\taida:confidenceValue "
-                    + f"{variable_entity_data['confidence']:.2E}"
-                    + " ;\n"
-                )
-                aif_file.write("\t\taida:system <" + CDSE_SYSTEM + "> ] ;\n")
-            aif_file.write(
-                '\taida:endOffsetInclusive "' + str(end_offset_inclusive) + '"^^xsd:int ;\n'
-            )
-            aif_file.write('\taida:source "' + source + '"^^xsd:string ;\n')
-            aif_file.write('\taida:startOffset "' + str(start_offset) + '"^^xsd:int ;\n')
-            write_system(aif_file)
 
     for data in claims_data:
         source = os.path.splitext(str(data["doc_id"]))[0]
@@ -390,7 +379,6 @@ def convert_json_file_to_aif(params: Parameters) -> None:
             has_x_variable = data["x_variable_type_qnode"] is not None
             x_variable_name = "None"
             x_variable_entity_name = "None"
-            x_variable_justification_name = "None"
 
             associated_kes = []
 
@@ -398,8 +386,7 @@ def convert_json_file_to_aif(params: Parameters) -> None:
                 (
                     x_variable_name,
                     x_variable_entity_name,
-                    x_variable_justification_name,
-                ) = get_name_data(af, data, "x_variable", source, claim_id)
+                ) = get_name_data(af, "x_variable", source, claim_id)
 
             af.write(
                 '\taida:naturalLanguageDescription "'
@@ -430,12 +417,9 @@ def convert_json_file_to_aif(params: Parameters) -> None:
             has_claimer = data["claimer_type_qnode"] is not None
             claimer_name = "None"
             claimer_entity_name = "None"
-            claimer_justification_name = "None"
 
             if has_claimer:
-                claimer_name, claimer_entity_name, claimer_justification_name = get_name_data(
-                    af, data, "claimer", source, claim_id
-                )
+                claimer_name, claimer_entity_name = get_name_data(af, "claimer", source, claim_id)
 
             has_claim_location = data["claim_location_qnode"] is not None
             claim_location = "None"
@@ -487,7 +471,7 @@ def convert_json_file_to_aif(params: Parameters) -> None:
                     "x_variable",
                     x_variable_name,
                     x_variable_entity_name,
-                    x_variable_justification_name,
+                    0,
                 )
 
             if has_claimer:
@@ -497,7 +481,7 @@ def convert_json_file_to_aif(params: Parameters) -> None:
                     "claimer",
                     claimer_name,
                     claimer_entity_name,
-                    claimer_justification_name,
+                    0,
                 )
 
             if has_claim_location:
@@ -522,6 +506,7 @@ def convert_json_file_to_aif(params: Parameters) -> None:
                 write_claim_semantics_event(af, data, claim_semantics_event)
 
                 # Arguments
+                arg_count = 0
                 for argument, arg_data in claim_arguments.items():
                     argument_role = argument_names_to_roles[argument]
 
@@ -534,7 +519,9 @@ def convert_json_file_to_aif(params: Parameters) -> None:
                         arg_data,
                         claim_semantics_event,
                         claim_semantics_id,
+                        arg_count,
                     )
+                    arg_count += 1
 
     if af:
         af.close()
