@@ -58,8 +58,9 @@ def main(edl_output: Path, output: Path) -> None:
                         ent_id=formatted_id, ent_type=ent_type, type_link=type_link
                     )
                 elif line[1] == "type":
-                    ent_type_uri = line[2]
                     # Type example: `https://tac.nist.gov/tracks/SM-KBP/2019/ontologies/LDCOntology#GPE.City`
+                    # Sometimes a number gets included, separated by whitespace
+                    ent_type_uri = line[2].split()[0]
                     ent_type = ent_type_uri.split("#")[-1]
                     new_entity = EDLEntity(ent_id=formatted_id, ent_type=ent_type)
 

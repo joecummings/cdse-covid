@@ -22,6 +22,7 @@ from cdse_covid.semantic_extraction.utils.amr_extraction_utils import (
     PROPBANK_PATTERN,
     STOP_WORDS,
     create_node_to_token_dict,
+    remove_preceding_trailing_stop_words,
 )
 from wikidata_linker.linker import WikidataLinkingClassifier
 from wikidata_linker.wikidata_linking import CPU, disambiguate_refvar_kgtk, disambiguate_verb_kgtk
@@ -92,14 +93,13 @@ def get_all_labeled_args(
                 framenet_arg = get_framenet_arg_role(arg[1])
                 if qnode_args.get(framenet_arg):
                     node_label = amr.nodes[arg_node]
-                    token_of_node = node_labels_to_tokens.get(arg_node)
-                    if not token_of_node:
+                    tokens_of_node = node_labels_to_tokens.get(arg_node)
+                    if tokens_of_node:
+                        tokens_of_node = remove_preceding_trailing_stop_words(tokens_of_node)
+                    if not tokens_of_node:
                         labeled_args[framenet_arg] = node_label.rsplit("-", 1)[0]
-                    elif any(token_of_node.endswith(f" {stop_word}") for stop_word in STOP_WORDS):
-                        # Sometimes the extracted token or part of it is irrelevant
-                        labeled_args[framenet_arg] = token_of_node.rsplit(" ")[0]
                     else:
-                        labeled_args[framenet_arg] = token_of_node
+                        labeled_args[framenet_arg] = tokens_of_node
     return labeled_args
 
 
@@ -127,7 +127,7 @@ def get_best_qnode_for_mention_text(
     mention_span = None
     if isinstance(mention_or_text, str):
         mention_text = mention_or_text
-        mention_span = claim.get_offsets_for_text(mention_text)
+        mention_span = claim.get_offsets_for_text(mention_text, spacy_model.tokenizer)
     elif isinstance(mention_or_text, Mention):
         mention_text = mention_or_text.text
         mention_id = mention_or_text.mention_id
