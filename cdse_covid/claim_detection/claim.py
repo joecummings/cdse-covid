@@ -1,4 +1,5 @@
 """Claim module."""
+import string
 from dataclasses import dataclass, field
 import logging
 from typing import Any, Dict, List, MutableMapping, Optional, Tuple, Union
@@ -51,7 +52,7 @@ class Claim:
         """Get an existing theory by *name*."""
         return self.theories.get(name)
 
-    def get_offsets_for_text(self, text: Optional[str]) -> Optional[Tuple[int, int]]:
+    def get_offsets_for_text(self, text: Optional[str], tokenizer: Any) -> Optional[Tuple[int, int]]:
         """Get the character offsets of the given string based on its claim span."""
         if not text:
             return None
@@ -61,7 +62,8 @@ class Claim:
         if not tokens_to_offsets:
             logging.warning("No tokens -> offsets mapping for claim `%s`.", self.claim_sentence)
             return None
-        text_split = text.split(" ")
+        text_tokens = tokenizer(text.strip())
+        text_split = [token.text for token in text_tokens]
         first_token = text_split[0]
         last_token = text_split[-1]
         first_offsets = tokens_to_offsets.get(first_token)

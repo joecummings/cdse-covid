@@ -165,12 +165,12 @@ def make_kgtk_candidates_filter(source_str: str) -> Callable[[Mapping[str, Any]]
     Returns:
         A filter function particular to source_str.
     """
-
     def kgtk_candidate_filter(candidate: Mapping[str, Any]) -> bool:
         str_found = source_str in candidate["label"][0]
         str_found = str_found or any(source_str in alias for alias in candidate["alias"])
         description_and_casematch = candidate["description"] and candidate["label"][0].islower()
-        return str_found and description_and_casematch
+        is_qnode = candidate["qnode"].startswith("Q")
+        return str_found and description_and_casematch and is_qnode
 
     return kgtk_candidate_filter
 

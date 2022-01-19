@@ -44,7 +44,7 @@ def main(inputs: Path, output: Path, *, spacy_model: Language) -> None:
                 label = arg_label_for_x_variable[0]  # Should only be one
                 x_variable = srl_out.args.get(label)
                 if x_variable:
-                    claim.x_variable = create_x_variable(x_variable, claim)
+                    claim.x_variable = create_x_variable(x_variable, claim, spacy_model.tokenizer)
 
         claim.add_theory("srl", srl_out)
     claim_ds.save_to_key_value_store(output)

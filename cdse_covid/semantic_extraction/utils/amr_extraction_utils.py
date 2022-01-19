@@ -211,7 +211,7 @@ def remove_preceding_trailing_stop_words(text: str) -> Optional[str]:
     return " ".join(clipped_text)
 
 
-def create_x_variable(text: Optional[str], claim: Claim) -> Optional[XVariable]:
+def create_x_variable(text: Optional[str], claim: Claim, tokenizer: Any) -> Optional[XVariable]:
     """Return an X-Variable object using the variable text and its claim data."""
     if text:
         # Remove trailing stop words
@@ -221,13 +221,13 @@ def create_x_variable(text: Optional[str], claim: Claim) -> Optional[XVariable]:
                 mention_id=create_id(),
                 text=final_text,
                 doc_id=claim.doc_id,
-                span=claim.get_offsets_for_text(final_text),
+                span=claim.get_offsets_for_text(final_text, tokenizer),
             )
     return None
 
 
 def identify_x_variable_covid(
-    amr: AMR, alignments: List[AMR_Alignment], claim: Claim
+    amr: AMR, alignments: List[AMR_Alignment], claim: Claim, tokenizer: Any
 ) -> Optional[XVariable]:
     """Use the AMR graph of the claim to identify the X variable given the template."""
     claim_template = claim.claim_template
@@ -249,7 +249,7 @@ def identify_x_variable_covid(
             if role == ":location" or role == ":source" or child_label in place_types:
                 location_name = get_full_name_value(amr_dict, nodes_to_source_strings, child)
                 return (
-                    create_x_variable(location_name, claim)
+                    create_x_variable(location_name, claim, tokenizer)
                     if location_name
                     else create_x_variable(
                         get_full_description(
@@ -260,6 +260,7 @@ def identify_x_variable_covid(
                             child,
                         ),
                         claim,
+                        tokenizer,
                     )
                 )
 
@@ -270,9 +271,9 @@ def identify_x_variable_covid(
             if child_label == "person":
                 person_name = get_full_name_value(amr_dict, nodes_to_source_strings, child)
                 return (
-                    create_x_variable(person_name, claim)
+                    create_x_variable(person_name, claim, tokenizer)
                     if person_name
-                    else create_x_variable(child_label, claim)
+                    else create_x_variable(child_label, claim, tokenizer)
                 )
     if claim_template.endswith("is X"):
         # In such cases, X is usually the root of the claim graph.
@@ -281,6 +282,7 @@ def identify_x_variable_covid(
                 amr_dict, nodes_to_labels, nodes_to_source_strings, tokens_to_indices, amr.root
             ),
             claim,
+            tokenizer
         )
     if claim_template.startswith("X was the target"):
         # For the template concerning the target of the coronavirus,
@@ -289,7 +291,7 @@ def identify_x_variable_covid(
             if nodes_to_labels[parent] == "target-01" and role == ":ARG1":
                 target_name = get_full_name_value(amr_dict, nodes_to_source_strings, child)
                 return (
-                    create_x_variable(target_name, claim)
+                    create_x_variable(target_name, claim, tokenizer)
                     if target_name
                     else create_x_variable(
                         get_full_description(
@@ -301,6 +303,7 @@ def identify_x_variable_covid(
                             ignore_focus_node=True,
                         ),
                         claim,
+                        tokenizer,
                     )
                 )
     if "X negative effect" in claim_template:
@@ -318,6 +321,7 @@ def identify_x_variable_covid(
                         ignore_focus_node=True,
                     ),
                     claim,
+                    tokenizer,
                 )
     if "Government-X" in claim_template:
         # In these graphs, the GPE of "government" is not a mod,
@@ -338,14 +342,14 @@ def identify_x_variable_covid(
                                     amr_dict, nodes_to_source_strings, value
                                 )
                 if full_name and add_gov_token:
-                    return create_x_variable(full_name + " government", claim)
-                return create_x_variable(full_name, claim)
+                    return create_x_variable(full_name + " government", claim, tokenizer)
+                return create_x_variable(full_name, claim, tokenizer)
             # Cover the case where the location name is used to represent its
             # government. We assume that in most cases, the first ARG0 that is also a
             # GPE will be the government in question.
             elif role == ":ARG0" and nodes_to_labels[child] in place_types:
                 return create_x_variable(
-                    get_full_name_value(amr_dict, nodes_to_source_strings, child), claim
+                    get_full_name_value(amr_dict, nodes_to_source_strings, child), claim, tokenizer
                 )
     # For "date-X" templates, return the date-entity
     if "date-X" in claim_template:
@@ -356,6 +360,7 @@ def identify_x_variable_covid(
                         amr_dict, nodes_to_labels, nodes_to_source_strings, tokens_to_indices, node
                     ),
                     claim,
+                    tokenizer,
                 )
     # This covers "treatment-X" template cases
     if "Treatment-X" in claim_template or "effective treatment" in claim_template:
@@ -372,6 +377,7 @@ def identify_x_variable_covid(
                         amr_dict, nodes_to_labels, nodes_to_source_strings, tokens_to_indices, child
                     ),
                     claim,
+                    tokenizer,
                 )
     if "medication X" in claim_template:
         # Concerns safe medication being unsafe for COVID-19 patients;
@@ -383,6 +389,7 @@ def identify_x_variable_covid(
                         amr_dict, nodes_to_labels, nodes_to_source_strings, tokens_to_indices, child
                     ),
                     claim,
+                    tokenizer,
                 )
     if "Animal-X" in claim_template:
         # We're going to look at the root arguments for this.
@@ -401,6 +408,7 @@ def identify_x_variable_covid(
                     arg1_values[0],
                 ),
                 claim,
+                tokenizer,
             )
     # The next two conditions are meant to cover all other templates.
     # If X is the first in the template, it implies that it serves the agent role
@@ -411,12 +419,13 @@ def identify_x_variable_covid(
             if parent == amr.root and role == agent_role:
                 agent_name = get_full_name_value(amr_dict, nodes_to_source_strings, child)
                 if agent_name:
-                    return create_x_variable(agent_name, claim)
+                    return create_x_variable(agent_name, claim, tokenizer)
                 return create_x_variable(
                     get_full_description(
                         amr_dict, nodes_to_labels, nodes_to_source_strings, tokens_to_indices, child
                     ),
                     claim,
+                    tokenizer,
                 )
     # Likewise, if X is the last item in the template,
     # it implies a patient role
@@ -425,12 +434,13 @@ def identify_x_variable_covid(
             if parent == amr.root and role == ":ARG1":
                 patient_name = get_full_name_value(amr_dict, nodes_to_source_strings, child)
                 if patient_name:
-                    return create_x_variable(patient_name, claim)
+                    return create_x_variable(patient_name, claim, tokenizer)
                 return create_x_variable(
                     get_full_description(
                         amr_dict, nodes_to_labels, nodes_to_source_strings, tokens_to_indices, child
                     ),
                     claim,
+                    tokenizer,
                 )
     return None
 
@@ -468,6 +478,7 @@ def identify_x_variable(
     claim: Claim,
     claim_ents: Dict[str, str],
     claim_pos: Dict[str, str],
+    tokenizer: Any,
 ) -> Optional[XVariable]:
     """Use the AMR graph of the claim to identify the X variable given the claim text.
 
@@ -503,8 +514,8 @@ def identify_x_variable(
                                         amr_dict, nodes_to_source_strings, value
                                     )
                     if full_name and add_gov_token:
-                        return create_x_variable(full_name + " government", claim)
-                    return create_x_variable(full_name, claim)
+                        return create_x_variable(full_name + " government", claim, tokenizer)
+                    return create_x_variable(full_name, claim, tokenizer)
                 if parent_label in place_types:
                     return create_x_variable(
                         get_full_description(
@@ -515,6 +526,7 @@ def identify_x_variable(
                             parent,
                         ),
                         claim,
+                        tokenizer,
                     )
                 elif child_label in place_types:
                     # If the nationality is a mod, check the parent
@@ -528,6 +540,7 @@ def identify_x_variable(
                                 parent,
                             ),
                             claim,
+                            tokenizer,
                         )
                     else:
                         return create_x_variable(
@@ -539,6 +552,7 @@ def identify_x_variable(
                                 child,
                             ),
                             claim,
+                            tokenizer,
                         )
         if label in ["PERSON", "ORG"]:
             # If a PERSON/ORG is detected, get the full name
@@ -547,9 +561,9 @@ def identify_x_variable(
                 if child_label in ["person", "organization"]:
                     person_name = get_full_name_value(amr_dict, nodes_to_source_strings, child)
                     return (
-                        create_x_variable(person_name, claim)
+                        create_x_variable(person_name, claim, tokenizer)
                         if person_name
-                        else create_x_variable(child_label, claim)
+                        else create_x_variable(child_label, claim, tokenizer)
                     )
 
     # Next, simply look for a location
@@ -560,13 +574,14 @@ def identify_x_variable(
         if role == ":location" or role == ":source" or child_label in place_types:
             location_name = get_full_name_value(amr_dict, nodes_to_source_strings, child)
             if location_name:
-                return create_x_variable(location_name, claim)
+                return create_x_variable(location_name, claim, tokenizer)
             else:
                 return create_x_variable(
                     get_full_description(
                         amr_dict, nodes_to_labels, nodes_to_source_strings, tokens_to_indices, child
                     ),
                     claim,
+                    tokenizer,
                 )
         # If there is a date-entity in the AMR graph, that may be the X-variable
         elif parent_label == "date-entity":
@@ -575,5 +590,6 @@ def identify_x_variable(
                     amr_dict, nodes_to_labels, nodes_to_source_strings, tokens_to_indices, parent
                 ),
                 claim,
+                tokenizer,
             )
     return None

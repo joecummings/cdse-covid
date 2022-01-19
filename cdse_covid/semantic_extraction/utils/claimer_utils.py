@@ -64,7 +64,7 @@ def identify_claimer(
                 mention_id=create_id(),
                 text=final_arg_node,
                 doc_id=claim.doc_id,
-                span=claim.get_offsets_for_text(final_arg_node),
+                span=claim.get_offsets_for_text(final_arg_node, spacy_model.tokenizer),
             )
     return None
 

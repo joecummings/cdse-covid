@@ -45,15 +45,17 @@ def main(
     linking_model.load_state_dict(model_ckpt, strict=False)
     linking_model.to(device)
 
+    spacy_tokenizer = spacy_model.tokenizer
+
     claim_ds = ClaimDataset.load_from_key_value_store(input_dir)
 
     for claim in claim_ds.claims:
         logging.info("Processing claim %s", claim.claim_id)
         tokenized_sentence = tokenize_sentence(
-            claim.claim_sentence, spacy_model.tokenizer, max_tokens
+            claim.claim_sentence, spacy_tokenizer, max_tokens
         )
         sentence_amr = amr_parser.amr_parse_sentences([tokenized_sentence])
-        tokenized_claim = tokenize_sentence(claim.claim_text, spacy_model.tokenizer, max_tokens)
+        tokenized_claim = tokenize_sentence(claim.claim_text, spacy_tokenizer, max_tokens)
         possible_claimer = identify_claimer(
             claim, tokenized_claim, sentence_amr.graph, sentence_amr.alignments, spacy_model
         )
@@ -76,13 +78,13 @@ def main(
 
         if domain == COVID_DOMAIN:
             possible_x_variable = identify_x_variable_covid(
-                claim_amr.graph, claim_amr.alignments, claim
+                claim_amr.graph, claim_amr.alignments, claim, spacy_tokenizer
             )
         else:
             claim_ents = {ent.text: ent.label_ for ent in spacy_model(claim.claim_text).ents}
             claim_pos = {token.text: token.pos_ for token in spacy_model(claim.claim_text).doc}
             possible_x_variable = identify_x_variable(
-                claim_amr.graph, claim_amr.alignments, claim, claim_ents, claim_pos
+                claim_amr.graph, claim_amr.alignments, claim, claim_ents, claim_pos, spacy_tokenizer
             )
         if possible_x_variable:
             claim.x_variable = possible_x_variable

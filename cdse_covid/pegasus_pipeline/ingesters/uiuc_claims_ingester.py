@@ -4,11 +4,14 @@ import json
 import logging
 from pathlib import Path
 
+import spacy
+from spacy import Language
+
 from cdse_covid.claim_detection.claim import TOKEN_OFFSET_THEORY, Claim, create_id
 from cdse_covid.claim_detection.run_claim_detection import ClaimDataset
 
 
-def main(claims_file: Path, output: Path) -> None:
+def main(claims_file: Path, output: Path, spacy_model: Language) -> None:
     """Entrypoint to UIUC claims ingestion."""
     with open(claims_file, "r", encoding="utf-8") as handle:
         all_claims = json.load(handle)
@@ -28,7 +31,8 @@ def main(claims_file: Path, output: Path) -> None:
             sentence_start = claim["start_char"]
             idx = sentence_start
             local_idx = 0
-            sentence: str = claim["sentence"].split()
+            tokenized_sentence = spacy_model.tokenizer(claim["sentence"])
+            sentence = [token.text for token in tokenized_sentence]
             for token_idx, sentence_token in enumerate(sentence):
                 claim_sentence_tokens_to_offsets[sentence_token] = (idx, idx + len(sentence_token))
                 local_idx += len(sentence_token)
@@ -63,4 +67,5 @@ if __name__ == "__main__":
     parser.add_argument("--claims-file", type=Path)
     parser.add_argument("--output", type=Path)
     args = parser.parse_args()
-    main(args.claims_file, args.output)
+    spacy_model = spacy.load("en_core_web_md")
+    main(args.claims_file, args.output, spacy_model)
