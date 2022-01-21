@@ -99,13 +99,15 @@ def get_all_labeled_args(
                 framenet_arg = get_framenet_arg_role(arg[1])
                 if qnode_args.get(framenet_arg):
                     node_label = amr.nodes[arg_node]
-                    tokens_of_node = node_labels_to_tokens.get(arg_node)
+                    trimmed_node_label = remove_preceding_trailing_stop_words(node_label)
+                    tokens_of_node = remove_preceding_trailing_stop_words(
+                        node_labels_to_tokens.get(arg_node)
+                    )
                     if tokens_of_node:
-                        tokens_of_node = remove_preceding_trailing_stop_words(tokens_of_node)
-                    if not tokens_of_node:
-                        labeled_args[framenet_arg] = node_label.rsplit("-", 1)[0]
-                    else:
                         labeled_args[framenet_arg] = tokens_of_node
+                    elif trimmed_node_label:
+                        labeled_args[framenet_arg] = node_label.rsplit("-", 1)[0]
+
     return labeled_args
 
 
