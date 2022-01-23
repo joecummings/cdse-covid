@@ -18,9 +18,11 @@ text_to_nil_ids: Dict[str, str] = {}
 def write_private_data(aif_file: TextIO, private_data: str) -> None:
     """Write a component's private data."""
     aif_file.write(
-        '\taida:privateData "['
+        '\taida:privateData "[ a aida:PrivateData ;'
+        + '\t\t"aida:jsonContent'
         + reduce_whitespace(str(private_data)).replace('"', "")
-        + ']"^^xsd:string ;\n'
+        + '"^^xsd:string ;'
+        + 'aida:system <' + CDSE_SYSTEM + '> ] ;'
     )
 
 
