@@ -90,12 +90,14 @@ def write_entity_data(
     # TextJustification
     if justification_name:
         aif_file.write(justification_name + " a aida:TextJustification ;\n")
-        if entity_data.get("confidence") and entity_data["confidence"] is not None:
-            aif_file.write("\taida:confidence [ a aida:Confidence ;\n")
-            aif_file.write(
-                "\t\taida:confidenceValue " + f"{entity_data['confidence']:.2E}" + " ;\n"
-            )
-            aif_file.write("\t\taida:system <" + CDSE_SYSTEM + "> ] ;\n")
+        confidence_val = (
+            entity_data["confidence"]
+            if entity_data.get("confidence") and entity_data["confidence"] is not None
+            else 1.0
+        )
+        aif_file.write("\taida:confidence [ a aida:Confidence ;\n")
+        aif_file.write("\t\taida:confidenceValue " + f"{confidence_val:.2E}" + " ;\n")
+        aif_file.write("\t\taida:system <" + CDSE_SYSTEM + "> ] ;\n")
         aif_file.write('\taida:endOffsetInclusive "' + str(end_offset_inclusive) + '"^^xsd:int ;\n')
         aif_file.write('\taida:source "' + source + '"^^xsd:string ;\n')
         aif_file.write('\taida:startOffset "' + str(start_offset) + '"^^xsd:int ;\n')
