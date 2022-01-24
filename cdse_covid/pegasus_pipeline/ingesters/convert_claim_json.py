@@ -392,7 +392,7 @@ def convert_json_file_to_aif(params: Parameters) -> None:
 
             af.write(
                 '\taida:naturalLanguageDescription "'
-                + reduce_whitespace(str(data["claim_sentence"])).replace('"', "")
+                + reduce_whitespace(str(data["claim_text"])).replace('"', "")
                 + '"^^xsd:string ;\n'
             )
 
@@ -456,11 +456,6 @@ def convert_json_file_to_aif(params: Parameters) -> None:
                         af.write("\t\t" + ke + end_punc)
 
             af.write("\taida:justifiedBy " + claim_justification_name + " ;\n")
-            af.write(
-                '\taida:claimText "'
-                + reduce_whitespace(str(data["claim_text"])).replace('"', "")
-                + '"^^xsd:string ;\n'
-            )
             write_system(af)
 
             # Write each component
