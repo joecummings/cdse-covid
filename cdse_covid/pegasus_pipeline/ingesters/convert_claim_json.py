@@ -18,11 +18,11 @@ text_to_nil_ids: Dict[str, str] = {}
 def write_private_data(aif_file: TextIO, private_data: str) -> None:
     """Write a component's private data."""
     aif_file.write(
-        '\taida:privateData "[ a aida:PrivateData ;'
-        + '\t\t"aida:jsonContent'
+        '\taida:privateData [ a aida:PrivateData ;\n'
+        + '\t\taida:jsonContent "'
         + reduce_whitespace(str(private_data)).replace('"', "")
-        + '"^^xsd:string ;'
-        + 'aida:system <' + CDSE_SYSTEM + '> ] ;'
+        + '"^^xsd:string ;\n'
+        + '\t\taida:system <' + CDSE_SYSTEM + '> ] ;\n'
     )
 
 
@@ -462,6 +462,9 @@ def convert_json_file_to_aif(params: Parameters) -> None:
 
             # Write each component
             af.write(claim_justification_name + " a aida:TextJustification ;\n")
+            af.write("\taida:confidence [ a aida:Confidence ;\n")
+            af.write("\t\taida:confidenceValue " + f"{1.00:.2E}" + " ;\n")
+            af.write("\t\taida:system <" + CDSE_SYSTEM + "> ] ;\n")
             af.write('\taida:endOffsetInclusive "' + str(end_offset_inclusive) + '"^^xsd:int ;\n')
             af.write('\taida:source "' + source + '"^^xsd:string ;\n')
             af.write('\taida:startOffset "' + str(start_offset) + '"^^xsd:int ;\n')
@@ -526,7 +529,7 @@ def convert_json_file_to_aif(params: Parameters) -> None:
                     )
                     arg_count += 1
 
-    af.write(f"<{CDSE_SYSTEM}> a aida:System .")
+        af.write(f"<{CDSE_SYSTEM}> a aida:System .")
 
     if af:
         af.close()
