@@ -360,7 +360,7 @@ def convert_json_file_to_aif(params: Parameters) -> None:
             af = open(aif_file, "w", encoding="utf-8")
             log.info("WRITING: %s", aif_file)
             af.write(
-                "@prefix aida: <https://raw.githubusercontent.com/NextCenturyCorporation/AIDA-Interchange-Format/develop/java/src/main/resources/com/ncc/aif/aida_ontology.shacl> .\n"
+                "@prefix aida: <https://raw.githubusercontent.com/NextCenturyCorporation/AIDA-Interchange-Format/master/java/src/main/resources/com/ncc/aif/ontologies/InterchangeOntology#> .\n"
             )
             af.write("@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .\n")
             af.write("@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .\n\n")
