@@ -51,9 +51,7 @@ def main(
 
     for claim in claim_ds.claims:
         logging.info("Processing claim %s", claim.claim_id)
-        tokenized_sentence = tokenize_sentence(
-            claim.claim_sentence, spacy_tokenizer, max_tokens
-        )
+        tokenized_sentence = tokenize_sentence(claim.claim_sentence, spacy_tokenizer, max_tokens)
         sentence_amr = amr_parser.amr_parse_sentences([tokenized_sentence])
         tokenized_claim = tokenize_sentence(claim.claim_text, spacy_tokenizer, max_tokens)
         possible_claimer = identify_claimer(

@@ -67,5 +67,5 @@ if __name__ == "__main__":
     parser.add_argument("--claims-file", type=Path)
     parser.add_argument("--output", type=Path)
     args = parser.parse_args()
-    spacy_model = spacy.load("en_core_web_md")
-    main(args.claims_file, args.output, spacy_model)
+    model = spacy.load("en_core_web_md")
+    main(args.claims_file, args.output, model)

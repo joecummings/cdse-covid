@@ -282,7 +282,7 @@ def identify_x_variable_covid(
                 amr_dict, nodes_to_labels, nodes_to_source_strings, tokens_to_indices, amr.root
             ),
             claim,
-            tokenizer
+            tokenizer,
         )
     if claim_template.startswith("X was the target"):
         # For the template concerning the target of the coronavirus,
