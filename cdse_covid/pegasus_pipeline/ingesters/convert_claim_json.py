@@ -529,6 +529,8 @@ def convert_json_file_to_aif(params: Parameters) -> None:
                     )
                     arg_count += 1
 
+    af.write(f"<{CDSE_SYSTEM}> a aida:System .")
+
     if af:
         af.close()
         log.info("WROTE: %s", aif_file)
