@@ -14,6 +14,22 @@ log = logging.getLogger(__name__)  # pylint:disable=invalid-name
 CDSE_SYSTEM = "http://www.isi.edu/cdse"
 text_to_nil_ids: Dict[str, str] = {}
 
+AUTHOR_DATA = {
+    "claimer": {
+        "text": "<AUTHOR>",
+        "span": [0, 0],
+        "confidence": 1.0
+    },
+    "claimer_identity_qnode": None,
+    "claimer_type_qnode": {
+        "text": "human",
+        "entity": None,
+        "span": [0, 0],
+        "confidence": 1.0,
+        "qnode_id": "Q5",
+    }
+}
+
 
 def write_offset(aif_file: TextIO, offset: int, is_start: bool) -> None:
     position = "startOffset" if is_start else "endOffsetInclusive"
@@ -332,7 +348,7 @@ def convert_json_file_to_aif(params: Parameters) -> None:
     var_types_to_aida_classes = {"x_variable": "xVariable", "claimer": "claimer"}
 
     def get_name_data(
-        aida_file: TextIO, var_type: str, source: str, claim_id: str
+        aida_file: TextIO, var_type: str, source: str, claim_id: str, is_author: bool = False
     ) -> Tuple[str, str, str]:
         """Get a variable's name, entity name, and justification name.
 
@@ -350,12 +366,28 @@ def convert_json_file_to_aif(params: Parameters) -> None:
                 CDSE_SYSTEM
                 + "/clusters/isi/entity/"
                 + source
+                + "/EN_Entity_EDL_ENG_0000000"
+            )
+            + ">"
+        ) if is_author else (
+            "<"
+            + make_xml_safe(
+                CDSE_SYSTEM
+                + "/clusters/isi/entity/"
+                + source
                 + f"/{claim_id}/{var_type}/"
                 + str(var_count)
             )
             + ">"
         )
         variable_entity_name = (
+            "<"
+            + make_xml_safe(
+                CDSE_SYSTEM
+                + f"/entities/isi/{source}/EN_Entity_EDL_ENG_0000000"
+            )
+            + ">"
+        ) if is_author else (
             "<"
             + make_xml_safe(
                 CDSE_SYSTEM
@@ -368,7 +400,6 @@ def convert_json_file_to_aif(params: Parameters) -> None:
             )
             + ">"
         )
-        var_count += 1
         aida_file.write(f"\taida:{var_types_to_aida_classes[var_type]} " + variable_name + " ;\n")
         associated_kes.append(variable_cluster_name)
         return variable_name, variable_entity_name, variable_cluster_name
@@ -395,14 +426,14 @@ def convert_json_file_to_aif(params: Parameters) -> None:
 
         # Cluster
         aif_file.write(variable_cluster_name + " a aida:SameAsCluster ;\n")
-        aif_file.write(f"\taida:prototype {variable_entity_name}")
+        aif_file.write(f"\taida:prototype {variable_entity_name} ;\n")
         write_system(aif_file)
 
         # Claim component
         aif_file.write(variable_name + " a aida:ClaimComponent ;\n")
         aif_file.write(
             '\taida:componentName "'
-            + make_xml_safe(str(variable_entity_data["text"]))
+            + make_xml_safe(str(variable_entity_data["text"])).replace("\\", "_")
             + '"^^xsd:string ;\n'
         )
         aif_file.write(
@@ -506,12 +537,9 @@ def convert_json_file_to_aif(params: Parameters) -> None:
                 associated_kes.extend([claim_arg for claim_arg in claim_arguments])
 
             has_claimer = data["claimer_type_qnode"] is not None
-            claimer_name = "None"
-            claimer_entity_name = "None"
-            claimer_cluster_name = "None"
-
-            if has_claimer:
-                claimer_name, claimer_entity_name, claimer_cluster_name = get_name_data(af, "claimer", source, claim_id)
+            claimer_name, claimer_entity_name, claimer_cluster_name = get_name_data(
+                af, "claimer", source, claim_id, is_author=(not has_claimer)
+            )
 
             has_claim_location = data["claim_location_qnode"] is not None
             claim_location = "None"
@@ -569,16 +597,17 @@ def convert_json_file_to_aif(params: Parameters) -> None:
                     0,
                 )
 
-            if has_claimer:
-                write_qnode_data(
-                    af,
-                    data,
-                    "claimer",
-                    claimer_name,
-                    claimer_entity_name,
-                    claimer_cluster_name,
-                    0,
-                )
+            AUTHOR_DATA["claimer"]["doc_id"] = source
+
+            write_qnode_data(
+                af,
+                data if has_claimer else AUTHOR_DATA,
+                "claimer",
+                claimer_name,
+                claimer_entity_name,
+                claimer_cluster_name,
+                0,
+            )
 
             if has_claim_location:
                 write_claim_component(af, data, "claim_location", claim_location)
