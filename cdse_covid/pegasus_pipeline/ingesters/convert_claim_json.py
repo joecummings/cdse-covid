@@ -15,6 +15,11 @@ CDSE_SYSTEM = "http://www.isi.edu/cdse"
 text_to_nil_ids: Dict[str, str] = {}
 
 
+def write_offset(aif_file: TextIO, offset: int, is_start: bool) -> None:
+    position = "startOffset" if is_start else "endOffsetInclusive"
+    aif_file.write(f"\taida:{position} \"{offset}\"^^xsd:int ;\n")
+
+
 def write_private_data(aif_file: TextIO, private_data: str) -> None:
     """Write a component's private data."""
     aif_file.write(
@@ -83,7 +88,6 @@ def write_entity_data(
 
     # Entity
     aif_file.write(entity_name + " a aida:Entity ;\n")
-    aif_file.write('\taida:text "' + make_xml_safe(str(entity_data["text"])) + '"^^xsd:string ;\n')
     if justification_name:
         aif_file.write("\taida:justifiedBy " + str(justification_name) + " ;\n")
     if entity_data["entity"] is not None:
@@ -209,12 +213,14 @@ def write_claim_semantics_event(
     aif_file.write(confidence_aif)
 
     # informative justification
-    # events have no spans in our system
+    event_start = event_data["span"][0]
+    event_end = event_data["span"][1]
     informative_justification_name = (
         "<"
         + CDSE_SYSTEM
         + f"/assertions/isi/event_informative_justification/{event_id}/"
         + source
+        + f"/{event_start}/{event_end}"
         + ">"
     )
     aif_file.write(f"\taida:informativeJustification {informative_justification_name} ;\n")
@@ -223,7 +229,7 @@ def write_claim_semantics_event(
     justification_name = (
         "<"
         + CDSE_SYSTEM
-        + f"/assertions/isi/eventjustification/{event_id}/{source}"
+        + f"/assertions/isi/eventjustification/{event_id}/{source}/{event_start}/{event_end}"
         + ">"
     )
     aif_file.write(f"\taida:justifiedBy {justification_name} ;\n")
@@ -234,8 +240,19 @@ def write_claim_semantics_event(
     # TextJustification
     aif_file.write(informative_justification_name + " a aida:TextJustification ;\n")
     aif_file.write(confidence_aif)
+    write_offset(aif_file, event_end, is_start=False)
     write_private_data(aif_file, event_data)
     aif_file.write(f'\taida:source "{source}"^^xsd:string ;\n')
+    write_offset(aif_file, event_start, is_start=True)
+    write_system(aif_file)
+
+    # Event justification
+    aif_file.write(justification_name + " a aida:TextJustification ;\n")
+    aif_file.write(confidence_aif)
+    write_offset(aif_file, event_end, is_start=False)
+    write_private_data(aif_file, event_data)
+    aif_file.write(f'\taida:source "{source}"^^xsd:string ;\n')
+    write_offset(aif_file, event_start, is_start=True)
     write_system(aif_file)
 
 
@@ -316,23 +333,27 @@ def convert_json_file_to_aif(params: Parameters) -> None:
 
     def get_name_data(
         aida_file: TextIO, var_type: str, source: str, claim_id: str
-    ) -> Tuple[str, str]:
+    ) -> Tuple[str, str, str]:
         """Get a variable's name, entity name, and justification name.
 
         var_type can be 'x_variable' or 'claimer'
         """
         var_count = 0
-        # variable_name = (
-        #     "<"
-        #     + make_xml_safe(
-        #         CDSE_SYSTEM + "/" + source + "/claim/" + claim_id + f"/{var_type}/" + str(var_count)
-        #     )
-        #     + ">"
-        # )
 
         type_for_uri = "X" if var_type == "x_variable" else var_type
         variable_name = (
             f"ex:claim_{source}_{claim_id}_{type_for_uri}"
+        )
+        variable_cluster_name = (
+            "<"
+            + make_xml_safe(
+                CDSE_SYSTEM
+                + "/clusters/isi/entity/"
+                + source
+                + f"/{claim_id}/{var_type}/"
+                + str(var_count)
+            )
+            + ">"
         )
         variable_entity_name = (
             "<"
@@ -349,8 +370,8 @@ def convert_json_file_to_aif(params: Parameters) -> None:
         )
         var_count += 1
         aida_file.write(f"\taida:{var_types_to_aida_classes[var_type]} " + variable_name + " ;\n")
-        associated_kes.append(variable_entity_name)
-        return variable_name, variable_entity_name
+        associated_kes.append(variable_cluster_name)
+        return variable_name, variable_entity_name, variable_cluster_name
 
     def write_qnode_data(
         aif_file: TextIO,
@@ -358,6 +379,7 @@ def convert_json_file_to_aif(params: Parameters) -> None:
         var_type: str,
         variable_name: str,
         variable_entity_name: str,
+        variable_cluster_name: str,
         var_count: int,
     ) -> None:
         """Write the component, entity, and justifications for the variable."""
@@ -370,6 +392,13 @@ def convert_json_file_to_aif(params: Parameters) -> None:
         else:
             variable_entity_data = data[f"{var_type}_type_qnode"]
             variable_entity_qnode = get_nil_id_for_entity(variable_entity_data["text"])
+
+        # Cluster
+        aif_file.write(variable_cluster_name + " a aida:SameAsCluster ;\n")
+        aif_file.write(f"\taida:prototype {variable_entity_name}")
+        write_system(aif_file)
+
+        # Claim component
         aif_file.write(variable_name + " a aida:ClaimComponent ;\n")
         aif_file.write(
             '\taida:componentName "'
@@ -419,6 +448,21 @@ def convert_json_file_to_aif(params: Parameters) -> None:
             prior_source = source
 
         if af:
+            # First check if there are claim semantics
+            has_claim_semantics = (
+                    data["claim_semantics"] is not None
+                    and data["claim_semantics"]["event"] is not None
+                    and data["claim_semantics"]["event"]["qnode_id"] is not None
+                    and data["claim_semantics"]["event"]["span"] is not None
+                    and data["claim_semantics"]["event"]["text"] is not "Unspecified"
+            )
+            if not has_claim_semantics:
+                continue
+            claim_semantics_cluster_name = "None"
+            claim_semantics_id = "None"
+            claim_arguments: Dict[str, Any] = {}
+            argument_names_to_roles: Dict[str, str] = {}
+
             # Write the Claim
             claim_id = make_xml_safe(str(data["claim_id"]))
             claim_name = "<" + make_xml_safe(CDSE_SYSTEM + "/" + source + "/claim_id/" + claim_id) + ">"
@@ -433,6 +477,7 @@ def convert_json_file_to_aif(params: Parameters) -> None:
             has_x_variable = data["x_variable_type_qnode"] is not None
             x_variable_name = "None"
             x_variable_entity_name = "None"
+            x_variable_cluster_name = "None"
 
             associated_kes = []
 
@@ -440,6 +485,7 @@ def convert_json_file_to_aif(params: Parameters) -> None:
                 (
                     x_variable_name,
                     x_variable_entity_name,
+                    x_variable_cluster_name,
                 ) = get_name_data(af, "x_variable", source, claim_id)
 
             af.write(
@@ -447,17 +493,6 @@ def convert_json_file_to_aif(params: Parameters) -> None:
                 + reduce_whitespace(str(data["claim_text"])).replace('"', "")
                 + '"^^xsd:string ;\n'
             )
-
-            has_claim_semantics = (
-                data["claim_semantics"] is not None
-                and data["claim_semantics"]["event"] is not None
-                and data["claim_semantics"]["event"]["qnode_id"] is not None
-                and data["claim_semantics"]["event"]["text"] is not "Unspecified"
-            )
-            claim_semantics_cluster_name = "None"
-            claim_semantics_id = "None"
-            claim_arguments: Dict[str, Any] = {}
-            argument_names_to_roles: Dict[str, str] = {}
 
             if has_claim_semantics:
                 (
@@ -473,9 +508,10 @@ def convert_json_file_to_aif(params: Parameters) -> None:
             has_claimer = data["claimer_type_qnode"] is not None
             claimer_name = "None"
             claimer_entity_name = "None"
+            claimer_cluster_name = "None"
 
             if has_claimer:
-                claimer_name, claimer_entity_name = get_name_data(af, "claimer", source, claim_id)
+                claimer_name, claimer_entity_name, claimer_cluster_name = get_name_data(af, "claimer", source, claim_id)
 
             has_claim_location = data["claim_location_qnode"] is not None
             claim_location = "None"
@@ -529,6 +565,7 @@ def convert_json_file_to_aif(params: Parameters) -> None:
                     "x_variable",
                     x_variable_name,
                     x_variable_entity_name,
+                    x_variable_cluster_name,
                     0,
                 )
 
@@ -539,6 +576,7 @@ def convert_json_file_to_aif(params: Parameters) -> None:
                     "claimer",
                     claimer_name,
                     claimer_entity_name,
+                    claimer_cluster_name,
                     0,
                 )
 
@@ -580,8 +618,6 @@ def convert_json_file_to_aif(params: Parameters) -> None:
                     argument_role = argument_names_to_roles[argument]
                     arg_name = clusters_to_arg_entities[argument]
                     arg_number = arg_name.split("_")[-1].strip(">")
-
-                    print(f"DEBUGGING! arg_data = {arg_data}")
 
                     write_claim_semantics_argument(
                         af,

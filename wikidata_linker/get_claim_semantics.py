@@ -281,10 +281,20 @@ def get_claim_semantics(
         device,
     )
 
+    # Reverse search for the pb's source text
+    # in order to get the associated char offsets
+    if best_qnode.get("pb"):
+        pb_amr_node = get_node_from_pb(amr_sentence, best_qnode["pb"])
+        event_tokens = amr_sentence.get_tokens_from_node(pb_amr_node, amr_alignments)
+        event_text = " ".join(event_tokens)
+        event_span = claim.get_offsets_for_text(event_text, spacy_model.tokenizer)
+    else:
+        pb_amr_node = None
+        logging.warning("No propbank label assigned to event qnode data: %s", best_qnode)
+
     wd: MutableMapping[str, Any] = {}
-    if best_qnode and best_qnode.get("args"):
-        node = get_node_from_pb(amr_sentence, best_qnode["pb"])
-        labeled_args = get_all_labeled_args(amr_sentence, amr_alignments, node, best_qnode["args"])
+    if best_qnode and pb_amr_node and best_qnode.get("args"):
+        labeled_args = get_all_labeled_args(amr_sentence, amr_alignments, pb_amr_node, best_qnode["args"])
         wd = get_wikidata_for_labeled_args(
             amr_sentence, amr_alignments, claim, labeled_args, spacy_model, linking_model, device
         )
@@ -293,6 +303,7 @@ def get_claim_semantics(
         claim_event = ClaimEvent(
             text=best_qnode.get("name"),
             doc_id=claim.doc_id,
+            span=event_span,
             description=best_qnode.get("definition"),
             from_query=best_qnode.get("pb"),
             qnode_id=best_qnode.get("qnode"),
