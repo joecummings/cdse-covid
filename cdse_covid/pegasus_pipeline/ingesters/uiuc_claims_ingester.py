@@ -45,7 +45,9 @@ def main(claims_file: Path, output: Path, spacy_model: Language) -> None:
                 claim_id=create_id(),
                 doc_id=doc_id,
                 claim_text=claim["claim_span_text"],
-                claim_span=(claim["claim_span_start"], claim["claim_span_end"]),
+                claim_span=(
+                    sentence_start + claim["claim_span_start"], sentence_start + claim["claim_span_end"]
+                ),
                 claim_sentence=claim["sentence"],
             )
 
