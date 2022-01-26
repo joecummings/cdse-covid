@@ -520,13 +520,14 @@ def get_kgtk_result_for_event(
             score = selected_qnode.get("score")
             if not definition and selected_qnode.get("description"):
                 definition = selected_qnode["description"][0]
-            return {
-                "pb": pb_label,
-                "name": selected_qnode.get("rawName") or selected_qnode["label"][0],
-                "qnode": selected_qnode["qnode"],
-                "definition": definition,
-                "score": score,
-            }, is_root
+            if selected_qnode.get("rawName") or selected_qnode.get("label"):
+                return {
+                    "pb": pb_label,
+                    "name": selected_qnode.get("rawName") or selected_qnode["label"][0],
+                    "qnode": selected_qnode["qnode"],
+                    "definition": definition,
+                    "score": score,
+                }, is_root
     return {}, False
 
 
