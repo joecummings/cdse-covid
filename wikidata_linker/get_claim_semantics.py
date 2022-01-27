@@ -28,7 +28,6 @@ from cdse_covid.semantic_extraction.utils.amr_extraction_utils import (
 from wikidata_linker.linker import WikidataLinkingClassifier
 from wikidata_linker.wikidata_linking import CPU, disambiguate_refvar_kgtk, disambiguate_verb_kgtk
 
-OVERLAY = "overlay"
 MASTER = "master"
 
 PARENT_DIR = Path(__file__).parent
@@ -144,7 +143,7 @@ def get_best_qnode_for_mention_text(
     if not mention_text:
         return None
     # Make both tables
-    pbs_to_qnodes_master, pbs_to_qnodes_overlay, names_to_qnodes = load_tables()
+    pbs_to_qnodes_master, pbs_to_qnodes_xpo, names_to_qnodes = load_tables()
 
     # Find the label associated with the last token of the variable text
     # (any tokens before it are likely modifiers)
@@ -175,7 +174,7 @@ def get_best_qnode_for_mention_text(
     if variable_node_label and node_label_is_pb:
         best_qnodes = determine_best_qnodes(
             [variable_node_label],
-            pbs_to_qnodes_overlay,
+            pbs_to_qnodes_xpo,
             pbs_to_qnodes_master,
             spacy_model,
             linking_model,
@@ -198,7 +197,7 @@ def get_best_qnode_for_mention_text(
 
     # If no Qnode was found, try the entity mapping
     query_list: List[str] = list(filter(None, [mention_text, *claim_variable_tokens]))
-    wd_qnode_from_entity_table = get_entity_table_result(
+    wd_qnode_from_entity_table = get_xpo_entity_result(
         query_list, names_to_qnodes, wn_lemmatizer, claim.doc_id, mention_id, mention_span
     )
     if wd_qnode_from_entity_table:
@@ -253,7 +252,7 @@ def get_wikidata_for_labeled_args(
 
 
 def load_tables() -> Tuple[Dict[str, Any], Dict[str, Any], Dict[str, Any]]:
-    """Load propbank-to-qnode mappings from files.
+    """Load qnode mappings from files.
 
     If they aren't found where expected, they will be generated
     from their respective original mapping files.
@@ -262,20 +261,20 @@ def load_tables() -> Tuple[Dict[str, Any], Dict[str, Any], Dict[str, Any]]:
     if not master_table_path.exists():
         logging.info("Could not find `pb_to_qnode_master.json`; generating it now")
         generate_master_dict(master_table_path)
-    overlay_table_path = PARENT_DIR / "resources" / "pb_to_qnode_overlay.json"
-    if not overlay_table_path.exists():
+    xpo_event_table_path = PARENT_DIR / "resources" / "pb_to_qnode_overlay.json"
+    if not xpo_event_table_path.exists():
         logging.info("Could not find `pb_to_qnode_overlay.json`; generating it now")
-        generate_overlay_dict(overlay_table_path)
-    entity_table_path = PARENT_DIR / "resources" / "names_to_qnode_overlay.json"
-    if not entity_table_path.exists():
+        generate_xpo_event_dict(xpo_event_table_path)
+    xpo_entity_table_path = PARENT_DIR / "resources" / "names_to_qnode_overlay.json"
+    if not xpo_entity_table_path.exists():
         logging.info("Could not find `names_to_qnode_overlay.json`; generating it now")
-        generate_entity_dict(entity_table_path)
+        generate_xpo_entity_dict(xpo_entity_table_path)
     # Load both qnode mappings
     with open(master_table_path, "r", encoding="utf-8") as master_json:
         pbs_to_qnodes_master = json.load(master_json)
-    with open(overlay_table_path, "r", encoding="utf-8") as overlay_json:
+    with open(xpo_event_table_path, "r", encoding="utf-8") as overlay_json:
         pbs_to_qnodes_overlay = json.load(overlay_json)
-    with open(entity_table_path, "r", encoding="utf-8") as entity_json:
+    with open(xpo_entity_table_path, "r", encoding="utf-8") as entity_json:
         names_to_qnodes = json.load(entity_json)
 
     return pbs_to_qnodes_master, pbs_to_qnodes_overlay, names_to_qnodes
@@ -399,7 +398,7 @@ def determine_best_qnodes(
     for pb in pb_label_list:
         top_results_for_pb = []
         # Get result from the XPO table
-        best_overlay_qnode = get_overlay_results(pb, pbs_to_qnodes_overlay, spacy_model)
+        best_overlay_qnode = get_xpo_event_result(pb, pbs_to_qnodes_overlay, spacy_model)
         if best_overlay_qnode:
             top_results_for_pb.append(best_overlay_qnode)
 
@@ -486,9 +485,9 @@ def create_wikidata_qnodes(
     return None
 
 
-def get_overlay_results(
+def get_xpo_event_result(
     propbank_label: str,
-    pb_mapping: MutableMapping[str, Any],
+    pb_mapping: Dict[str, Any],
     spacy_model: Language,
 ) -> Dict[str, Any]:
     """Returns the 'best' qnode from the overlay mapping.
@@ -546,7 +545,7 @@ def get_master_result(
     return {}
 
 
-def get_entity_table_result(
+def get_xpo_entity_result(
     potential_entity_strings: List[str],
     qnode_mapping: Dict[str, Any],
     lemmatizer: WordNetLemmatizer,
@@ -727,7 +726,7 @@ def create_arg_dict(qnode_dict: Dict[str, Any]) -> Dict[Any, Any]:
     return final_args
 
 
-def generate_overlay_dict(pb_overlay: Path) -> None:
+def generate_xpo_event_dict(pb_xpo: Path) -> None:
     """Create a PB-to-Qnode dict from the DWD overlay."""
     qnode_mapping = ORIGINAL_XPO_TABLE
     pbs_to_qnodes = defaultdict(list)
@@ -771,11 +770,11 @@ def generate_overlay_dict(pb_overlay: Path) -> None:
                 for pb_item in pb_list:
                     add_qnode_to_mapping(pb_item, qnode, qnode_summary)
 
-    with open(pb_overlay, "w+", encoding="utf-8") as out_json:
+    with open(pb_xpo, "w+", encoding="utf-8") as out_json:
         json.dump(pbs_to_qnodes, out_json, indent=4)
 
 
-def generate_entity_dict(entity_overlay: Path) -> None:
+def generate_xpo_entity_dict(entity_overlay: Path) -> None:
     """Create an entity-to-Qnode dict from the DWD overlay."""
     qnode_mapping = ORIGINAL_XPO_TABLE
     entities_to_qnodes: Dict[str, Dict[str, str]] = {}
