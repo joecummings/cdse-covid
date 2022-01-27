@@ -260,7 +260,10 @@ def get_claim_semantics(
     linking_model: WikidataLinkingClassifier,
     device: str = CPU,
 ) -> Optional[ClaimSemantics]:
-    """Disambiguate AMR sentence according to DWD overlay."""
+    """Disambiguate AMR sentence according to DWD overlay.
+
+    Return all event qnodes and their corresponding arguments for the given claim.
+    """
     # Make both tables
     pbs_to_qnodes_master, pbs_to_qnodes_overlay = load_tables()
 
