@@ -97,7 +97,7 @@ def main(
         semantics = get_claim_semantics(
             claim_amr.graph, claim_amr.alignments, claim, spacy_model, linking_model, device
         )
-        claim.claim_semantics = [semantics]
+        claim.claim_semantics = semantics
 
         claim.add_theory("amr", sentence_amr.graph)
         claim.add_theory("alignments", sentence_amr.alignments)

@@ -164,7 +164,7 @@ def get_best_qnode_for_mention_text(
         node_label_is_pb = is_pb_label(variable_node_label)
 
     if variable_node_label and node_label_is_pb:
-        best_qnode = determine_best_qnode(
+        best_qnodes = determine_best_qnodes(
             [variable_node_label],
             pbs_to_qnodes_overlay,
             pbs_to_qnodes_master,
@@ -173,7 +173,8 @@ def get_best_qnode_for_mention_text(
             linking_model,
             check_mappings_only=True,
         )
-        if best_qnode:
+        if best_qnodes:
+            best_qnode = best_qnodes[0]  # there should only be one
             return WikidataQnode(
                 text=best_qnode.get("name"),
                 mention_id=mention_id,
@@ -259,11 +260,13 @@ def get_claim_semantics(
     spacy_model: Language,
     linking_model: WikidataLinkingClassifier,
     device: str = CPU,
-) -> Optional[ClaimSemantics]:
+) -> List[ClaimSemantics]:
     """Disambiguate AMR sentence according to DWD overlay.
 
     Return all event qnodes and their corresponding arguments for the given claim.
     """
+    all_claim_semantics = []
+
     # Make both tables
     pbs_to_qnodes_master, pbs_to_qnodes_overlay = load_tables()
 
@@ -272,9 +275,9 @@ def get_claim_semantics(
     pb_label_list = [label for label in label_list_all if re.match(PROPBANK_PATTERN, label)]
     if not pb_label_list:
         logging.warning("No PropBank labels in the graph!")
-        return None
+        return []
 
-    best_qnode = determine_best_qnode(
+    best_event_qnodes = determine_best_qnodes(
         pb_label_list,
         pbs_to_qnodes_overlay,
         pbs_to_qnodes_master,
@@ -284,43 +287,44 @@ def get_claim_semantics(
         device,
     )
 
-    # Reverse search for the pb's source text
-    # in order to get the associated char offsets
-    if best_qnode.get("pb"):
-        pb_amr_node = get_node_from_pb(amr_sentence, best_qnode["pb"])
-        event_tokens = amr_sentence.get_tokens_from_node(pb_amr_node, amr_alignments)
-        event_text = " ".join(event_tokens)
-        event_span = claim.get_offsets_for_text(event_text, spacy_model.tokenizer)
-    else:
-        pb_amr_node = ""
-        logging.warning("No propbank label assigned to event qnode data: %s", best_qnode)
+    for event_qnode in best_event_qnodes:
+        # Reverse search for the pb's source text
+        # in order to get the associated char offsets
+        event_span = None
+        if event_qnode.get("pb"):
+            pb_amr_node = get_node_from_pb(amr_sentence, event_qnode["pb"])
+            event_tokens = amr_sentence.get_tokens_from_node(pb_amr_node, amr_alignments)
+            event_text = " ".join(event_tokens)
+            event_span = claim.get_offsets_for_text(event_text, spacy_model.tokenizer)
+        else:
+            pb_amr_node = ""
+            logging.warning("No propbank label assigned to event qnode data: %s", event_qnode)
 
-    wd: MutableMapping[str, Any] = {}
-    if best_qnode and pb_amr_node and best_qnode.get("args"):
-        labeled_args = get_all_labeled_args(
-            amr_sentence, amr_alignments, pb_amr_node, best_qnode["args"]
-        )
-        wd = get_wikidata_for_labeled_args(
-            amr_sentence, amr_alignments, claim, labeled_args, spacy_model, linking_model, device
-        )
+        wd: MutableMapping[str, Any] = {}
+        if pb_amr_node and event_qnode.get("args"):
+            node = get_node_from_pb(amr_sentence, pb_amr_node)
+            labeled_args = get_all_labeled_args(amr_sentence, amr_alignments, node, event_qnode["args"])
+            wd = get_wikidata_for_labeled_args(
+                amr_sentence, amr_alignments, claim, labeled_args, spacy_model, linking_model, device
+            )
 
-    if best_qnode:
         claim_event = ClaimEvent(
-            text=best_qnode.get("name"),
+            text=event_qnode.get("name"),
             doc_id=claim.doc_id,
             span=event_span,
-            description=best_qnode.get("definition"),
-            from_query=best_qnode.get("pb"),
-            qnode_id=best_qnode.get("qnode"),
-            confidence=best_qnode.get("score"),
+            description=event_qnode.get("definition"),
+            from_query=event_qnode.get("pb"),
+            qnode_id=event_qnode.get("qnode"),
+            confidence=event_qnode.get("score"),
         )
 
         claim_args = {k: {"type": w} for k, w in wd.items()}
-        return ClaimSemantics(event=claim_event, args=claim_args)
-    return None
+        all_claim_semantics.append(ClaimSemantics(event=claim_event, args=claim_args))
+
+    return all_claim_semantics
 
 
-def determine_best_qnode(
+def determine_best_qnodes(
     pb_label_list: List[str],
     pbs_to_qnodes_overlay: Dict[str, Any],
     pbs_to_qnodes_master: Dict[str, Any],
@@ -329,58 +333,49 @@ def determine_best_qnode(
     linking_model: WikidataLinkingClassifier,
     device: str = CPU,
     check_mappings_only: bool = False,
-) -> Dict[str, Any]:
-    """Return list of qnode results from the overlay.
+) -> List[Dict[str, Any]]:
+    """Return a list of qnode results from the pb-to-qnode mappings.
+
+    The list will contain the best qnode result for each PropBank frame
+    in the claim's AMR graph.
 
     We prioritize overlay results since they tend to be more precise.
-    If the result is from the root verb, we automatically go with that.
     Otherwise, we also check the master table, and finally do a KGTK lookup.
     """
-    ranked_qnodes = []
-    root_label = amr.nodes[amr.root]
-    best_overlay_qnode, overlay_result_from_root = get_overlay_result(
-        pb_label_list, pbs_to_qnodes_overlay, root_label, spacy_model
-    )
-
-    if best_overlay_qnode:
-        if overlay_result_from_root:
-            return best_overlay_qnode
-        else:
-            ranked_qnodes.append(best_overlay_qnode)
-
-    # Get result from the master table
-    best_master_qnode, master_result_from_root = get_master_result(
-        pb_label_list, pbs_to_qnodes_master, ORIGINAL_MASTER_TABLE, root_label, spacy_model
-    )
-
-    # Prioritize the master result if it is from the root node
-    # or there is no result from the overlay.
-    if master_result_from_root or not best_overlay_qnode:
-        return best_master_qnode
-    elif best_master_qnode and not master_result_from_root:
-        ranked_qnodes.append(best_master_qnode)
-
-    if check_mappings_only:
-        logging.warning("Using node other than root to get event Qnode.")
-        if ranked_qnodes:
-            return ranked_qnodes[0]
-    else:
-        # Finally, run a KGTK lookup
-        best_kgtk_qnode, kgtk_result_from_root = get_kgtk_result_for_event(
-            pb_label_list, amr, linking_model, device
+    chosen_event_qnodes = []
+    for pb in pb_label_list:
+        # Get result from the XPO table
+        best_overlay_qnode = get_overlay_results(
+            pb, pbs_to_qnodes_overlay, spacy_model
         )
-        # Prioritize the root if there is one
-        if kgtk_result_from_root or not ranked_qnodes:
-            return best_kgtk_qnode
-        # Next, prioritize any other result we found in the tables
-        logging.warning("Using node other than root to get event Qnode.")
-        if ranked_qnodes:
-            return ranked_qnodes[0]
-        if not best_kgtk_qnode:
-            logging.warning("Couldn't find a qnode for pbs %s", pb_label_list)
-        return best_kgtk_qnode
-    logging.warning("Couldn't find a qnode for pbs %s", pb_label_list)
-    return {}
+
+        if best_overlay_qnode:
+            chosen_event_qnodes.append(best_overlay_qnode)
+            continue
+
+        # Get result from the master table
+        best_master_qnode = get_master_result(
+            pb, pbs_to_qnodes_master, ORIGINAL_MASTER_TABLE, spacy_model
+        )
+
+        if best_master_qnode:
+            chosen_event_qnodes.append(best_master_qnode)
+            continue
+
+        if check_mappings_only:
+            return chosen_event_qnodes
+        else:
+            # Finally, run a KGTK lookup
+            best_kgtk_qnode = get_kgtk_result_for_event(
+                pb, amr, linking_model, device
+            )
+            if best_kgtk_qnode:
+                chosen_event_qnodes.append(best_kgtk_qnode)
+
+    if not chosen_event_qnodes:
+        logging.warning("Couldn't find a qnode for pbs %s", pb_label_list)
+
+    return chosen_event_qnodes
 
 
 def create_wikidata_qnodes(
@@ -436,104 +431,96 @@ def create_wikidata_qnodes(
     return None
 
 
-def get_overlay_result(
-    pb_label_list: List[str],
+def get_overlay_results(
+    propbank_label: str,
     pb_mapping: MutableMapping[str, Any],
-    root_label: str,
     spacy_model: Language,
-) -> Tuple[Dict[str, Any], bool]:
+) -> Dict[str, Any]:
     """Returns the 'best' qnode from the overlay mapping.
 
     Given the set of PropBank labels along with whether the qnode came from the root label.
     """
-    for label in pb_label_list:
-        is_root = label == root_label
-        appended_qnode_data = {"pb": label}
-        qnode_dicts = pb_mapping.get(label)
-        if qnode_dicts:
-            if len(qnode_dicts) == 1:
-                appended_qnode_data.update(qnode_dicts[0])
-                return appended_qnode_data, is_root
-            # If there is more than one, do string similarity
-            # (It's unlikely that there will be a ton)
-            best_qnode, score = get_best_qnode_by_semantic_similarity(
-                label, qnode_dicts, spacy_model
-            )
-            if best_qnode:
-                appended_qnode_data["score"] = score  # type: ignore
-                appended_qnode_data.update(best_qnode)
-        if len(appended_qnode_data) > 1:
-            return appended_qnode_data, is_root
-    return {}, False
+    appended_qnode_data = {"pb": propbank_label}
+    qnode_dicts = pb_mapping.get(propbank_label)
+    if qnode_dicts:
+        if len(qnode_dicts) == 1:
+            appended_qnode_data.update(qnode_dicts[0])
+            return appended_qnode_data
+        # If there is more than one, do string similarity
+        # (It's unlikely that there will be a ton)
+        best_qnode, score = get_best_qnode_by_semantic_similarity(
+            propbank_label, qnode_dicts, spacy_model
+        )
+        if best_qnode:
+            appended_qnode_data["score"] = score  # type: ignore
+            appended_qnode_data.update(best_qnode)
+    if len(appended_qnode_data) > 1:
+        return appended_qnode_data
+    return {}
 
 
 def get_master_result(
-    pb_label_list: List[str],
+    propbank_label: str,
     pb_mapping: MutableMapping[str, Any],
     original_mapping: Path,
-    root_label: str,
     spacy_model: Language,
-) -> Tuple[Dict[str, Any], bool]:
+) -> Dict[str, Any]:
     """Get Qnode from master JSON."""
-    for label in pb_label_list:
-        is_root = label == root_label
-        appended_qnode_data = {"pb": label}
-        qnode_dicts = pb_mapping.get(label)
-        if qnode_dicts:
-            # Return this if there is only one result
-            if len(qnode_dicts) == 1:
-                appended_qnode_data.update(qnode_dicts[0])
-                return appended_qnode_data, is_root
-            # Else, try to find the "best" result
-            # First find the qnode with the best string similarity
-            # (to be used as backup)
-            qnode_with_best_name, score = get_best_qnode_by_semantic_similarity(
-                label, qnode_dicts, spacy_model
-            )
-            # Next, try to find the most general qnode
-            most_general_qnode = get_most_general_qnode(label, qnode_dicts, original_mapping)
-            if most_general_qnode:
-                appended_qnode_data.update(most_general_qnode)
-                return appended_qnode_data, is_root
-            elif qnode_with_best_name:
-                appended_qnode_data["score"] = score  # type: ignore
-                appended_qnode_data.update(qnode_with_best_name)
-                return appended_qnode_data, is_root
+    appended_qnode_data = {"pb": propbank_label}
+    qnode_dicts = pb_mapping.get(propbank_label)
+    if qnode_dicts:
+        # Return this if there is only one result
+        if len(qnode_dicts) == 1:
+            appended_qnode_data.update(qnode_dicts[0])
+            return appended_qnode_data
+        # Else, try to find the "best" result
+        # First find the qnode with the best string similarity
+        # (to be used as backup)
+        qnode_with_best_name, score = get_best_qnode_by_semantic_similarity(
+            propbank_label, qnode_dicts, spacy_model
+        )
+        # Next, try to find the most general qnode
+        most_general_qnode = get_most_general_qnode(propbank_label, qnode_dicts, original_mapping)
+        if most_general_qnode:
+            appended_qnode_data.update(most_general_qnode)
+            return appended_qnode_data
+        elif qnode_with_best_name:
+            appended_qnode_data["score"] = score  # type: ignore
+            appended_qnode_data.update(qnode_with_best_name)
+            return appended_qnode_data
 
-    return {}, False
+    return {}
 
 
 def get_kgtk_result_for_event(
-    pb_label_list: List[str], amr: AMR, linking_model: WikidataLinkingClassifier, device: str = CPU
-) -> Tuple[Dict[str, Any], bool]:
+    propbank_label: str, amr: AMR, linking_model: WikidataLinkingClassifier, device: str = CPU
+) -> Dict[str, Any]:
     """Get the KGTK result for an event in the claim sentence."""
-    for pb_label in pb_label_list:
-        is_root = pb_label == amr.nodes[amr.root]
-        formatted_pb = pb_label.rsplit("-", 1)[0]
-        qnode_info = disambiguate_verb_kgtk(formatted_pb, linking_model, k=1, device=device)
-        if qnode_info["options"]:
-            selected_qnode = qnode_info["options"][0]
-        elif qnode_info["other_options"]:
-            selected_qnode = qnode_info["other_options"][0]
-        elif qnode_info["all_options"]:
-            selected_qnode = qnode_info["all_options"][0]  # Just selecting the first result
-        else:
-            selected_qnode = None
+    formatted_pb = propbank_label.rsplit("-", 1)[0]
+    qnode_info = disambiguate_verb_kgtk(formatted_pb, linking_model, k=1, device=device)
+    if qnode_info["options"]:
+        selected_qnode = qnode_info["options"][0]
+    elif qnode_info["other_options"]:
+        selected_qnode = qnode_info["other_options"][0]
+    elif qnode_info["all_options"]:
+        selected_qnode = qnode_info["all_options"][0]  # Just selecting the first result
+    else:
+        selected_qnode = None
 
-        if selected_qnode:
-            definition = selected_qnode.get("definition")
-            score = selected_qnode.get("score")
-            if not definition and selected_qnode.get("description"):
-                definition = selected_qnode["description"][0]
-            if selected_qnode.get("rawName") or selected_qnode.get("label"):
-                return {
-                    "pb": pb_label,
-                    "name": selected_qnode.get("rawName") or selected_qnode["label"][0],
-                    "qnode": selected_qnode["qnode"],
-                    "definition": definition,
-                    "score": score,
-                }, is_root
-    return {}, False
+    if selected_qnode:
+        definition = selected_qnode.get("definition")
+        score = selected_qnode.get("score")
+        if not definition and selected_qnode.get("description"):
+            definition = selected_qnode["description"][0]
+        if selected_qnode.get("rawName") or selected_qnode.get("label"):
+            return {
+                "pb": propbank_label,
+                "name": selected_qnode.get("rawName") or selected_qnode["label"][0],
+                "qnode": selected_qnode["qnode"],
+                "definition": definition,
+                "score": score,
+            }
+    return {}
 
 
 def get_best_qnode_by_semantic_similarity(
