@@ -168,7 +168,6 @@ def get_best_qnode_for_mention_text(
             [variable_node_label],
             pbs_to_qnodes_overlay,
             pbs_to_qnodes_master,
-            amr,
             spacy_model,
             linking_model,
             check_mappings_only=True,
@@ -281,7 +280,6 @@ def get_claim_semantics(
         pb_label_list,
         pbs_to_qnodes_overlay,
         pbs_to_qnodes_master,
-        amr_sentence,
         spacy_model,
         linking_model,
         device,
@@ -305,7 +303,13 @@ def get_claim_semantics(
             node = get_node_from_pb(amr_sentence, pb_amr_node)
             labeled_args = get_all_labeled_args(amr_sentence, amr_alignments, node, event_qnode["args"])
             wd = get_wikidata_for_labeled_args(
-                amr_sentence, amr_alignments, claim, labeled_args, spacy_model, linking_model, device
+                amr_sentence,
+                amr_alignments,
+                claim,
+                labeled_args,
+                spacy_model,
+                linking_model,
+                device,
             )
 
         claim_event = ClaimEvent(
@@ -328,7 +332,6 @@ def determine_best_qnodes(
     pb_label_list: List[str],
     pbs_to_qnodes_overlay: Dict[str, Any],
     pbs_to_qnodes_master: Dict[str, Any],
-    amr: AMR,
     spacy_model: Language,
     linking_model: WikidataLinkingClassifier,
     device: str = CPU,
@@ -345,9 +348,7 @@ def determine_best_qnodes(
     chosen_event_qnodes = []
     for pb in pb_label_list:
         # Get result from the XPO table
-        best_overlay_qnode = get_overlay_results(
-            pb, pbs_to_qnodes_overlay, spacy_model
-        )
+        best_overlay_qnode = get_overlay_results(pb, pbs_to_qnodes_overlay, spacy_model)
 
         if best_overlay_qnode:
             chosen_event_qnodes.append(best_overlay_qnode)
@@ -366,9 +367,7 @@ def determine_best_qnodes(
             return chosen_event_qnodes
         else:
             # Finally, run a KGTK lookup
-            best_kgtk_qnode = get_kgtk_result_for_event(
-                pb, amr, linking_model, device
-            )
+            best_kgtk_qnode = get_kgtk_result_for_event(pb, linking_model, device)
             if best_kgtk_qnode:
                 chosen_event_qnodes.append(best_kgtk_qnode)
 
@@ -493,7 +492,7 @@ def get_master_result(
 
 
 def get_kgtk_result_for_event(
-    propbank_label: str, amr: AMR, linking_model: WikidataLinkingClassifier, device: str = CPU
+    propbank_label: str, linking_model: WikidataLinkingClassifier, device: str = CPU
 ) -> Dict[str, Any]:
     """Get the KGTK result for an event in the claim sentence."""
     formatted_pb = propbank_label.rsplit("-", 1)[0]

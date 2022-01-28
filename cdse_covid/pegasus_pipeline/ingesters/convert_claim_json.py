@@ -650,6 +650,13 @@ def convert_json_file_to_aif(params: Parameters) -> None:
                         claim_semantics_id,
                         arg_number,
                     )
+<<<<<<< HEAD
+=======
+                    arg_count += 1
+
+        if af:
+            af.write(f"<{CDSE_SYSTEM}> a aida:System .")
+>>>>>>> Reformat
 
     if af:
         af.close()
