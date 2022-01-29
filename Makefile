@@ -3,7 +3,7 @@ default:
 
 SHELL=/usr/bin/env bash
 
-PYTHON_FILES=$(shell git ls-files --cached --others --exclude-standard '*.py' | sort | tr '\n' ' ')
+PYTHON_FILES=$(shell git ls-files --cached --others --exclude-standard '*.py' | grep -v "scripts/*" | sort | tr '\n' ' ')
 
 export PYTHONPATH := ..
 
