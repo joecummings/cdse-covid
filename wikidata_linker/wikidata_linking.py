@@ -165,6 +165,7 @@ def make_kgtk_candidates_filter(source_str: str) -> Callable[[Mapping[str, Any]]
     Returns:
         A filter function particular to source_str.
     """
+
     def kgtk_candidate_filter(candidate: Mapping[str, Any]) -> bool:
         str_found = source_str in candidate["label"][0]
         str_found = str_found or any(source_str in alias for alias in candidate["alias"])
