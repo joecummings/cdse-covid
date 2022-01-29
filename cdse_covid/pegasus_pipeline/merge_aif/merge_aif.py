@@ -114,12 +114,19 @@ def fuzzy_match(span: Tuple[int, int], keys: List[Tuple[int, int]]) -> Optional[
 
 def link_ent(graph: Graph, uiuc_claim: URIRef, ent: URIRef) -> Graph:
 
-    update_query = """
+    update_cs = """
         INSERT { ?claim aida:claimSemantics ?semantics . }
         WHERE { ?claim aida:claimSemantics ?s . }
     """
 
-    graph.update(update_query, initBindings={"claim": uiuc_claim[0], "semantics": ent})
+    graph.update(update_cs, initBindings={"claim": uiuc_claim[0], "semantics": ent})
+
+    update_kes = """
+        INSERT { ?claim aida:associatedKEs ?semantics . }
+        WHERE { ?claim aida:associatedKEs ?s . }
+    """
+
+    graph.update(update_kes, initBindings={"claim": uiuc_claim[0], "semantics": ent})
 
     return graph
 
@@ -208,7 +215,7 @@ def main() -> None:
                                 )
                                 stack.extend(all_props_of_curr)
 
-            uiuc_graph.serialize(args.output / f"{graph_id}-merged.ttl", format="turtle")
+            uiuc_graph.serialize(args.output / graph_id, format="turtle")
 
     logging.info("Serialized merged graphs to %s", args.output)
 
