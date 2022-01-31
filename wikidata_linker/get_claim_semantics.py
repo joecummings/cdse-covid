@@ -170,6 +170,7 @@ def get_best_qnode_for_mention_text(
             pbs_to_qnodes_master,
             spacy_model,
             linking_model,
+            claim.claim_text,
             check_mappings_only=True,
         )
         if best_qnodes:
@@ -179,6 +180,7 @@ def get_best_qnode_for_mention_text(
                 mention_id=mention_id,
                 doc_id=claim.doc_id,
                 span=mention_span,
+                confidence=best_qnode.get("score"),
                 description=best_qnode.get("definition"),
                 from_query=best_qnode.get("pb"),
                 qnode_id=best_qnode.get("qnode"),
@@ -189,7 +191,9 @@ def get_best_qnode_for_mention_text(
         claim_variable_links = disambiguate_refvar_kgtk(
             query, linking_model, claim.claim_sentence, k=1, device=device
         )
-        claim_event_links = disambiguate_verb_kgtk(query, linking_model, k=1, device=device)
+        claim_event_links = disambiguate_verb_kgtk(
+            query, linking_model, claim.claim_text, k=1, device=device
+        )
         # Combine the results
         all_claim_links = claim_variable_links
         all_claim_links["options"].extend(claim_event_links["options"])
@@ -282,6 +286,7 @@ def get_claim_semantics(
         pbs_to_qnodes_master,
         spacy_model,
         linking_model,
+        claim.claim_text,
         device,
     )
 
@@ -334,6 +339,7 @@ def determine_best_qnodes(
     pbs_to_qnodes_master: Dict[str, Any],
     spacy_model: Language,
     linking_model: WikidataLinkingClassifier,
+    claim_text: str,
     device: str = CPU,
     check_mappings_only: bool = False,
 ) -> List[Dict[str, Any]]:
@@ -347,29 +353,34 @@ def determine_best_qnodes(
     """
     chosen_event_qnodes = []
     for pb in pb_label_list:
+        top_results_for_pb = []
         # Get result from the XPO table
         best_overlay_qnode = get_overlay_results(pb, pbs_to_qnodes_overlay, spacy_model)
-
         if best_overlay_qnode:
-            chosen_event_qnodes.append(best_overlay_qnode)
-            continue
+            top_results_for_pb.append(best_overlay_qnode)
 
         # Get result from the master table
         best_master_qnode = get_master_result(
             pb, pbs_to_qnodes_master, ORIGINAL_MASTER_TABLE, spacy_model
         )
-
         if best_master_qnode:
-            chosen_event_qnodes.append(best_master_qnode)
-            continue
+            top_results_for_pb.append(best_master_qnode)
 
-        if check_mappings_only:
-            return chosen_event_qnodes
-        else:
+        if not check_mappings_only:
             # Finally, run a KGTK lookup
-            best_kgtk_qnode = get_kgtk_result_for_event(pb, linking_model, device)
+            best_kgtk_qnode = get_kgtk_result_for_event(pb, linking_model, claim_text, device)
             if best_kgtk_qnode:
-                chosen_event_qnodes.append(best_kgtk_qnode)
+                # todo: get_event_arguments(best_kgtk_qnode)
+                top_results_for_pb.append(best_kgtk_qnode)
+
+        if top_results_for_pb:
+            top_qnode, top_score = get_best_qnode_by_semantic_similarity(
+                pb, top_results_for_pb, spacy_model
+            )
+            if top_qnode:
+                if not top_qnode.get("score"):
+                    top_qnode["score"] = str(top_score)
+                chosen_event_qnodes.append(top_qnode)
 
     if not chosen_event_qnodes:
         logging.warning("Couldn't find a qnode for pbs %s", pb_label_list)
@@ -492,11 +503,14 @@ def get_master_result(
 
 
 def get_kgtk_result_for_event(
-    propbank_label: str, linking_model: WikidataLinkingClassifier, device: str = CPU
+    propbank_label: str,
+    linking_model: WikidataLinkingClassifier,
+    claim_text: str,
+    device: str = CPU,
 ) -> Dict[str, Any]:
     """Get the KGTK result for an event in the claim sentence."""
     formatted_pb = propbank_label.rsplit("-", 1)[0]
-    qnode_info = disambiguate_verb_kgtk(formatted_pb, linking_model, k=1, device=device)
+    qnode_info = disambiguate_verb_kgtk(formatted_pb, linking_model, claim_text, k=1, device=device)
     if qnode_info["options"]:
         selected_qnode = qnode_info["options"][0]
     elif qnode_info["other_options"]:

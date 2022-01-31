@@ -333,6 +333,7 @@ def filter_candidates_with_scores(
 def disambiguate_verb_kgtk(
     event_description: str,
     linking_model: WikidataLinkingClassifier,
+    context: str = "",
     no_expansion: bool = False,
     k: int = 3,
     device: str = CPU,
@@ -366,6 +367,8 @@ def disambiguate_verb_kgtk(
     unique_candidates = filter_duplicate_candidates(kgtk_json)
     options = []
 
+    if context:
+        cleaned_description = context
     candidate_scores = get_linker_scores(
         cleaned_description, False, unique_candidates, linking_model, device
     )["scores"]
