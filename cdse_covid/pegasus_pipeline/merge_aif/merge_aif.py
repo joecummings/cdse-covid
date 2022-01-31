@@ -1,7 +1,7 @@
 import argparse
 import logging
 from pathlib import Path
-from typing import List, Mapping, Optional, Sequence, Set, Tuple
+from typing import Iterable, Mapping, Optional, Sequence, Set, Tuple
 
 from rdflib import Graph, URIRef
 from tqdm import tqdm
@@ -84,7 +84,7 @@ def load_from_key_value_store(kvs_path: Path) -> Mapping[str, Graph]:
     return graphs
 
 
-def fuzzy_match(span: Tuple[int, int], keys: List[Tuple[int, int]]) -> Optional[Tuple[int, int]]:
+def fuzzy_match(span: Tuple[int, int], keys: Iterable[Tuple[int, int]]) -> Optional[Tuple[int, int]]:
     """Fuzzy match claim spans."""
     start = span[0]
     end = span[1]
@@ -186,7 +186,7 @@ def main() -> None:
                 uiuc_claims_with_spans[(x.start.value, x.end.value)] = claim
 
             for uiuc_claim_span, uiuc_claim in uiuc_claims_with_spans.items():
-                match = fuzzy_match(uiuc_claim_span, list(isi_claims_with_spans.keys()))
+                match = fuzzy_match(uiuc_claim_span, isi_claims_with_spans.keys())
                 if match:
                     isi_claim = isi_claims_with_spans[match]
                     # get all claim semantics URIs (events & arguments)
