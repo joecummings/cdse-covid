@@ -1,5 +1,4 @@
-from pathlib import Path
-
+"""Merge pipeline."""
 from pegasus_wrapper import (
     Locator,
     initialize_vista_pegasus_wrapper,
@@ -19,14 +18,14 @@ def main(params: Parameters) -> None:
 
     ingest_locator = base_locator / "ingest"
     ingest_job_file = params.existing_file("python_file")
-    _dir = params.existing_directory("uiuc_aif")
-    name = _dir.stem
-    zip_dir = _dir.with_suffix(".zip")
+    uiuc_aif_dir = params.existing_directory("uiuc_aif")
+    name = uiuc_aif_dir.stem
+    zip_dir = uiuc_aif_dir.with_suffix(".zip")
     ingest_job = run_python_on_args(
         ingest_locator / name,
         ingest_job_file,
         f"""
-        --aif-dir {_dir} \
+        --aif-dir {uiuc_aif_dir} \
         --aif-as-zip {zip_dir} \
         --is-uiuc
         """,
@@ -34,14 +33,14 @@ def main(params: Parameters) -> None:
     )
     uiuc_store = ZipKeyValueStore(path=zip_dir, depends_on=ingest_job)
 
-    _dir = params.existing_directory("isi_aif")
-    name = _dir.stem
-    zip_dir = _dir.with_suffix(".zip")
+    isi_aif_dir = params.existing_directory("isi_aif")
+    name = isi_aif_dir.stem
+    zip_dir = isi_aif_dir.with_suffix(".zip")
     ingest_job = run_python_on_args(
         ingest_locator / name,
         ingest_job_file,
         f"""
-        --aif-dir {_dir} \
+        --aif-dir {isi_aif_dir} \
         --aif-as-zip {zip_dir} \
         """,
         depends_on=[],
