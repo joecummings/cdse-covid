@@ -289,12 +289,14 @@ def get_claim_semantics(
         event_text = " ".join(event_tokens)
         event_span = claim.get_offsets_for_text(event_text, spacy_model.tokenizer)
     else:
-        pb_amr_node = None
+        pb_amr_node = ""
         logging.warning("No propbank label assigned to event qnode data: %s", best_qnode)
 
     wd: MutableMapping[str, Any] = {}
     if best_qnode and pb_amr_node and best_qnode.get("args"):
-        labeled_args = get_all_labeled_args(amr_sentence, amr_alignments, pb_amr_node, best_qnode["args"])
+        labeled_args = get_all_labeled_args(
+            amr_sentence, amr_alignments, pb_amr_node, best_qnode["args"]
+        )
         wd = get_wikidata_for_labeled_args(
             amr_sentence, amr_alignments, claim, labeled_args, spacy_model, linking_model, device
         )
