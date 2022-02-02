@@ -31,7 +31,12 @@ OVERLAY = "overlay"
 MASTER = "master"
 
 PARENT_DIR = Path(__file__).parent
-ORIGINAL_MASTER_TABLE = PARENT_DIR / "resources" / "qe_master.json"
+ORIGINAL_MASTER_TABLE_PATH = PARENT_DIR / "resources" / "qe_master.json"
+ORIGINAL_XPO_TABLE_PATH = PARENT_DIR / "resources" / "xpo_v3.2_freeze.json"
+with open(ORIGINAL_MASTER_TABLE_PATH, "r", encoding="utf-8") as master:
+    ORIGINAL_MASTER_TABLE = json.load(master)
+with open(ORIGINAL_XPO_TABLE_PATH, "r", encoding="utf-8") as xpo:
+    ORIGINAL_XPO_TABLE = json.load(xpo)
 
 
 def get_node_from_pb(amr: AMR, pb_label: str) -> str:
@@ -175,12 +180,13 @@ def get_best_qnode_for_mention_text(
         )
         if best_qnodes:
             best_qnode = best_qnodes[0]  # there should only be one
+            score = float(best_qnode["score"]) if best_qnode.get("score") else 1.0
             return WikidataQnode(
                 text=best_qnode.get("name"),
                 mention_id=mention_id,
                 doc_id=claim.doc_id,
                 span=mention_span,
-                confidence=best_qnode.get("score"),
+                confidence=score,
                 description=best_qnode.get("definition"),
                 from_query=best_qnode.get("pb"),
                 qnode_id=best_qnode.get("qnode"),
@@ -242,11 +248,11 @@ def load_tables() -> Tuple[Dict[str, Any], Dict[str, Any]]:
     master_table_path = PARENT_DIR / "resources" / "pb_to_qnode_master.json"
     if not master_table_path.exists():
         logging.info("Could not find `pb_to_qnode_master.json`; generating it now")
-        generate_master_dict(ORIGINAL_MASTER_TABLE, master_table_path)
+        generate_master_dict(master_table_path)
     overlay_table_path = PARENT_DIR / "resources" / "pb_to_qnode_overlay.json"
     if not overlay_table_path.exists():
         logging.info("Could not find `pb_to_qnode_overlay.json`; generating it now")
-        generate_overlay_dict(PARENT_DIR / "resources" / "xpo_v3.2_freeze.json", overlay_table_path)
+        generate_overlay_dict(overlay_table_path)
     # Load both qnode mappings
     with open(master_table_path, "r", encoding="utf-8") as in_json:
         pbs_to_qnodes_master = json.load(in_json)
@@ -305,8 +311,9 @@ def get_claim_semantics(
 
         wd: MutableMapping[str, Any] = {}
         if pb_amr_node and event_qnode.get("args"):
-            node = get_node_from_pb(amr_sentence, pb_amr_node)
-            labeled_args = get_all_labeled_args(amr_sentence, amr_alignments, node, event_qnode["args"])
+            labeled_args = get_all_labeled_args(
+                amr_sentence, amr_alignments, pb_amr_node, event_qnode["args"]
+            )
             wd = get_wikidata_for_labeled_args(
                 amr_sentence,
                 amr_alignments,
@@ -317,6 +324,11 @@ def get_claim_semantics(
                 device,
             )
 
+        if event_qnode.get("score"):
+            float_score = float(event_qnode["score"])
+        else:
+            float_score = 1.0
+
         claim_event = ClaimEvent(
             text=event_qnode.get("name"),
             doc_id=claim.doc_id,
@@ -324,13 +336,24 @@ def get_claim_semantics(
             description=event_qnode.get("definition"),
             from_query=event_qnode.get("pb"),
             qnode_id=event_qnode.get("qnode"),
-            confidence=event_qnode.get("score"),
+            confidence=float_score,
         )
 
         claim_args = {k: {"type": w} for k, w in wd.items()}
         all_claim_semantics.append(ClaimSemantics(event=claim_event, args=claim_args))
 
     return all_claim_semantics
+
+
+def get_arg_roles_for_kgkt_event(event_qnode: str) -> Optional[Dict[Any, Any]]:
+    """If an event is chosen from kgtk, use the XPO table to potentially find the arguments."""
+    events = ORIGINAL_XPO_TABLE["events"]
+    qnode_dict = events.get(f"DWD_{event_qnode}")
+    if qnode_dict:
+        arguments = create_arg_dict(qnode_dict)
+        if arguments:
+            return arguments
+    return None
 
 
 def determine_best_qnodes(
@@ -360,9 +383,7 @@ def determine_best_qnodes(
             top_results_for_pb.append(best_overlay_qnode)
 
         # Get result from the master table
-        best_master_qnode = get_master_result(
-            pb, pbs_to_qnodes_master, ORIGINAL_MASTER_TABLE, spacy_model
-        )
+        best_master_qnode = get_master_result(pb, pbs_to_qnodes_master, spacy_model)
         if best_master_qnode:
             top_results_for_pb.append(best_master_qnode)
 
@@ -370,7 +391,9 @@ def determine_best_qnodes(
             # Finally, run a KGTK lookup
             best_kgtk_qnode = get_kgtk_result_for_event(pb, linking_model, claim_text, device)
             if best_kgtk_qnode:
-                # todo: get_event_arguments(best_kgtk_qnode)
+                arguments_from_table = get_arg_roles_for_kgkt_event(best_kgtk_qnode["qnode"])
+                if arguments_from_table:
+                    best_kgtk_qnode["args"] = arguments_from_table
                 top_results_for_pb.append(best_kgtk_qnode)
 
         if top_results_for_pb:
@@ -379,7 +402,7 @@ def determine_best_qnodes(
             )
             if top_qnode:
                 if not top_qnode.get("score"):
-                    top_qnode["score"] = str(top_score)
+                    top_qnode["score"] = top_score
                 chosen_event_qnodes.append(top_qnode)
 
     if not chosen_event_qnodes:
@@ -399,10 +422,11 @@ def create_wikidata_qnodes(
     other_options = link["other_options"]
     all_options = link["all_options"]
     best_option = None
-    top_score = 0
+    top_score = 0.0
     text = None
     qnode = None
     description = None
+    score = 1.0
     if len(options) > 0:
         # For options and other_options, grab the first in the list
         best_option = options[0]
@@ -413,10 +437,10 @@ def create_wikidata_qnodes(
         text = best_option["rawName"] if best_option["rawName"] else None
         qnode = best_option["qnode"] if best_option["qnode"] else None
         description = best_option["definition"] if best_option["definition"] else None
-        score = None
-    elif len(all_options) > 0:
+        score = 1.0
+    elif len(all_options) > 0.0:
         for option in all_options:
-            score = option.get("linking_score", 0)
+            score = option.get("linking_score", 0.0)
             if score > top_score:
                 top_score = score
                 best_option = option
@@ -434,7 +458,7 @@ def create_wikidata_qnodes(
             qnode_id=qnode,
             description=description,
             from_query=link["query"],
-            confidence=score,
+            confidence=score or 1.0,
         )
 
     logging.warning("No WikiData links found for '%s'.", link["query"])
@@ -472,7 +496,6 @@ def get_overlay_results(
 def get_master_result(
     propbank_label: str,
     pb_mapping: MutableMapping[str, Any],
-    original_mapping: Path,
     spacy_model: Language,
 ) -> Dict[str, Any]:
     """Get Qnode from master JSON."""
@@ -490,7 +513,7 @@ def get_master_result(
             propbank_label, qnode_dicts, spacy_model
         )
         # Next, try to find the most general qnode
-        most_general_qnode = get_most_general_qnode(propbank_label, qnode_dicts, original_mapping)
+        most_general_qnode = get_most_general_qnode(propbank_label, qnode_dicts)
         if most_general_qnode:
             appended_qnode_data.update(most_general_qnode)
             return appended_qnode_data
@@ -538,7 +561,7 @@ def get_kgtk_result_for_event(
 
 def get_best_qnode_by_semantic_similarity(
     pb: str, qnode_dicts: List[Dict[str, str]], spacy_model: Language
-) -> Tuple[Optional[Dict[str, str]], float]:
+) -> Tuple[Optional[Dict[str, Any]], float]:
     """Return the best qnode name for the given PropBank frame ID.
 
     This computes semantic similarity between two strings by
@@ -565,18 +588,14 @@ def get_best_qnode_by_semantic_similarity(
     return qnames_to_dicts.get(best_qname), best_score
 
 
-def get_most_general_qnode(
-    pb: str, qnode_dicts: List[Dict[str, str]], original_mapping_path: Path
-) -> Optional[Dict[str, str]]:
+def get_most_general_qnode(pb: str, qnode_dicts: List[Dict[str, str]]) -> Optional[Dict[str, str]]:
     """Get the most general qnode given a propbank verb."""
     ids_to_qdicts: Dict[str, Dict[str, str]] = {
         qnode_dict["qnode"]: qnode_dict for qnode_dict in qnode_dicts
     }
     qnode_ids: Set[str] = {qid for qid, _ in ids_to_qdicts.items()}
     qnode_options_map: Dict[str, Dict[str, List[str]]] = {}
-    with open(original_mapping_path, "r", encoding="utf-8") as og_in_json:
-        original_master_table = json.load(og_in_json)
-    for og_qdict in original_master_table:
+    for og_qdict in ORIGINAL_MASTER_TABLE:
         current_qnode = og_qdict.get("id")
         if current_qnode in qnode_ids:
             parents = [parent.rsplit("_", 1)[-1] for parent in og_qdict["parents"]]
@@ -606,10 +625,9 @@ def get_most_general_qnode(
     return None
 
 
-def generate_master_dict(master_table_path: Path, pb_master: Path) -> None:
+def generate_master_dict(pb_master: Path) -> None:
     """Generate master dict between PropBank and DWD."""
-    with open(master_table_path, "r", encoding="utf-8") as in_json:
-        qnode_mapping = json.load(in_json)
+    qnode_mapping = ORIGINAL_MASTER_TABLE
     pbs_to_qnodes = defaultdict(list)
     for qnode_dict in qnode_mapping:
         qnode = qnode_dict.get("id")
@@ -645,11 +663,26 @@ def generate_master_dict(master_table_path: Path, pb_master: Path) -> None:
         json.dump(pbs_to_qnodes, out_json, indent=4)
 
 
-def generate_overlay_dict(overlay_path: Path, pb_overlay: Path) -> None:
-    """Create a PB-to-Qnode dict from the DWD overlay."""
-    with open(overlay_path, "r", encoding="utf-8") as in_json:
-        qnode_mapping = json.load(in_json)["events"]
+def create_arg_dict(qnode_dict: Dict[str, Any]) -> Dict[Any, Any]:
+    """Generate an argument mapping from the XPO table's qnode info."""
+    args = qnode_dict.get("arguments")
+    final_args = {}
+    if args:
+        for arg in args:
+            arg_name = arg["name"]
+            arg_parts = arg_name.split("_")
+            arg_pos = arg_parts[1] if arg_parts[0] in ["AM", "Ax", "mnr"] else arg_parts[0]
+            if arg_pos:
+                final_args[arg_pos] = {
+                    "constraints": arg["constraints"],
+                    "text_role": "-".join(arg_parts[2:]),
+                }
+    return final_args
 
+
+def generate_overlay_dict(pb_overlay: Path) -> None:
+    """Create a PB-to-Qnode dict from the DWD overlay."""
+    qnode_mapping = ORIGINAL_XPO_TABLE
     pbs_to_qnodes = defaultdict(list)
     # Use this to keep track of which qnodes have been added
     # to the final mapping (there are several repeats)
@@ -672,34 +705,24 @@ def generate_overlay_dict(overlay_path: Path, pb_overlay: Path) -> None:
         qdescr = data.get("wd_description")
         pb_roleset = data.get("pb_roleset")
 
-        args = data.get("arguments")
-        final_args = {}
-        for arg in args:
-            arg_name = arg["name"]
-            arg_parts = arg_name.split("_")
-            arg_pos = arg_parts[1] if arg_parts[0] in ["AM", "Ax", "mnr"] else arg_parts[0]
-            if arg_pos:
-                final_args[arg_pos] = {
-                    "constraints": arg["constraints"],
-                    "text_role": "-".join(arg_parts[2:]),
-                }
+        final_args = create_arg_dict(data)
 
-            qnode_summary = {
-                "qnode": qnode,
-                "name": qname,
-                "definition": qdescr,
-                "args": final_args,
-            }
-            if pb_roleset:
-                add_qnode_to_mapping(pb_roleset, qnode, qnode_summary)
+        qnode_summary = {
+            "qnode": qnode,
+            "name": qname,
+            "definition": qdescr,
+            "args": final_args,
+        }
+        if pb_roleset:
+            add_qnode_to_mapping(pb_roleset, qnode, qnode_summary)
 
-            # Add "other PB rolesets"
-            ldc_types = data.get("ldc_types")
-            if ldc_types:
-                for ldc_type in ldc_types:
-                    pb_list = ldc_type.get("other_pb_rolesets")
-                    for pb_item in pb_list:
-                        add_qnode_to_mapping(pb_item, qnode, qnode_summary)
+        # Add "other PB rolesets"
+        ldc_types = data.get("ldc_types")
+        if ldc_types:
+            for ldc_type in ldc_types:
+                pb_list = ldc_type.get("other_pb_rolesets")
+                for pb_item in pb_list:
+                    add_qnode_to_mapping(pb_item, qnode, qnode_summary)
 
     with open(pb_overlay, "w+", encoding="utf-8") as out_json:
         json.dump(pbs_to_qnodes, out_json, indent=4)
