@@ -435,10 +435,10 @@ def create_wikidata_qnodes(
 
     if best_option:
         text = best_option["rawName"] if best_option["rawName"] else None
-        qnode = best_option["qnode"] if best_option["qnode"] else None
+        qnode = best_option.get("qnode")
         description = best_option["definition"] if best_option["definition"] else None
         score = 1.0
-    elif len(all_options) > 0.0:
+    elif len(all_options) > 0:
         for option in all_options:
             score = option.get("linking_score", 0.0)
             if score > top_score:
@@ -447,7 +447,7 @@ def create_wikidata_qnodes(
         if best_option:
             text = best_option["label"][0] if best_option["label"] else None
             score = top_score
-            qnode = best_option["qnode"] if best_option["qnode"] else None
+            qnode = best_option.get("qnode")
             description = best_option["description"][0] if best_option["description"] else None
     if best_option:
         return WikidataQnode(
