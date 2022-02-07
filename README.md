@@ -118,7 +118,7 @@ We provide a simple way to run the whole pipeline without needing Pegasus WMS.
 9. Postprocessing
    ```
    conda activate <cdse-covid-env>
-   python -m cdse_covid.pegasus_pipeline.merge \
+   python -m cdse_covid.pegasus_pipeline.convert_claims_to_json \
        --input ENTITY_OUT \
        --output OUTPUT_FILE
    ```

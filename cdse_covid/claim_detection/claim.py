@@ -40,7 +40,7 @@ class Claim:
     claim_date_time: Optional[str] = None
     claim_location: Optional[str] = None
     claim_location_qnode: Optional[WikidataQnode] = None
-    claim_semantics: Optional[ClaimSemantics] = None
+    claim_semantics: List[ClaimSemantics] = field(default_factory=list)
     theories: MutableMapping[str, Any] = field(default_factory=dict)
 
     def add_theory(self, name: str, theory: Any) -> None:

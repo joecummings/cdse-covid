@@ -1,9 +1,10 @@
 """Convert the claim data from the output json into AIF files."""
+from dataclasses import dataclass, field
 import json
 import logging
 import os
 from random import randint
-from typing import Any, Dict, MutableMapping, TextIO, Tuple, Union
+from typing import Any, Dict, List, MutableMapping, TextIO, Tuple, Union
 
 from aida_tools.utils import make_xml_safe, reduce_whitespace
 from vistautils.parameters import Parameters
@@ -25,6 +26,30 @@ AUTHOR_DATA: MutableMapping[str, Any] = {
         "qnode_id": "Q5",
     },
 }
+
+
+@dataclass
+class ClaimSemanticsData:
+    """Base data class."""
+
+    semantics_id: str
+    name: str
+    cluster_name: str
+    qnode_data: Dict[str, Any]
+
+
+@dataclass
+class ClaimSemanticsArgData(ClaimSemanticsData):
+    """A set of data for each claim semantics event for AIF conversion."""
+
+    role: str
+
+
+@dataclass
+class ClaimSemanticsEventData(ClaimSemanticsData):
+    """A set of data for each claim semantics event for AIF conversion."""
+
+    arguments: List[ClaimSemanticsArgData] = field(default_factory=list)
 
 
 def write_offset(aif_file: TextIO, offset: int, is_start: bool) -> None:
@@ -124,61 +149,108 @@ def write_entity_data(
         write_system(aif_file)
 
 
+def get_valid_claim_semantics(claim_semantics_data: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    """Create a list of 'valid' claim semantics.
+
+    Valid claim semantics events have a Qnode ID and span,
+    and the Qnode is not "Unspecified."
+    """
+    valid_claim_semantics = []
+    for claim_semantics in claim_semantics_data:
+        event = claim_semantics["event"]
+        event_qnode = event.get("qnode_id")
+        event_span = event.get("span")
+        event_text = event.get("text") != "Unspecified"
+        if event and event_qnode and event_span and event_text:
+            valid_claim_semantics.append(claim_semantics)
+    return valid_claim_semantics
+
+
 def get_claim_semantics_data(
-    aif_file: TextIO, source: str, data: Any, event_number: int
-) -> Tuple[str, str, Dict[str, Any], Dict[str, str]]:
+    aif_file: TextIO,
+    source: str,
+    claim_semantics_source_data: Any,
+    event_count: int,
+    arg_count: int,
+) -> Tuple[List[ClaimSemanticsEventData], List[str], int, int]:
     """Write basic claim semantics data to Claim and gather for later use."""
-    event_number_string = str(event_number).zfill(6)
-    claim_semantics_event_id = f"EN_Event_{event_number_string}"
-    claim_semantics = (
-        "<"
-        + make_xml_safe(CDSE_SYSTEM + f"/clusters/isi/events/{source}/{claim_semantics_event_id}")
-        + ">"
-    )
-    aif_file.write("\taida:claimSemantics " + claim_semantics)
+    claim_semantics_aif_data = []
+    event_cluster_list = []
+    arg_cluster_list = []
 
-    claim_arguments = {}
-    argument_names_to_roles = {}
-    has_claim_arguments = data["claim_semantics"]["args"] is not None
-    has_arg_qnodes = False
-    arg_count = 0
-    if has_claim_arguments:
-        argument_objects = data["claim_semantics"]["args"]
-        total_arguments = len(argument_objects)
-        for arg_number, (role, arg_qnodes) in enumerate(argument_objects.items()):
-            claim_argument = None
-            argument_id = "EN_Entity_EDL_ENG_" + str(arg_count).zfill(7)
-            if arg_qnodes.get("type"):
-                if arg_qnodes["type"]["qnode_id"] is not None:
-                    claim_argument = (
-                        "<"
-                        + make_xml_safe(
-                            CDSE_SYSTEM + "/clusters/isi/entity/" + source + "/" + argument_id
-                        )
-                        + ">"
-                    )
-            elif arg_qnodes.get("identity"):
-                if arg_qnodes["identity"]["qnode_id"] is not None:
-                    claim_argument = (
-                        "<"
-                        + make_xml_safe(
-                            CDSE_SYSTEM + "/clusters/isi/entity/" + source + "/" + argument_id
-                        )
-                        + ">"
-                    )
-            if claim_argument:
-                has_arg_qnodes = True
-                claim_arguments[claim_argument] = arg_qnodes
-                argument_names_to_roles[claim_argument] = role
-                end_punc = " ;\n" if arg_number + 1 == total_arguments else ""
-                aif_file.write(",\n\t\t" + claim_argument + end_punc)
-                arg_count += 1
-            elif arg_number + 1 == total_arguments:
-                aif_file.write(" ;\n")
+    for claim_event in claim_semantics_source_data:
+        event_number_string = str(event_count).zfill(6)
+        claim_semantics_event_id = f"EN_Event_{event_number_string}"
+        claim_semantics_name = (
+            "<"
+            + make_xml_safe(
+                CDSE_SYSTEM + f"/clusters/isi/events/{source}/{claim_semantics_event_id}"
+            )
+            + ">"
+        )
 
-    if not has_arg_qnodes:
-        aif_file.write(" ;\n")
-    return claim_semantics_event_id, claim_semantics, claim_arguments, argument_names_to_roles
+        event_cluster_list.append(claim_semantics_name)
+        event_count += 1
+
+        claim_arguments_for_event = []
+        has_claim_arguments = claim_event["args"] is not None
+        if has_claim_arguments:
+            argument_objects = claim_event["args"]
+            for role, arg_qnodes in argument_objects.items():
+                claim_argument = None
+                argument_id = "EN_Entity_EDL_ENG_" + str(arg_count).zfill(7)
+                if arg_qnodes.get("type"):
+                    if arg_qnodes["type"]["qnode_id"] is not None:
+                        claim_argument = (
+                            "<"
+                            + make_xml_safe(
+                                CDSE_SYSTEM + "/clusters/isi/entity/" + source + "/" + argument_id
+                            )
+                            + ">"
+                        )
+                elif arg_qnodes.get("identity"):
+                    if arg_qnodes["identity"]["qnode_id"] is not None:
+                        claim_argument = (
+                            "<"
+                            + make_xml_safe(
+                                CDSE_SYSTEM + "/clusters/isi/entity/" + source + "/" + argument_id
+                            )
+                            + ">"
+                        )
+                if claim_argument:
+                    arg_count += 1
+                    arg_cluster_list.append(claim_argument)
+                    claim_arguments_for_event.append(
+                        ClaimSemanticsArgData(
+                            semantics_id=argument_id,
+                            name="",
+                            cluster_name=claim_argument,
+                            qnode_data=arg_qnodes,
+                            role=role,
+                        )
+                    )
+
+        claim_semantics_aif_data.append(
+            ClaimSemanticsEventData(
+                semantics_id=claim_semantics_event_id,
+                name="",
+                cluster_name=claim_semantics_name,
+                qnode_data=claim_event["event"],
+                arguments=claim_arguments_for_event,
+            )
+        )
+
+    # Write events, then arguments
+    all_clusters = event_cluster_list + arg_cluster_list
+    aif_file.write(f"\taida:claimSemantics {event_cluster_list.pop()}")
+    for event_cluster in event_cluster_list:
+        aif_file.write(f",\n\t\t{event_cluster}")
+    if arg_cluster_list:
+        for arg_cluster in arg_cluster_list:
+            aif_file.write(f",\n\t\t{arg_cluster}")
+    aif_file.write(" ;\n")
+
+    return claim_semantics_aif_data, all_clusters, event_count, arg_count
 
 
 def write_claim_component(
@@ -199,11 +271,11 @@ def write_claim_component(
 
 
 def write_claim_semantics_event(
-    aif_file: TextIO, source: str, data: Any, claim_semantics_event: str, event_id: str
+    aif_file: TextIO, source: str, claim_semantics_event: ClaimSemanticsEventData
 ) -> None:
     """Add the event of the claim and its justifications."""
-    aif_file.write(claim_semantics_event + " a aida:Event ;\n")
-    event_data = data["claim_semantics"]["event"]
+    aif_file.write(claim_semantics_event.name + " a aida:Event ;\n")
+    event_data = claim_semantics_event.qnode_data
 
     confidence_val = (
         event_data["confidence"]
@@ -227,7 +299,7 @@ def write_claim_semantics_event(
     informative_justification_name = (
         "<"
         + CDSE_SYSTEM
-        + f"/assertions/isi/event_informative_justification/{event_id}/"
+        + f"/assertions/isi/event_informative_justification/{claim_semantics_event.semantics_id}/"
         + source
         + f"/{event_start}/{event_end}"
         + ">"
@@ -238,19 +310,19 @@ def write_claim_semantics_event(
     justification_name = (
         "<"
         + CDSE_SYSTEM
-        + f"/assertions/isi/eventjustification/{event_id}/{source}/{event_start}/{event_end}"
+        + f"/assertions/isi/eventjustification/{claim_semantics_event.semantics_id}/{source}/{event_start}/{event_end}"
         + ">"
     )
     aif_file.write(f"\taida:justifiedBy {justification_name} ;\n")
 
-    write_private_data(aif_file, data["claim_semantics"])
+    write_private_data(aif_file, str(event_data))
     write_system(aif_file)
 
     # TextJustification
     aif_file.write(informative_justification_name + " a aida:TextJustification ;\n")
     aif_file.write(confidence_aif)
     write_offset(aif_file, event_end, is_start=False)
-    write_private_data(aif_file, event_data)
+    write_private_data(aif_file, str(event_data))
     aif_file.write(f'\taida:source "{source}"^^xsd:string ;\n')
     write_offset(aif_file, event_start, is_start=True)
     write_system(aif_file)
@@ -259,7 +331,7 @@ def write_claim_semantics_event(
     aif_file.write(justification_name + " a aida:TextJustification ;\n")
     aif_file.write(confidence_aif)
     write_offset(aif_file, event_end, is_start=False)
-    write_private_data(aif_file, event_data)
+    write_private_data(aif_file, str(event_data))
     aif_file.write(f'\taida:source "{source}"^^xsd:string ;\n')
     write_offset(aif_file, event_start, is_start=True)
     write_system(aif_file)
@@ -267,18 +339,15 @@ def write_claim_semantics_event(
 
 def write_claim_semantics_argument(
     aif_file: TextIO,
-    data: Any,
     source: str,
-    argument: str,
-    argument_role: str,
-    arg_data: Any,
-    claim_semantics_event: str,
-    claim_semantics_id: str,
+    argument: ClaimSemanticsArgData,
+    event: ClaimSemanticsEventData,
     arg_count: Union[int, str],
 ) -> None:
     """Add an event argument and link it to its event."""
     # Check if there's type/identity data
     # Most args should have a type
+    arg_data = argument.qnode_data
     arg_type_data = arg_data.get("type")
     arg_identity_data = arg_data.get("identity")
     if not arg_type_data:
@@ -298,8 +367,8 @@ def write_claim_semantics_argument(
     write_entity_data(
         aif_file,
         source,
-        argument_role,
-        argument,
+        argument.role,
+        argument.name,
         defining_arg_data,
         arg_count,
     )
@@ -310,16 +379,16 @@ def write_claim_semantics_argument(
         + "/assertions/isi/eventarg/"
         + source
         + "/"
-        + claim_semantics_id
+        + event.semantics_id
         + "/"
-        + f"{data['claim_semantics']['event']['text']}.{argument_role}/"
+        + f"{event.qnode_data['text']}.{argument.role}/"
         + f"EventArgument-{defining_arg_qnode}"
         + "> a rdf:Statement,\n"
     )
     aif_file.write("\t\taida:ArgumentStatement ;\n")
-    aif_file.write(f"\trdf:object {argument} ;\n")
-    aif_file.write(f'\trdf:predicate "{argument_role}"^^xsd:string ;\n')
-    aif_file.write(f"\trdf:subject {claim_semantics_event} ;\n")
+    aif_file.write(f"\trdf:object {argument.name} ;\n")
+    aif_file.write(f'\trdf:predicate "{argument.role}"^^xsd:string ;\n')
+    aif_file.write(f"\trdf:subject {event.name} ;\n")
     write_system(aif_file)
 
 
@@ -341,14 +410,17 @@ def convert_json_file_to_aif(params: Parameters) -> None:
     var_types_to_aida_classes = {"x_variable": "xVariable", "claimer": "claimer"}
 
     def get_name_data(
-        aida_file: TextIO, var_type: str, source: str, claim_id: str, is_author: bool = False
-    ) -> Tuple[str, str, str]:
+        aida_file: TextIO,
+        var_type: str,
+        source: str,
+        claim_id: str,
+        variable_count: int,
+        is_author: bool = False,
+    ) -> Tuple[str, str, str, int]:
         """Get a variable's name, entity name, and justification name.
 
         var_type can be 'x_variable' or 'claimer'
         """
-        var_count = 0
-
         type_for_uri = "X" if var_type == "x_variable" else var_type
         variable_name = f"ex:claim_{source}_{claim_id}_{type_for_uri}"
         variable_cluster_name = (
@@ -367,7 +439,7 @@ def convert_json_file_to_aif(params: Parameters) -> None:
                     + "/clusters/isi/entity/"
                     + source
                     + f"/{claim_id}/{var_type}/"
-                    + str(var_count)
+                    + str(variable_count)
                 )
                 + ">"
             )
@@ -388,14 +460,15 @@ def convert_json_file_to_aif(params: Parameters) -> None:
                     + "/claim/"
                     + claim_id
                     + f"/{var_type}/entity/"
-                    + str(var_count)
+                    + str(variable_count)
                 )
                 + ">"
             )
         )
         aida_file.write(f"\taida:{var_types_to_aida_classes[var_type]} " + variable_name + " ;\n")
         associated_kes.append(variable_cluster_name)
-        return variable_name, variable_entity_name, variable_cluster_name
+        variable_count += 1
+        return variable_name, variable_entity_name, variable_cluster_name, variable_count
 
     def write_qnode_data(
         aif_file: TextIO,
@@ -452,6 +525,7 @@ def convert_json_file_to_aif(params: Parameters) -> None:
         )
 
     event_count = 0
+    entity_count = 1  # 0 is reserved for the "author"
 
     for data in claims_data:
         source = os.path.splitext(str(data["doc_id"]))[0]
@@ -472,20 +546,10 @@ def convert_json_file_to_aif(params: Parameters) -> None:
             prior_source = source
 
         if af:
-            # First check if there are claim semantics
-            has_claim_semantics = (
-                data["claim_semantics"] is not None
-                and data["claim_semantics"]["event"] is not None
-                and data["claim_semantics"]["event"]["qnode_id"] is not None
-                and data["claim_semantics"]["event"]["span"] is not None
-                and data["claim_semantics"]["event"]["text"] != "Unspecified"
-            )
-            if not has_claim_semantics:
+            # First check if there is at least one valid claim semantics object
+            claim_semantics = get_valid_claim_semantics(data["claim_semantics"])
+            if not claim_semantics:
                 continue
-            claim_semantics_cluster_name = "None"
-            claim_semantics_id = "None"
-            claim_arguments: Dict[str, Any] = {}
-            argument_names_to_roles: Dict[str, str] = {}
 
             # Write the Claim
             claim_id = make_xml_safe(str(data["claim_id"]))
@@ -512,7 +576,8 @@ def convert_json_file_to_aif(params: Parameters) -> None:
                     x_variable_name,
                     x_variable_entity_name,
                     x_variable_cluster_name,
-                ) = get_name_data(af, "x_variable", source, claim_id)
+                    entity_count,
+                ) = get_name_data(af, "x_variable", source, claim_id, entity_count)
 
             af.write(
                 '\taida:naturalLanguageDescription "'
@@ -520,20 +585,17 @@ def convert_json_file_to_aif(params: Parameters) -> None:
                 + '"^^xsd:string ;\n'
             )
 
-            if has_claim_semantics:
-                (
-                    claim_semantics_id,
-                    claim_semantics_cluster_name,
-                    claim_arguments,
-                    argument_names_to_roles,
-                ) = get_claim_semantics_data(af, source, data, event_count)
-                event_count += 1
-                associated_kes.append(claim_semantics_cluster_name)
-                associated_kes.extend([claim_arg for claim_arg in claim_arguments])
+            (
+                claim_semantics_data,
+                semantics_kes,
+                event_count,
+                entity_count,
+            ) = get_claim_semantics_data(af, source, claim_semantics, event_count, entity_count)
+            associated_kes.extend(semantics_kes)
 
             has_claimer = data["claimer_type_qnode"] is not None
-            claimer_name, claimer_entity_name, claimer_cluster_name = get_name_data(
-                af, "claimer", source, claim_id, is_author=(not has_claimer)
+            claimer_name, claimer_entity_name, claimer_cluster_name, entity_count = get_name_data(
+                af, "claimer", source, claim_id, entity_count, is_author=(not has_claimer)
             )
 
             has_claim_location = data["claim_location_qnode"] is not None
@@ -607,49 +669,45 @@ def convert_json_file_to_aif(params: Parameters) -> None:
             if has_claim_location:
                 write_claim_component(af, data, "claim_location", claim_location)
 
-            if has_claim_semantics:
+            for claim_semantics_event in claim_semantics_data:
                 # SameAsCluster
-                af.write(claim_semantics_cluster_name + " a aida:SameAsCluster ;\n")
+                af.write(claim_semantics_event.cluster_name + " a aida:SameAsCluster ;\n")
                 claim_semantics_event_name = (
-                    "<" + CDSE_SYSTEM + f"/events/isi/{source}/{claim_semantics_id}" + ">"
+                    "<"
+                    + CDSE_SYSTEM
+                    + f"/events/isi/{source}/{claim_semantics_event.semantics_id}"
+                    + ">"
                 )
                 af.write("\taida:prototype " + claim_semantics_event_name + " ;\n")
+                claim_semantics_event.name = claim_semantics_event_name
                 write_system(af)
 
                 # Event
-                write_claim_semantics_event(
-                    af, source, data, claim_semantics_event_name, claim_semantics_id
-                )
+                write_claim_semantics_event(af, source, claim_semantics_event)
 
-                # Argument SameAsClusters
-                clusters_to_arg_entities = {}
-                for argument in claim_arguments:
-                    arg_id = argument.split("/")[-1].strip(">")
-                    af.write(argument + "a aida:SameAsCluster ;\n")
+                for argument in claim_semantics_event.arguments:
+                    # Argument SameAsClusters
+                    af.write(argument.cluster_name + "a aida:SameAsCluster ;\n")
                     claim_semantics_arg_name = (
-                        "<" + CDSE_SYSTEM + f"/entities/isi/{source}/{arg_id}" + ">"
+                        "<" + CDSE_SYSTEM + f"/entities/isi/{source}/{argument.semantics_id}" + ">"
                     )
                     af.write("\taida:prototype " + claim_semantics_arg_name + " ;\n")
+                    argument.name = claim_semantics_arg_name
                     write_system(af)
-                    clusters_to_arg_entities[argument] = claim_semantics_arg_name
 
-                # Arguments
-                for argument, arg_data in claim_arguments.items():
-                    argument_role = argument_names_to_roles[argument]
-                    arg_name = clusters_to_arg_entities[argument]
-                    arg_number = arg_name.split("_")[-1].strip(">")
+                    # Arguments
+                    arg_number = claim_semantics_arg_name.split("_")[-1].strip(">")
 
                     write_claim_semantics_argument(
                         af,
-                        data,
                         source,
-                        arg_name,
-                        argument_role,
-                        arg_data,
-                        claim_semantics_event_name,
-                        claim_semantics_id,
+                        argument,
+                        claim_semantics_event,
                         arg_number,
                     )
+
+        if af:
+            af.write(f"<{CDSE_SYSTEM}> a aida:System .")
 
     if af:
         af.close()

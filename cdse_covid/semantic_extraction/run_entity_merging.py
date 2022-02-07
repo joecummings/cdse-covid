@@ -207,31 +207,32 @@ def main(
                     claim.claimer_type_qnode = type_mapping_to_qnode.get(base_type)
 
         if claim.claim_semantics:
-            for _, arg in claim.claim_semantics.args.items():
-                if arg:
-                    type_arg = arg["type"]
-                    if type_arg:
-                        arg_mention = find_knowledge_entity(
-                            all_kes, type_arg.span, include_contains
-                        )
-                        if arg_mention:
-                            arg["identity"] = type_arg
-                            arg["identity"].entity = arg_mention.parent_entity
-                            entity_qnode_id = arg["identity"].entity.ent_link
-                            entity_type_qnode_id = arg["identity"].entity.type_link
-                            if entity_qnode_id:
-                                arg_qnode = create_wikidata_qnode_from_id(
-                                    arg["identity"], entity_qnode_id
-                                )
-                                arg["identity"] = arg_qnode
-                            if entity_type_qnode_id:
-                                arg_type_qnode = create_wikidata_qnode_from_id(
-                                    arg["type"], entity_type_qnode_id
-                                )
-                                arg["type"] = arg_type_qnode
-                            else:
-                                base_type = arg_mention.parent_entity.ent_type.split(".")[0]
-                                arg["type"] = type_mapping_to_qnode.get(base_type)
+            for claim_semantics in claim.claim_semantics:
+                for _, arg in claim_semantics.args.items():
+                    if arg:
+                        type_arg = arg["type"]
+                        if type_arg:
+                            arg_mention = find_knowledge_entity(
+                                all_kes, type_arg.span, include_contains
+                            )
+                            if arg_mention:
+                                arg["identity"] = type_arg
+                                arg["identity"].entity = arg_mention.parent_entity
+                                entity_qnode_id = arg["identity"].entity.ent_link
+                                entity_type_qnode_id = arg["identity"].entity.type_link
+                                if entity_qnode_id:
+                                    arg_qnode = create_wikidata_qnode_from_id(
+                                        arg["identity"], entity_qnode_id
+                                    )
+                                    arg["identity"] = arg_qnode
+                                if entity_type_qnode_id:
+                                    arg_type_qnode = create_wikidata_qnode_from_id(
+                                        arg["type"], entity_type_qnode_id
+                                    )
+                                    arg["type"] = arg_type_qnode
+                                else:
+                                    base_type = arg_mention.parent_entity.ent_type.split(".")[0]
+                                    arg["type"] = type_mapping_to_qnode.get(base_type)
 
     claim_ds.save_to_key_value_store(output)
 
