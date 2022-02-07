@@ -3,6 +3,7 @@ import argparse
 import logging
 from pathlib import Path
 
+from nltk.stem import WordNetLemmatizer
 import spacy
 from spacy.language import Language
 import torch
@@ -24,6 +25,8 @@ def main(
     linking_model.load_state_dict(model_ckpt, strict=False)
     linking_model.to(device)
 
+    lemmatizer = WordNetLemmatizer()
+
     for claim in claim_dataset:
         claim_amr = claim.get_theory("amr")
         claim_alignments = claim.get_theory("alignments")
@@ -36,6 +39,7 @@ def main(
                     claim_alignments,
                     spacy_model,
                     linking_model,
+                    lemmatizer,
                     device,
                 )
                 if best_qnode:

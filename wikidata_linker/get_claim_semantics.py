@@ -8,6 +8,7 @@ from typing import Any, Dict, List, MutableMapping, Optional, Set, Tuple, Union
 
 from amr_utils.alignments import AMR_Alignment
 from amr_utils.amr import AMR  # pylint: disable=import-error
+from nltk.stem import WordNetLemmatizer
 from spacy.language import Language
 
 from cdse_covid.claim_detection.claim import Claim
@@ -120,6 +121,7 @@ def get_best_qnode_for_mention_text(
     alignments: List[AMR_Alignment],
     spacy_model: Language,
     linking_model: WikidataLinkingClassifier,
+    wn_lemmatizer: WordNetLemmatizer,
     device: str,
 ) -> Optional[WikidataQnode]:
     """Return the best WikidataQnode for a string within the claim sentence.
@@ -140,7 +142,7 @@ def get_best_qnode_for_mention_text(
     if not mention_text:
         return None
     # Make both tables
-    pbs_to_qnodes_master, pbs_to_qnodes_overlay = load_tables()
+    pbs_to_qnodes_master, pbs_to_qnodes_overlay, names_to_qnodes = load_tables()
 
     # Find the label associated with the last token of the variable text
     # (any tokens before it are likely modifiers)
@@ -191,9 +193,17 @@ def get_best_qnode_for_mention_text(
                 from_query=best_qnode.get("pb"),
                 qnode_id=best_qnode.get("qnode"),
             )
-    # If no Qnode was found, try KGTK
-    query_list: List[Optional[str]] = [mention_text, *claim_variable_tokens]
-    for query in list(filter(None, query_list)):
+
+    # If no Qnode was found, try the entity mapping
+    query_list: List[str] = list(filter(None, [mention_text, *claim_variable_tokens]))
+    wd_qnode_from_entity_table = get_entity_table_result(
+        query_list, names_to_qnodes, wn_lemmatizer, claim.doc_id, mention_id, mention_span
+    )
+    if wd_qnode_from_entity_table:
+        return wd_qnode_from_entity_table
+
+    # Finally, try KGTK
+    for query in query_list:
         claim_variable_links = disambiguate_refvar_kgtk(
             query, linking_model, claim.claim_sentence, k=1, device=device
         )
@@ -218,13 +228,14 @@ def get_wikidata_for_labeled_args(
     args: MutableMapping[str, Any],
     spacy_model: Language,
     linking_model: WikidataLinkingClassifier,
+    wn_lemmatizer: WordNetLemmatizer,
     device: str = CPU,
 ) -> MutableMapping[str, Any]:
     """Get WikiData for labeled arguments."""
     args_to_qnodes = {}
     for role, arg in args.items():
         qnode_selection = get_best_qnode_for_mention_text(
-            arg, claim, amr, alignments, spacy_model, linking_model, device
+            arg, claim, amr, alignments, spacy_model, linking_model, wn_lemmatizer, device
         )
         if qnode_selection:
             args_to_qnodes[role] = ClaimArg(
@@ -239,7 +250,7 @@ def get_wikidata_for_labeled_args(
     return args_to_qnodes
 
 
-def load_tables() -> Tuple[Dict[str, Any], Dict[str, Any]]:
+def load_tables() -> Tuple[Dict[str, Any], Dict[str, Any], Dict[str, Any]]:
     """Load propbank-to-qnode mappings from files.
 
     If they aren't found where expected, they will be generated
@@ -253,13 +264,19 @@ def load_tables() -> Tuple[Dict[str, Any], Dict[str, Any]]:
     if not overlay_table_path.exists():
         logging.info("Could not find `pb_to_qnode_overlay.json`; generating it now")
         generate_overlay_dict(overlay_table_path)
+    entity_table_path = PARENT_DIR / "resources" / "names_to_qnode_overlay.json"
+    if not entity_table_path.exists():
+        logging.info("Could not find `names_to_qnode_overlay.json`; generating it now")
+        generate_entity_dict(entity_table_path)
     # Load both qnode mappings
-    with open(master_table_path, "r", encoding="utf-8") as in_json:
-        pbs_to_qnodes_master = json.load(in_json)
-    with open(overlay_table_path, "r", encoding="utf-8") as in_json_2:
-        pbs_to_qnodes_overlay = json.load(in_json_2)
+    with open(master_table_path, "r", encoding="utf-8") as master_json:
+        pbs_to_qnodes_master = json.load(master_json)
+    with open(overlay_table_path, "r", encoding="utf-8") as overlay_json:
+        pbs_to_qnodes_overlay = json.load(overlay_json)
+    with open(entity_table_path, "r", encoding="utf-8") as entity_json:
+        names_to_qnodes = json.load(entity_json)
 
-    return pbs_to_qnodes_master, pbs_to_qnodes_overlay
+    return pbs_to_qnodes_master, pbs_to_qnodes_overlay, names_to_qnodes
 
 
 def get_claim_semantics(
@@ -268,6 +285,7 @@ def get_claim_semantics(
     claim: Claim,
     spacy_model: Language,
     linking_model: WikidataLinkingClassifier,
+    wordnet_lemmatizer: WordNetLemmatizer,
     device: str = CPU,
 ) -> List[ClaimSemantics]:
     """Disambiguate AMR sentence according to DWD overlay.
@@ -277,7 +295,7 @@ def get_claim_semantics(
     all_claim_semantics = []
 
     # Make both tables
-    pbs_to_qnodes_master, pbs_to_qnodes_overlay = load_tables()
+    pbs_to_qnodes_master, pbs_to_qnodes_overlay, _ = load_tables()
 
     # Gather propbank nodes from resulting graph
     label_list_all = amr_sentence.get_ordered_node_labels()
@@ -321,6 +339,7 @@ def get_claim_semantics(
                 labeled_args,
                 spacy_model,
                 linking_model,
+                wordnet_lemmatizer,
                 device,
             )
 
@@ -525,6 +544,35 @@ def get_master_result(
     return {}
 
 
+def get_entity_table_result(
+    potential_entity_strings: List[str],
+    qnode_mapping: Dict[str, Any],
+    lemmatizer: WordNetLemmatizer,
+    doc_id: str,
+    mention_id: Optional[str],
+    mention_span: Optional[Tuple[int, int]],
+) -> Optional[WikidataQnode]:
+    """Look up each string in the entity mapping until a match is found."""
+    for potential_entity in potential_entity_strings:
+        potential_lemma = lemmatizer.lemmatize(potential_entity.lower())
+        qnode_info = qnode_mapping.get(potential_lemma) or qnode_mapping.get(potential_entity)
+        if qnode_info:
+            print(
+                f"\nWE FOUND A MATCH IN THE ENTITY TABLE!\n{potential_entity} --> {qnode_info['name']}\n"
+            )
+            return WikidataQnode(
+                text=qnode_info["name"],
+                mention_id=mention_id,
+                doc_id=doc_id,
+                span=mention_span,
+                qnode_id=qnode_info["qnode"],
+                description=qnode_info["definition"],
+                from_query=potential_entity,
+                confidence=1.0,
+            )
+    return None
+
+
 def get_kgtk_result_for_event(
     propbank_label: str,
     linking_model: WikidataLinkingClassifier,
@@ -726,3 +774,39 @@ def generate_overlay_dict(pb_overlay: Path) -> None:
 
     with open(pb_overlay, "w+", encoding="utf-8") as out_json:
         json.dump(pbs_to_qnodes, out_json, indent=4)
+
+
+def generate_entity_dict(entity_overlay: Path) -> None:
+    """Create an entity-to-Qnode dict from the DWD overlay."""
+    qnode_mapping = ORIGINAL_XPO_TABLE
+    entities_to_qnodes: Dict[str, Dict[str, str]] = {}
+    entities_to_qnodes_only: Dict[str, Set[str]] = defaultdict(set)
+
+    def add_qnode_to_mapping(qnode: str, qnode_info: Dict[str, Any]) -> None:
+        """Add qnode data to the pb-to-qnode mapping.
+
+        Check first that a qnode's data hasn't been added to the list
+        associated with the name, then add it to the mapping.
+        """
+        name = qnode_info["name"]
+        if qnode not in entities_to_qnodes_only[name]:
+            entities_to_qnodes[name] = qnode_info
+            entities_to_qnodes_only[name].add(qnode)
+
+    entity_data = qnode_mapping["entities"]
+    for data in entity_data.values():
+        qnode = data.get("wd_qnode")
+        qname = data.get("name")
+        qdescr = data.get("wd_description")
+
+        if qname:
+            cleaned_qname = qname.replace("_", " ")
+            qnode_summary = {
+                "qnode": qnode,
+                "name": cleaned_qname,
+                "definition": qdescr,
+            }
+            add_qnode_to_mapping(qnode, qnode_summary)
+
+    with open(entity_overlay, "w+", encoding="utf-8") as out_json:
+        json.dump(entities_to_qnodes, out_json, indent=4)
