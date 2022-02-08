@@ -6,6 +6,7 @@ import argparse
 import logging
 from pathlib import Path
 
+from nltk.stem import WordNetLemmatizer
 import spacy
 from spacy.language import Language
 import torch
@@ -46,6 +47,7 @@ def main(
     linking_model.to(device)
 
     spacy_tokenizer = spacy_model.tokenizer
+    wordnet_lemmatizer = WordNetLemmatizer()
 
     claim_ds = ClaimDataset.load_from_key_value_store(input_dir)
 
@@ -73,6 +75,7 @@ def main(
                 sentence_amr.alignments,
                 spacy_model,
                 linking_model,
+                wordnet_lemmatizer,
                 device,
             )
             if best_qnode:
@@ -95,7 +98,13 @@ def main(
 
         # Get claim semantics from AMR data
         semantics = get_claim_semantics(
-            claim_amr.graph, claim_amr.alignments, claim, spacy_model, linking_model, device
+            sentence_amr.graph,
+            sentence_amr.alignments,
+            claim,
+            spacy_model,
+            linking_model,
+            wordnet_lemmatizer,
+            device,
         )
         claim.claim_semantics = semantics
 
