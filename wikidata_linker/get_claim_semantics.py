@@ -290,7 +290,7 @@ def get_claim_semantics(
 ) -> List[ClaimSemantics]:
     """Disambiguate AMR sentence according to DWD overlay.
 
-    Return all event qnodes and their corresponding arguments for the given claim.
+    Return all event qnodes and their corresponding arguments for the given claim sentence.
     """
     all_claim_semantics = []
 
@@ -557,9 +557,6 @@ def get_entity_table_result(
         potential_lemma = lemmatizer.lemmatize(potential_entity.lower())
         qnode_info = qnode_mapping.get(potential_lemma) or qnode_mapping.get(potential_entity)
         if qnode_info:
-            print(
-                f"\nWE FOUND A MATCH IN THE ENTITY TABLE!\n{potential_entity} --> {qnode_info['name']}\n"
-            )
             return WikidataQnode(
                 text=qnode_info["name"],
                 mention_id=mention_id,

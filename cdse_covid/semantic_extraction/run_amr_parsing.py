@@ -98,8 +98,8 @@ def main(
 
         # Get claim semantics from AMR data
         semantics = get_claim_semantics(
-            claim_amr.graph,
-            claim_amr.alignments,
+            sentence_amr.graph,
+            sentence_amr.alignments,
             claim,
             spacy_model,
             linking_model,
