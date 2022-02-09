@@ -37,7 +37,7 @@ wikidata:
 
 unify:
     output: "%experiments_root%/output.json"
-    python_file: "%project_root%/cdse_covid/pegasus_pipeline/merge.py"
+    python_file: "%project_root%/cdse_covid/pegasus_pipeline/convert_claims_to_json.py"
 
 aif:
     python_file: "%project_root%/cdse_covid/pegasus_pipeline/ingesters/convert_claim_json.py"

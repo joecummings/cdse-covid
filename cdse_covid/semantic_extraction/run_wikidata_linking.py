@@ -11,6 +11,7 @@ import torch
 from cdse_covid.claim_detection.run_claim_detection import ClaimDataset
 from wikidata_linker.get_claim_semantics import get_best_qnode_for_mention_text
 from wikidata_linker.linker import WikidataLinkingClassifier
+from wikidata_linker.qnode_mapping_utils import load_tables
 from wikidata_linker.wikidata_linking import CPU
 
 
@@ -24,6 +25,8 @@ def main(
     model_ckpt = torch.load(state_dict, map_location=torch.device(device))
     linking_model.load_state_dict(model_ckpt, strict=False)
     linking_model.to(device)
+
+    qnode_tables = load_tables()
 
     lemmatizer = WordNetLemmatizer()
 
@@ -40,6 +43,7 @@ def main(
                     spacy_model,
                     linking_model,
                     lemmatizer,
+                    qnode_tables,
                     device,
                 )
                 if best_qnode:
