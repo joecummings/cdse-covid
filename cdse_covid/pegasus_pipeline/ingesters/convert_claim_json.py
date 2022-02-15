@@ -4,7 +4,7 @@ import json
 import logging
 import os
 from random import randint
-from typing import Any, Dict, List, MutableMapping, TextIO, Tuple, Union
+from typing import Any, Dict, List, MutableMapping, Optional, TextIO, Tuple, Union
 
 from aida_tools.utils import make_xml_safe, reduce_whitespace
 from vistautils.parameters import Parameters
@@ -159,11 +159,30 @@ def get_valid_claim_semantics(claim_semantics_data: List[Dict[str, Any]]) -> Lis
     for claim_semantics in claim_semantics_data:
         event = claim_semantics["event"]
         event_qnode = event.get("qnode_id")
-        event_span = event.get("span")
+        event_span = event.get("span") and len(event["span"]) == 2
         event_text = event.get("text") != "Unspecified"
         if event and event_qnode and event_span and event_text:
             valid_claim_semantics.append(claim_semantics)
     return valid_claim_semantics
+
+
+def is_valid_x_variable(x_varaible_data: Optional[Dict[str, Any]]) -> bool:
+    """Returns True if the claim has a valid x-variable.
+
+    Claim components are valid if they exist and have a span.
+    """
+    if not x_varaible_data:
+        return False
+
+    x_variable_span = x_varaible_data.get("span")
+    if x_variable_span:
+        if len(x_variable_span) != 2:
+            logging.warning(
+                "The span of x-variable %s is invalid (%s).", x_varaible_data, x_variable_span
+            )
+            return False
+        return True
+    return False
 
 
 def get_claim_semantics_data(
@@ -200,7 +219,9 @@ def get_claim_semantics_data(
                 claim_argument = None
                 argument_id = "EN_Entity_EDL_ENG_" + str(arg_count).zfill(7)
                 if arg_qnodes.get("type"):
-                    if arg_qnodes["type"]["qnode_id"] is not None:
+                    if arg_qnodes["type"]["qnode_id"] is not None and arg_qnodes["type"].get(
+                        "span"
+                    ):
                         claim_argument = (
                             "<"
                             + make_xml_safe(
@@ -209,7 +230,9 @@ def get_claim_semantics_data(
                             + ">"
                         )
                 elif arg_qnodes.get("identity"):
-                    if arg_qnodes["identity"]["qnode_id"] is not None:
+                    if arg_qnodes["identity"]["qnode_id"] is not None and arg_qnodes["type"].get(
+                        "span"
+                    ):
                         claim_argument = (
                             "<"
                             + make_xml_safe(
@@ -381,7 +404,7 @@ def write_claim_semantics_argument(
         + "/"
         + event.semantics_id
         + "/"
-        + f"{event.qnode_data['text']}.{argument.role}/"
+        + f"{event.qnode_data['text'].replace(' ', '_')}.{argument.role}/"
         + f"EventArgument-{defining_arg_qnode}"
         + "> a rdf:Statement,\n"
     )
@@ -549,6 +572,10 @@ def convert_json_file_to_aif(params: Parameters) -> None:
             # First check if there is at least one valid claim semantics object
             claim_semantics = get_valid_claim_semantics(data["claim_semantics"])
             if not claim_semantics:
+                continue
+
+            # Each claim needs at least one x-variable
+            if not is_valid_x_variable(data["x_variable_type_qnode"]):
                 continue
 
             # Write the Claim
