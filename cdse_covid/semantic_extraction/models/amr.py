@@ -2,7 +2,7 @@
 import logging
 from os import chdir, getcwd
 from pathlib import Path
-from typing import List
+from typing import List, Optional
 import uuid
 
 from amr_utils.amr_readers import AMR_Reader, Metadata_Parser
@@ -41,10 +41,13 @@ class AMRModel(object):
 
     def amr_parse_sentences(
         self, sentences: List[List[str]], output_alignments: bool = False
-    ) -> AMROutput:
+    ) -> Optional[AMROutput]:
         """Parse sentences in AMR graph and alignments."""
         logging.info(output_alignments)
         annotations = self.parser.parse_sentences(sentences)
         metadata, graph_metadata = Metadata_Parser().readlines(annotations[0][0])
+        # Make sure there's a graph we can work with
+        if not graph_metadata.get("node"):
+            return None
         amr, alignments = AMR_Reader._parse_amr_from_metadata(metadata["tok"], graph_metadata)
         return AMROutput(int(uuid.uuid1()), amr, alignments, annotations)
