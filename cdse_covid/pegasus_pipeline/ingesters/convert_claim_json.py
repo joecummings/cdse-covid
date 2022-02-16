@@ -359,6 +359,25 @@ def write_claim_semantics_event(
     write_offset(aif_file, event_start, is_start=True)
     write_system(aif_file)
 
+    # Event object
+    aif_file.write(
+        "<"
+        + CDSE_SYSTEM
+        + "/assertions/isi/eventtype/"
+        + source
+        + "/"
+        + claim_semantics_event.semantics_id
+        + "/"
+        + f"{event_data['text'].replace(' ', '_')}/"
+        + f"EventType-{event_data['qnode_id']}"
+        + "> a rdf:Statement,\n"
+    )
+    aif_file.write("\t\taida:TypeStatement ;\n")
+    aif_file.write(f'\trdf:object "{event_data["qnode_id"]}"^^xsd:string ;\n')
+    aif_file.write("\trdf:predicate rdf:type ;\n")
+    aif_file.write(f"\trdf:subject {claim_semantics_event.name} ;\n")
+    write_system(aif_file)
+
 
 def write_claim_semantics_argument(
     aif_file: TextIO,
