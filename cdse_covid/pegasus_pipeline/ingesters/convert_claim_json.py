@@ -95,7 +95,7 @@ def get_nil_id_for_entity(entity_text: str) -> str:
 
 def write_entity_data(
     aif_file: TextIO,
-    source_doc: str,
+    source: str,
     var_type: str,
     entity_name: str,
     entity_data: Any,
@@ -113,7 +113,7 @@ def write_entity_data(
             + make_xml_safe(
                 CDSE_SYSTEM
                 + "/"
-                + source_doc
+                + source
                 + f"/{var_type}/justification"
                 + str(var_count)
                 + "/"
@@ -144,7 +144,7 @@ def write_entity_data(
         aif_file.write("\t\taida:confidenceValue " + f"{confidence_val:.2E}" + " ;\n")
         aif_file.write("\t\taida:system <" + CDSE_SYSTEM + "> ] ;\n")
         aif_file.write('\taida:endOffsetInclusive "' + str(end_offset_inclusive) + '"^^xsd:int ;\n')
-        aif_file.write('\taida:sourceDocument "' + source_doc + '"^^xsd:string ;\n')
+        aif_file.write('\taida:source "' + source + '"^^xsd:string ;\n')
         aif_file.write('\taida:startOffset "' + str(start_offset) + '"^^xsd:int ;\n')
         write_system(aif_file)
 
@@ -294,7 +294,7 @@ def write_claim_component(
 
 
 def write_claim_semantics_event(
-    aif_file: TextIO, source_doc: str, claim_semantics_event: ClaimSemanticsEventData
+    aif_file: TextIO, source: str, claim_semantics_event: ClaimSemanticsEventData
 ) -> None:
     """Add the event of the claim and its justifications."""
     aif_file.write(claim_semantics_event.name + " a aida:Event ;\n")
@@ -323,7 +323,7 @@ def write_claim_semantics_event(
         "<"
         + CDSE_SYSTEM
         + f"/assertions/isi/event_informative_justification/{claim_semantics_event.semantics_id}/"
-        + source_doc
+        + source
         + f"/{event_start}/{event_end}"
         + ">"
     )
@@ -333,7 +333,7 @@ def write_claim_semantics_event(
     justification_name = (
         "<"
         + CDSE_SYSTEM
-        + f"/assertions/isi/eventjustification/{claim_semantics_event.semantics_id}/{source_doc}/{event_start}/{event_end}"
+        + f"/assertions/isi/eventjustification/{claim_semantics_event.semantics_id}/{source}/{event_start}/{event_end}"
         + ">"
     )
     aif_file.write(f"\taida:justifiedBy {justification_name} ;\n")
@@ -346,7 +346,7 @@ def write_claim_semantics_event(
     aif_file.write(confidence_aif)
     write_offset(aif_file, event_end, is_start=False)
     write_private_data(aif_file, str(event_data))
-    aif_file.write(f'\taida:sourceDocument "{source_doc}"^^xsd:string ;\n')
+    aif_file.write(f'\taida:source "{source}"^^xsd:string ;\n')
     write_offset(aif_file, event_start, is_start=True)
     write_system(aif_file)
 
@@ -355,7 +355,7 @@ def write_claim_semantics_event(
     aif_file.write(confidence_aif)
     write_offset(aif_file, event_end, is_start=False)
     write_private_data(aif_file, str(event_data))
-    aif_file.write(f'\taida:sourceDocument "{source_doc}"^^xsd:string ;\n')
+    aif_file.write(f'\taida:source "{source}"^^xsd:string ;\n')
     write_offset(aif_file, event_start, is_start=True)
     write_system(aif_file)
 
@@ -540,7 +540,7 @@ def convert_json_file_to_aif(params: Parameters) -> None:
         # Entity and justification
         write_entity_data(
             aif_file,
-            source_document,
+            source,
             var_type,
             variable_entity_name,
             variable_entity_data,
@@ -551,12 +551,12 @@ def convert_json_file_to_aif(params: Parameters) -> None:
     entity_count = 1  # 0 is reserved for the "author"
 
     for data in claims_data:
-        source_document = os.path.splitext(str(data["doc_id"]))[0]
+        source = os.path.splitext(str(data["doc_id"]))[0]
 
-        if source_document != prior_source:
+        if source != prior_source:
             if prior_source != "":
                 af.close()  # type: ignore
-            aif_file = os.path.join(aif_dir, source_document + ".ttl")
+            aif_file = os.path.join(aif_dir, source + ".ttl")
             af = open(aif_file, "w", encoding="utf-8")
             log.info("WRITING: %s", aif_file)
             af.write(
@@ -566,7 +566,7 @@ def convert_json_file_to_aif(params: Parameters) -> None:
             af.write("@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .\n")
             af.write("@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .\n\n")
             af.write(f"<{CDSE_SYSTEM}> a aida:System .\n\n")
-            prior_source = source_document
+            prior_source = source
 
         if af:
             # First check if there is at least one valid claim semantics object
@@ -581,9 +581,7 @@ def convert_json_file_to_aif(params: Parameters) -> None:
             # Write the Claim
             claim_id = make_xml_safe(str(data["claim_id"]))
             claim_name = (
-                "<"
-                + make_xml_safe(CDSE_SYSTEM + "/" + source_document + "/claim_id/" + claim_id)
-                + ">"
+                "<" + make_xml_safe(CDSE_SYSTEM + "/" + source + "/claim_id/" + claim_id) + ">"
             )
             af.write(claim_name + " a aida:Claim ;\n")
             af.write('\taida:sourceDocument "' + str(data["doc_id"]) + '"^^xsd:string ;\n')
@@ -606,7 +604,7 @@ def convert_json_file_to_aif(params: Parameters) -> None:
                     x_variable_entity_name,
                     x_variable_cluster_name,
                     entity_count,
-                ) = get_name_data(af, "x_variable", source_document, claim_id, entity_count)
+                ) = get_name_data(af, "x_variable", source, claim_id, entity_count)
 
             af.write(
                 '\taida:naturalLanguageDescription "'
@@ -619,14 +617,12 @@ def convert_json_file_to_aif(params: Parameters) -> None:
                 semantics_kes,
                 event_count,
                 entity_count,
-            ) = get_claim_semantics_data(
-                af, source_document, claim_semantics, event_count, entity_count
-            )
+            ) = get_claim_semantics_data(af, source, claim_semantics, event_count, entity_count)
             associated_kes.extend(semantics_kes)
 
             has_claimer = data["claimer_type_qnode"] is not None
             claimer_name, claimer_entity_name, claimer_cluster_name, entity_count = get_name_data(
-                af, "claimer", source_document, claim_id, entity_count, is_author=(not has_claimer)
+                af, "claimer", source, claim_id, entity_count, is_author=(not has_claimer)
             )
 
             has_claim_location = data["claim_location_qnode"] is not None
@@ -642,7 +638,7 @@ def convert_json_file_to_aif(params: Parameters) -> None:
                 + make_xml_safe(
                     CDSE_SYSTEM
                     + "/claims/justifications/"
-                    + source_document
+                    + source
                     + "/"
                     + str(start_offset)
                     + "/"
@@ -670,7 +666,7 @@ def convert_json_file_to_aif(params: Parameters) -> None:
             af.write("\t\taida:confidenceValue " + f"{1.00:.2E}" + " ;\n")
             af.write("\t\taida:system <" + CDSE_SYSTEM + "> ] ;\n")
             af.write('\taida:endOffsetInclusive "' + str(end_offset_inclusive) + '"^^xsd:int ;\n')
-            af.write('\taida:sourceDocument "' + source_document + '"^^xsd:string ;\n')
+            af.write('\taida:source "' + source + '"^^xsd:string ;\n')
             af.write('\taida:startOffset "' + str(start_offset) + '"^^xsd:int ;\n')
             af.write(f"\taida:system <{CDSE_SYSTEM}> . \n\n")
 
@@ -685,7 +681,7 @@ def convert_json_file_to_aif(params: Parameters) -> None:
                     0,
                 )
 
-            AUTHOR_DATA["claimer"]["doc_id"] = source_document
+            AUTHOR_DATA["claimer"]["doc_id"] = source
 
             write_qnode_data(
                 af,
@@ -706,7 +702,7 @@ def convert_json_file_to_aif(params: Parameters) -> None:
                 claim_semantics_event_name = (
                     "<"
                     + CDSE_SYSTEM
-                    + f"/events/isi/{source_document}/{claim_semantics_event.semantics_id}"
+                    + f"/events/isi/{source}/{claim_semantics_event.semantics_id}"
                     + ">"
                 )
                 af.write("\taida:prototype " + claim_semantics_event_name + " ;\n")
@@ -714,16 +710,13 @@ def convert_json_file_to_aif(params: Parameters) -> None:
                 write_system(af)
 
                 # Event
-                write_claim_semantics_event(af, source_document, claim_semantics_event)
+                write_claim_semantics_event(af, source, claim_semantics_event)
 
                 for argument in claim_semantics_event.arguments:
                     # Argument SameAsClusters
                     af.write(argument.cluster_name + "a aida:SameAsCluster ;\n")
                     claim_semantics_arg_name = (
-                        "<"
-                        + CDSE_SYSTEM
-                        + f"/entities/isi/{source_document}/{argument.semantics_id}"
-                        + ">"
+                        "<" + CDSE_SYSTEM + f"/entities/isi/{source}/{argument.semantics_id}" + ">"
                     )
                     af.write("\taida:prototype " + claim_semantics_arg_name + " ;\n")
                     argument.name = claim_semantics_arg_name
@@ -734,7 +727,7 @@ def convert_json_file_to_aif(params: Parameters) -> None:
 
                     write_claim_semantics_argument(
                         af,
-                        source_document,
+                        source,
                         argument,
                         claim_semantics_event,
                         arg_number,
