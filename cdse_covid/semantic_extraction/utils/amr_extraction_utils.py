@@ -197,8 +197,10 @@ def create_tokens_to_indices(amr_tokens: List[str]) -> Dict[str, int]:
     return {token: index for index, token in enumerate(amr_tokens)}
 
 
-def remove_preceding_trailing_stop_words(text: str) -> Optional[str]:
+def remove_preceding_trailing_stop_words(text: Optional[str]) -> Optional[str]:
     """Remove trailing stop words from mention text."""
+    if not text:
+        return None
     text_tokens = text.split(" ")
     first_nonstop_idx = -1
     last_nonstop_idx = -1

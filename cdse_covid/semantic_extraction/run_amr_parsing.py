@@ -22,6 +22,7 @@ from cdse_covid.semantic_extraction.utils.amr_extraction_utils import (
 from cdse_covid.semantic_extraction.utils.claimer_utils import identify_claimer
 from wikidata_linker.get_claim_semantics import get_claim_semantics
 from wikidata_linker.linker import WikidataLinkingClassifier
+from wikidata_linker.qnode_mapping_utils import load_tables
 from wikidata_linker.wikidata_linking import CPU
 
 COVID_DOMAIN = "covid"
@@ -48,6 +49,8 @@ def main(
 
     spacy_tokenizer = spacy_model.tokenizer
     wordnet_lemmatizer = WordNetLemmatizer()
+
+    qnode_mappings = load_tables()
 
     claim_ds = ClaimDataset.load_from_key_value_store(input_dir)
 
@@ -76,6 +79,7 @@ def main(
                 spacy_model,
                 linking_model,
                 wordnet_lemmatizer,
+                qnode_mappings,
                 device,
             )
             if best_qnode:
@@ -104,6 +108,7 @@ def main(
             spacy_model,
             linking_model,
             wordnet_lemmatizer,
+            qnode_mappings,
             device,
         )
         claim.claim_semantics = semantics

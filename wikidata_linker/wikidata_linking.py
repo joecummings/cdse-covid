@@ -169,9 +169,9 @@ def make_kgtk_candidates_filter(source_str: str) -> Callable[[Mapping[str, Any]]
     def kgtk_candidate_filter(candidate: Mapping[str, Any]) -> bool:
         str_found = source_str in candidate["label"][0]
         str_found = str_found or any(source_str in alias for alias in candidate["alias"])
-        description_and_casematch = candidate["description"] and candidate["label"][0].islower()
+        has_description = candidate["description"] is not None
         is_qnode = candidate["qnode"].startswith("Q")
-        return str_found and description_and_casematch and is_qnode
+        return str_found and has_description and is_qnode
 
     return kgtk_candidate_filter
 
@@ -247,7 +247,7 @@ def get_request_kgtk(
             if not candidate["label"]:
                 candidate["label"] = [""]
             if not candidate["description"]:
-                candidate["desription"] = [""]
+                candidate["description"] = [""]
             candidate["kgtk_query"] = query
         if filter_results:
             candidates = list(filter(make_kgtk_candidates_filter(query), candidates))
@@ -445,10 +445,7 @@ def disambiguate_refvar_kgtk(
     options = []
 
     if context:
-        cleaned_refvar = (
-            refvar + " - " + context
-        )  # this is how it would be done in MASC, since refvars are not
-        # necessarily mentioned in context, otherwise context is probably sufficient
+        cleaned_refvar = context
     candidate_scores = get_linker_scores(
         cleaned_refvar, False, unique_candidates, linking_model, device
     )["scores"]
