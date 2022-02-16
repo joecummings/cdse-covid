@@ -57,14 +57,16 @@ def main(
     for claim in claim_ds.claims:
         logging.info("Processing claim %s", claim.claim_id)
         tokenized_sentence = tokenize_sentence(claim.claim_sentence, spacy_tokenizer, max_tokens)
-        if len(tokenized_sentence) <= 1:
-            logging.warning("Sentence `%s` is too short!", claim.claim_sentence)
-            continue
         sentence_amr = amr_parser.amr_parse_sentences([tokenized_sentence])
-        tokenized_claim = tokenize_sentence(claim.claim_text, spacy_tokenizer, max_tokens)
-        if len(tokenized_claim) <= 1:
-            logging.warning("Claim text `%s` is too short!", claim.claim_text)
+        if not sentence_amr:
+            logging.warning("Cannot create valid AMR for sentence `%s`; skipping", claim.claim_sentence)
             continue
+        tokenized_claim = tokenize_sentence(claim.claim_text, spacy_tokenizer, max_tokens)
+        claim_amr = amr_parser.amr_parse_sentences([tokenized_claim])
+        if not claim_amr:
+            logging.warning("Cannot create valid AMR for claim `%s`; skipping", claim.claim_text)
+            continue
+
         possible_claimer = identify_claimer(
             claim, tokenized_claim, sentence_amr.graph, sentence_amr.alignments, spacy_model
         )
@@ -84,8 +86,6 @@ def main(
             )
             if best_qnode:
                 claim.claimer_type_qnode = best_qnode
-
-        claim_amr = amr_parser.amr_parse_sentences([tokenized_claim])
 
         if domain == COVID_DOMAIN:
             possible_x_variable = identify_x_variable_covid(
