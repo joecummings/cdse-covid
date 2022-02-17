@@ -59,7 +59,9 @@ def main(
         tokenized_sentence = tokenize_sentence(claim.claim_sentence, spacy_tokenizer, max_tokens)
         sentence_amr = amr_parser.amr_parse_sentences([tokenized_sentence])
         if not sentence_amr:
-            logging.warning("Cannot create valid AMR for sentence `%s`; skipping", claim.claim_sentence)
+            logging.warning(
+                "Cannot create valid AMR for sentence `%s`; skipping", claim.claim_sentence
+            )
             continue
         tokenized_claim = tokenize_sentence(claim.claim_text, spacy_tokenizer, max_tokens)
         claim_amr = amr_parser.amr_parse_sentences([tokenized_claim])

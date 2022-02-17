@@ -97,12 +97,13 @@ def main(
         output_file = f"{output_dir}/{input_file.stem}.amr"
         with open(output_file, "w+", encoding="utf-8") as outfile:
             # PENMAN notation is at index 0
-            for anno_number, annotation in enumerate(amr_parse.annotations[0]):
-                # Append an id to each graph so that
-                # it can be loaded by amr-utils later
-                outfile.write(f"# ::id {input_file.stem}_{anno_number}\n")
-                outfile.write(f"# ::snt {original_sentences[anno_number]}")
-                outfile.writelines("".join(annotation))
+            if amr_parse is not None:
+                for anno_number, annotation in enumerate(amr_parse.annotations[0]):
+                    # Append an id to each graph so that
+                    # it can be loaded by amr-utils later
+                    outfile.write(f"# ::id {input_file.stem}_{anno_number}\n")
+                    outfile.write(f"# ::snt {original_sentences[anno_number]}")
+                    outfile.writelines("".join(annotation))
 
 
 if __name__ == "__main__":

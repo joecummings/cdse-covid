@@ -205,9 +205,17 @@ def remove_preceding_trailing_stop_words(text: Optional[str]) -> Optional[str]:
     first_nonstop_idx = -1
     last_nonstop_idx = -1
     for i, token in enumerate(text_tokens):
-        if first_nonstop_idx == -1 and token.lower() not in STOP_WORDS and token not in string.punctuation:
+        if (
+            first_nonstop_idx == -1
+            and token.lower() not in STOP_WORDS
+            and token not in string.punctuation
+        ):
             first_nonstop_idx = i
-        if first_nonstop_idx > -1 and token.lower() not in STOP_WORDS and token not in string.punctuation:
+        if (
+            first_nonstop_idx > -1
+            and token.lower() not in STOP_WORDS
+            and token not in string.punctuation
+        ):
             last_nonstop_idx = i
     clipped_text = text_tokens[first_nonstop_idx : last_nonstop_idx + 1]
     return " ".join(clipped_text)

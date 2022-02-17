@@ -27,7 +27,6 @@ def main(params: Parameters) -> None:
         f"""
         --aif-dir {uiuc_aif_dir} \
         --aif-as-zip {zip_dir} \
-        --is-uiuc
         """,
         depends_on=[],
     )
