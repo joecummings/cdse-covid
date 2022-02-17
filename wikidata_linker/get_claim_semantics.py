@@ -290,7 +290,11 @@ def get_claim_semantics(
         if event_qnode.get("pb"):
             pb_amr_node = get_node_from_pb(amr_sentence, event_qnode["pb"])
             event_tokens = amr_sentence.get_tokens_from_node(pb_amr_node, amr_alignments)
-            event_text = " ".join(event_tokens)
+            if "<ROOT>" in event_tokens:
+                event_tokens.remove("<ROOT>")
+            event_text = remove_preceding_trailing_stop_words(" ".join(event_tokens))
+            if not event_text:
+                continue
             event_span = claim.get_offsets_for_text(event_text, spacy_model.tokenizer)
         else:
             pb_amr_node = ""

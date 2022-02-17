@@ -57,7 +57,7 @@ class Claim:
         """Get the character offsets of the given string based on its claim span."""
         if not text:
             return None
-        tokens_to_offsets: Dict[str, Tuple[int, int]] = self.get_theory(  # type: ignore
+        tokens_to_offsets: Dict[str, List[Tuple[int, int]]] = self.get_theory(  # type: ignore
             TOKEN_OFFSET_THEORY
         )
         if not tokens_to_offsets:
@@ -65,34 +65,51 @@ class Claim:
             return None
         text_tokens = tokenizer(text.strip())
         text_split = [token.text for token in text_tokens]
-        first_token = text_split[0]
-        last_token = text_split[-1]
-        first_offsets = tokens_to_offsets.get(first_token)
-        if not first_offsets:
+        # If there is only one token, simply grab the first span
+        if len(text_split) == 1:
+            offsets_list = tokens_to_offsets.get(text_split[0])
+            if offsets_list:
+                return offsets_list[0]
+            else:
+                logging.warning(
+                    "Could not find char offset info for token '%s' in claim sentence `%s`",
+                    text_split[0],
+                    self.claim_sentence,
+                )
+                return None
+        else:
+            first_token = text_split[0]
+            last_token = text_split[-1]
+            first_offsets_list = tokens_to_offsets.get(first_token)
+            if not first_offsets_list:
+                logging.warning(
+                    "Could not find char offset info for token '%s' in claim sentence `%s`",
+                    first_token,
+                    self.claim_sentence,
+                )
+                return None
+            first_offsets_list.reverse()
+            last_offsets_list = tokens_to_offsets.get(last_token)
+            if not last_offsets_list:
+                logging.warning(
+                    "Could not find char offset info for token '%s' in claim sentence `%s`",
+                    last_token,
+                    self.claim_sentence,
+                )
+                return None
+            # Find the first combination of spans that makes sense
+            for first_offsets in first_offsets_list:
+                for last_offsets in last_offsets_list:
+                    first_idx = first_offsets[0]
+                    last_idx = last_offsets[1]
+                    if first_idx < last_idx:
+                        return first_idx, last_idx
             logging.warning(
-                "Could not find char offset info for token '%s' in claim sentence `%s`",
-                first_token,
-                self.claim_sentence,
-            )
-            return None
-        span_start = first_offsets[0]
-        last_offsets = tokens_to_offsets.get(last_token)
-        if not last_offsets:
-            logging.warning(
-                "Could not find char offset info for token '%s' in claim sentence`%s`",
-                last_token,
-                self.claim_sentence,
-            )
-            return None
-        span_end = last_offsets[1]
-        if span_end <= span_start:
-            logging.warning(
-                "Impossible char offsets found for string '%s' in claim sentence `%s`",
+                "Could not find char offsets for string '%s' in claim sentence `%s`",
                 text,
                 self.claim_sentence,
             )
             return None
-        return span_start, span_end
 
     @staticmethod
     def to_json(

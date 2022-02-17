@@ -1,5 +1,6 @@
 """Ingest claims from UIUC's internal format."""
 import argparse
+from collections import defaultdict
 import json
 import logging
 from pathlib import Path
@@ -27,14 +28,16 @@ def main(claims_file: Path, output: Path, spacy_model: Language) -> None:
                 continue
 
             # Get offsets from tokens in the claim's sentence
-            claim_sentence_tokens_to_offsets = {}
+            claim_sentence_tokens_to_offsets = defaultdict(list)
             sentence_start = claim["start_char"]
             idx = sentence_start
             local_idx = 0
             tokenized_sentence = spacy_model.tokenizer(claim["sentence"])
             sentence = [token.text for token in tokenized_sentence]
             for token_idx, sentence_token in enumerate(sentence):
-                claim_sentence_tokens_to_offsets[sentence_token] = (idx, idx + len(sentence_token))
+                claim_sentence_tokens_to_offsets[sentence_token].append(
+                    (idx, idx + len(sentence_token) - 1)
+                )
                 local_idx += len(sentence_token)
                 if token_idx + 1 < len(sentence):
                     idx = sentence_start + claim["sentence"].find(

@@ -198,16 +198,16 @@ def create_tokens_to_indices(amr_tokens: List[str]) -> Dict[str, int]:
 
 
 def remove_preceding_trailing_stop_words(text: Optional[str]) -> Optional[str]:
-    """Remove trailing stop words from mention text."""
+    """Remove trailing stop words and punctuation from mention text."""
     if not text:
         return None
     text_tokens = text.split(" ")
     first_nonstop_idx = -1
     last_nonstop_idx = -1
     for i, token in enumerate(text_tokens):
-        if first_nonstop_idx == -1 and token not in STOP_WORDS:
+        if first_nonstop_idx == -1 and token.lower() not in STOP_WORDS and token not in string.punctuation:
             first_nonstop_idx = i
-        if first_nonstop_idx > -1 and token not in STOP_WORDS:
+        if first_nonstop_idx > -1 and token.lower() not in STOP_WORDS and token not in string.punctuation:
             last_nonstop_idx = i
     clipped_text = text_tokens[first_nonstop_idx : last_nonstop_idx + 1]
     return " ".join(clipped_text)
@@ -219,6 +219,7 @@ def create_x_variable(text: Optional[str], claim: Claim, tokenizer: Any) -> Opti
         # Remove trailing stop words
         final_text = remove_preceding_trailing_stop_words(text)
         if final_text:
+            print("We're about to create the x-variable...")
             return XVariable(
                 mention_id=create_id(),
                 text=final_text,

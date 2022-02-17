@@ -173,12 +173,14 @@ class RegexClaimDetector(ClaimDetector, Matcher):  # type: ignore
                 span_offset_end = span.end_char
 
                 # Get offsets from tokens in the claim's sentence
-                claim_sentence_tokens_to_offsets = {}
+                claim_sentence_tokens_to_offsets = defaultdict(list)
                 idx = span.sent.start_char
                 for sentence_token in span.sent:
-                    claim_sentence_tokens_to_offsets[sentence_token.text] = (
-                        idx,
-                        idx + len(sentence_token.text),
+                    claim_sentence_tokens_to_offsets[sentence_token.text].append(
+                        (
+                            idx,
+                            idx + len(sentence_token.text) - 1,
+                        )
                     )
                     idx += len(sentence_token.text_with_ws)
 
