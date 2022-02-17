@@ -179,7 +179,7 @@ class RegexClaimDetector(ClaimDetector, Matcher):  # type: ignore
                     claim_sentence_tokens_to_offsets[sentence_token.text].append(
                         (
                             idx,
-                            idx + len(sentence_token.text),
+                            idx + len(sentence_token.text) - 1,
                         )
                     )
                     idx += len(sentence_token.text_with_ws)

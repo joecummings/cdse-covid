@@ -36,7 +36,7 @@ def main(claims_file: Path, output: Path, spacy_model: Language) -> None:
             sentence = [token.text for token in tokenized_sentence]
             for token_idx, sentence_token in enumerate(sentence):
                 claim_sentence_tokens_to_offsets[sentence_token].append(
-                    (idx, idx + len(sentence_token))
+                    (idx, idx + len(sentence_token) - 1)
                 )
                 local_idx += len(sentence_token)
                 if token_idx + 1 < len(sentence):
