@@ -92,7 +92,7 @@ class Claim:
             last_offsets_list = tokens_to_offsets.get(last_token)
             if not last_offsets_list:
                 logging.warning(
-                    "Could not find char offset info for token '%s' in claim sentence`%s`",
+                    "Could not find char offset info for token '%s' in claim sentence `%s`",
                     last_token,
                     self.claim_sentence,
                 )
