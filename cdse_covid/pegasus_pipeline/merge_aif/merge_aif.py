@@ -12,6 +12,14 @@ from vistautils.parameters import Parameters
 from cdse_covid.pegasus_pipeline.merge_aif.aif_models import Span
 
 
+JUSTIFICATIONS = [
+    URIRef('https://raw.githubusercontent.com/NextCenturyCorporation/AIDA-Interchange-Format/master/java/src/main/resources/com/ncc/aif/ontologies/InterchangeOntology#informativeJustification'),
+    URIRef('https://raw.githubusercontent.com/NextCenturyCorporation/AIDA-Interchange-Format/master/java/src/main/resources/com/ncc/aif/ontologies/InterchangeOntology#justifiedBy'),
+    URIRef('https://raw.githubusercontent.com/NextCenturyCorporation/AIDA-Interchange-Format/master/java/src/main/resources/com/ncc/aif/ontologies/InterchangeOntology#TextJustification')
+]
+
+SOURCE_DOC = URIRef('https://raw.githubusercontent.com/NextCenturyCorporation/AIDA-Interchange-Format/master/java/src/main/resources/com/ncc/aif/ontologies/InterchangeOntology#sourceDocument')
+
 def get_claim_semantics_for_claim(graph: Graph, claim: URIRef) -> Optional[Sequence[URIRef]]:
     """Get Claim Semantics for a given Claim."""
     claim_semantics_uri_result = set(
@@ -166,6 +174,40 @@ def get_all_properties(graph: Graph, elem: URIRef) -> Set[Tuple[URIRef, URIRef]]
     return set(graph.query(query, initBindings={"elem": elem}))
 
 
+
+def get_all_event_types_and_arguments(graph: Graph) -> Set[URIRef]:
+    query = """
+    SELECT DISTINCT ?et
+    WHERE { ?et a rdf:Statement }
+    """
+    return set(graph.query(query))
+
+
+def is_in_updated_graph(graph: Graph, elem: URIRef) -> bool:
+    query = """
+    SELECT DISTINCT ?elem
+    WHERE { 
+        ?elem rdf:subject ?subject .
+        ?subject a aida:Event .
+    }
+    """
+    return set(graph.query(query, initBindings={"elem": elem}))
+
+
+
+def get_source_id(graph: Graph, claim: URIRef) -> Set[URIRef]:
+    query = """
+    SELECT DISTINCT ?source
+    WHERE {
+        ?claim aida:justifiedBy ?jb .
+
+        ?jb aida:sourceDocument ?source .
+    }
+    """
+    res = set(graph.query(query, initBindings={"claim": claim}))
+    if res:
+        return res.pop()
+
 def main(isi_store: Path, uiuc_store: Path, output: Path) -> None:
     """Entrypoint to Merge script."""
     isi_graphs = load_from_key_value_store(isi_store)
@@ -191,6 +233,8 @@ def main(isi_store: Path, uiuc_store: Path, output: Path) -> None:
                     uiuc_claims_with_spans[(span.start, span.end)] = claim
 
             for uiuc_claim_span, uiuc_claim in uiuc_claims_with_spans.items():
+                source_id = get_source_id(uiuc_graph, uiuc_claim[0])
+
                 match = fuzzy_match(uiuc_claim_span, isi_claims_with_spans.keys())
                 if match:
                     isi_claim = isi_claims_with_spans[match]
@@ -212,14 +256,29 @@ def main(isi_store: Path, uiuc_store: Path, output: Path) -> None:
                             while stack:
                                 curr_elem = stack.pop()
                                 curr_elem_value = curr_elem[1]
+
+                                prop_type = curr_elem[0]
+
                                 all_props_of_curr = get_all_properties(
                                     potential_isi_graph, curr_elem_value
                                 )
+
+                                if prop_type in JUSTIFICATIONS:
+                                    # breakpoint()
+                                    all_props_of_curr.add((SOURCE_DOC, source_id[0]))
+
                                 if all_props_of_curr:
                                     uiuc_graph = create_ent(
                                         uiuc_graph, curr_elem_value, all_props_of_curr
                                     )
                                     stack.extend(all_props_of_curr)
+
+            all_event_types_and_args = get_all_event_types_and_arguments(potential_isi_graph)
+            for elem in all_event_types_and_args:
+                if is_in_updated_graph(uiuc_graph, elem):
+                    all_props = get_all_properties(potential_isi_graph, elem)
+                    if all_props:
+                        uiuc_graph = create_ent(uiuc_graph, elem, all_props)
 
             uiuc_graph.serialize(output / graph_id, format="turtle")
 
