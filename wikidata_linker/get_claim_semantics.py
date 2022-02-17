@@ -129,7 +129,6 @@ def get_best_qnode_for_mention_text(
     mention_span = None
     if isinstance(mention_or_text, str):
         mention_text = mention_or_text
-        print("We're about to get the mention span...")
         mention_span = claim.get_offsets_for_text(mention_text, spacy_model.tokenizer)
     elif isinstance(mention_or_text, Mention):
         mention_text = mention_or_text.text
