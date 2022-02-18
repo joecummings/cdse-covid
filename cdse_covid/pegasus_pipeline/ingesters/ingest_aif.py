@@ -20,7 +20,7 @@ def get_abstract_doc_id(graph: Graph) -> Optional[str]:
     WHERE {
         ?e a aida:TextJustification .
 
-        ?e aida:source ?doc_id .
+        ?e aida:sourceDocument ?doc_id .
     }
     """
     doc_id = set(graph.query(query))
