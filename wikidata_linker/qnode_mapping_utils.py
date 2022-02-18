@@ -140,7 +140,8 @@ def generate_xpo_event_dict(og_xpo: Dict[str, Any], pb_xpo: Path) -> None:
             pbs_to_qnodes[pb].append(qnode_info)
             pbs_to_qnodes_only[pb].add(qnode)
 
-    for _, data in og_xpo.items():
+    event_data = og_xpo["events"]
+    for _, data in event_data.items():
         qdescr = data.get("wd_description")
         if not qdescr:
             continue
