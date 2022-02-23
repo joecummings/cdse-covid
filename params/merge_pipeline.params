@@ -3,15 +3,15 @@ _includes:
     - "local.params"
     - "spacy.params"
 
-experiments_root: /Users/jcummings/Desktop/projects/GAIA/merge_feb_16
+experiments_root: /Users/jcummings/Desktop/projects/GAIA/merge_feb_16_7
 workflow_directory: "%experiments_root%"
 experiment_name: merge_aif
 
 python_file: "%project_root%/cdse_covid/pegasus_pipeline/ingesters/ingest_aif.py"
 
-isi_aif: "%project_root%/data/isi_condition_5_en"
-uiuc_aif: "%project_root%/data/output_ttl_condition5_en"
+isi_aif: "%project_root%/data/isi_condition_7_en"
+uiuc_aif: "%project_root%/data/output_ttl_condition7_en"
 
-merge_python_file: "%project_root%/cdse_covid/pegasus_pipeline/merge_aif/merge_aif.py"
+merge_python_file: "%project_root%/cdse_covid/pegasus_pipeline/merge/merge_aif.py"
 
-output: "%project_root%/data/en_ttl_merged_feb_16"
+output: "%project_root%/data/en_ttl_merged_feb_16_cond7"
