@@ -7,7 +7,6 @@ from pegasus_wrapper import (
     directory_for,
     initialize_vista_pegasus_wrapper,
     run_python_on_args,
-    run_python_on_parameters,
     write_workflow_description,
 )
 from pegasus_wrapper.artifact import ValueArtifact
@@ -223,7 +222,7 @@ def main(params: Parameters) -> None:
         --claims-json {output_file} \
         --aif-dir {aif_output_dir}
         """,
-        depends_on=[unify_output]
+        depends_on=[unify_output],
     )
 
     write_workflow_description()
