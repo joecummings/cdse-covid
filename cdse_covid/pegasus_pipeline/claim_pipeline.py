@@ -215,7 +215,16 @@ def main(params: Parameters) -> None:
     aif_params = params.namespace("aif")
     aif_loc = base_locator / "aif"
     json_to_aif_python_job = aif_params.existing_file("python_file")
-    run_python_on_parameters(aif_loc, json_to_aif_python_job, params, depends_on=[unify_output])
+    aif_output_dir = aif_params.creatable_directory("aif_output_dir")
+    run_python_on_args(
+        aif_loc,
+        json_to_aif_python_job,
+        f"""
+        --claims-json {output_file} \
+        --aif-dir {aif_output_dir}
+        """,
+        depends_on=[unify_output]
+    )
 
     write_workflow_description()
 

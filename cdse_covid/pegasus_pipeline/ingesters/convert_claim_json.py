@@ -1,14 +1,14 @@
 """Convert the claim data from the output json into AIF files."""
+import argparse
 from dataclasses import dataclass, field
 import json
 import logging
 import os
+from pathlib import Path
 from random import randint
 from typing import Any, Dict, List, MutableMapping, Optional, TextIO, Tuple, Union
 
 from aida_tools.utils import make_xml_safe, reduce_whitespace
-from vistautils.parameters import Parameters
-from vistautils.parameters_only_entrypoint import parameters_only_entry_point
 
 log = logging.getLogger(__name__)  # pylint:disable=invalid-name
 
@@ -434,14 +434,10 @@ def write_claim_semantics_argument(
     write_system(aif_file)
 
 
-def convert_json_file_to_aif(params: Parameters) -> None:
+def convert_json_file_to_aif(claims_json: Path, aif_dir: Path) -> None:
     """Convert the claim data from the output json into AIF files."""
-    unify_params = params.namespace("unify")
-    aif_params = params.namespace("aif")
-    claims_file = unify_params.existing_file("output")
-    aif_dir = aif_params.creatable_directory("aif_output_dir")
-    log.info("READING: %s WRITING: %s", claims_file, aif_dir)
-    cf = open(claims_file, encoding="utf-8")
+    log.info("READING: %s WRITING: %s", claims_json, aif_dir)
+    cf = open(claims_json, encoding="utf-8")
     claims_data = json.load(cf)
 
     prior_source = ""
@@ -762,4 +758,8 @@ def convert_json_file_to_aif(params: Parameters) -> None:
 
 
 if __name__ == "__main__":
-    parameters_only_entry_point(convert_json_file_to_aif)
+    argparser = argparse.ArgumentParser(description=__doc__)
+    argparser.add_argument("--claims-json", help="Path to the output JSON", type=Path)
+    argparser.add_argument("--aif-dir", help="Path to the AIF output dir", type=Path)
+    args = argparser.parse_args()
+    convert_json_file_to_aif(args.claims_json, args.aif_dir)
