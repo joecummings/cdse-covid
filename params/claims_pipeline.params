@@ -40,7 +40,7 @@ unify:
     python_file: "%project_root%/cdse_covid/pegasus_pipeline/convert_claims_to_json.py"
 
 aif:
-    python_file: "%project_root%/cdse_covid/pegasus_pipeline/ingesters/convert_claim_json.py"
+    python_file: "%project_root%/cdse_covid/pegasus_pipeline/ingesters/claim_json_to_aif.py"
     aif_output_dir: "%experiments_root%/aif_output"
 
 uiuc_claims:
