@@ -15,11 +15,14 @@ def main():
 
     added_claim_info = defaultdict(lambda: defaultdict(list))
 
+    num_claims = 0
     for aif in tqdm(args.merged_aif_folder.glob("*.ttl"), total=1180):
         g = Graph()
         g = g.parse(source=aif, format="turtle")
 
         all_claims = get_claims(g)
+
+        num_claims += len(all_claims)
 
         for claim in all_claims:
             cs = get_claim_semantics_for_claim(g, claim[0])
@@ -32,6 +35,7 @@ def main():
                     elif elem.find("entity") != -1:
                         added_claim_info[claim[0]]["entities"].append(elem)
 
+    print(f"Total number of claims: {num_claims}.")
     print(f"Number of claims modified: {len(added_claim_info)}.")
     print(f'Number of events added: {sum(len(c["events"]) for _, c in added_claim_info.items())}')
     print(
