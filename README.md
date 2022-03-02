@@ -25,20 +25,20 @@ These instructions assume that you are building the image on the SAGA cluster.
    2. `git clone https://github.com/elizlee/amr-utils.git`
    3. `git clone https://github.com/isi-vista/saga-tools.git`
    4. `git clone https://github.com/IBM/transition-amr-parser.git`
-      1. Make sure that your installation is on the `master` branch.
-      2. Then in `transition-amr-parser/preprocess`:
+      1. Make sure that your `transition-amr-parser` installation is updated and on the `master` branch.
+      2. `cd` to `transition-amr-parser/preprocess` and do the following:
          1. `git clone https://github.com/jflanigan/jamr.git`
          2. `git clone https://github.com/damghani/AMR_Aligner.git`
          3. `mv AMR_Aligner kevin`
-         4. In `transition-amr-parser/preprocess/kevin`:
+         4. `cd transition-amr-parser/preprocess/kevin`:
             1. `git clone https://github.com/moses-smt/mgiza.git`
    5. Copy the following files from `/scratch/dockermount/cdse_covid_resources`:
       1. The Wikidata classifier: `wikidata_classifier.state_dict` --> `cdse-covid/wikidata_linker/resources`
       2. The AMR parser model: `/scratch/dockermount/cdse_covid_resources/AMR2.0` --> `transition-amr-parser/DATA`
-      4. UIUC's EDL output: `final_entity.cs` --> `cdse-covid/data`
+      4. UIUC's EDL output (for test runs): `final_entity.cs` --> `cdse-covid/data`
    6. `cd` back into `cdse-covid` and run
       ```
-      docker build . -t isi-cdse-covid:latest
+      docker build . -t isi-cdse-covid:<tag>
       ```
 
 ## Usage
