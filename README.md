@@ -35,7 +35,6 @@ These instructions assume that you are building the image on the SAGA cluster.
    5. Copy the following files from `/scratch/dockermount/cdse_covid_resources`:
       1. The Wikidata classifier: `wikidata_classifier.state_dict` --> `cdse-covid/wikidata_linker/resources`
       2. The AMR parser model: `/scratch/dockermount/cdse_covid_resources/AMR2.0` --> `transition-amr-parser/DATA`
-      4. UIUC's EDL output (for test runs): `final_entity.cs` --> `cdse-covid/data`
    6. `cd` back into `cdse-covid` and run
       ```
       docker build . -t isi-cdse-covid:<tag>
