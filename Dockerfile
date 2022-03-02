@@ -39,13 +39,13 @@ RUN wget --quiet https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86
     echo ". /opt/conda/etc/profile.d/conda.sh" >> ~/.bashrc
 
 # Main conda env
-ADD ./cdse_covid /cdse-covid/cdse_covid
-ADD ./setup.py /cdse-covid/setup.py
-ADD ./wikidata_linker /cdse-covid/wikidata_linker
-ADD ./requirements-docker-lock.txt /cdse-covid/requirements-docker-lock.txt
-ADD ./aida-tools /aida-tools
-ADD ./amr-utils /amr-utils
-ADD ./saga-tools /saga-tools
+COPY ./cdse_covid /cdse-covid/cdse_covid
+COPY ./setup.py /cdse-covid/setup.py
+COPY ./wikidata_linker /cdse-covid/wikidata_linker
+COPY ./requirements-docker-lock.txt /cdse-covid/requirements-docker-lock.txt
+COPY ./aida-tools /aida-tools
+COPY ./amr-utils /amr-utils
+COPY ./saga-tools /saga-tools
 RUN /opt/conda/bin/conda create -n cdse-covid python=3.7 && \
     /opt/conda/bin/conda install -c conda-forge jsonnet==0.17.0 && \
     /opt/conda/envs/cdse-covid/bin/pip install -r /cdse-covid/requirements-docker-lock.txt && \
@@ -61,8 +61,8 @@ RUN /opt/conda/bin/conda create -n cdse-covid python=3.7 && \
 ENV PYTHONPATH /cdse-covid
 
 # Transition AMR Parser conda env
-ADD ./amr-requirements-docker-lock.txt /cdse-covid/amr-requirements-docker-lock.txt
-ADD ./transition-amr-parser /transition-amr-parser
+COPY ./amr-requirements-docker-lock.txt /cdse-covid/amr-requirements-docker-lock.txt
+COPY ./transition-amr-parser /transition-amr-parser
 RUN /opt/conda/bin/conda create -n transition-amr-parser python=3.7
     /opt/conda/envs/transition-amr-parser/bin/pip install -r /cdse-covid/amr-requirements-docker-lock.txt # && \
     /opt/conda/envs/transition-amr-parser/bin/python -m spacy download en_core_web_md && \
