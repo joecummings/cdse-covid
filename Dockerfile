@@ -1,5 +1,5 @@
 # Dockerfile, Image, Container
-# Before building, please run setup.sh to download necessary files (?)
+# Please see the README about instructions before building
 FROM ubuntu:latest
 
 LABEL name="ISI Claim Detection and Semantic Extraction COVID-19"
@@ -12,32 +12,23 @@ ENV PATH /opt/conda/bin:$PATH
 ENV TZ=America/New_York
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
-ARG isi_username=""
-
 # Install base packages
 RUN apt-get update --fix-missing && apt-get install -y \
     cmake \
+    g++ \
     git \
+    libboost-all-dev \
     software-properties-common \
     unzip \
     wget
 
 # Install Java 8
 RUN add-apt-repository -y \
-    ppa:webupd8team/java
+    ppa:openjdk-r/ppa
 
 RUN apt-get update && \
     apt-get install -y openjdk-8-jdk && \
-    apt-get install -y ant && \
-    apt-get clean;
-
-# Fix certificate issues
-RUN apt-get update && \
-    apt-get install ca-certificates-java && \
-    apt-get clean && \
-    update-ca-certificates -f && \
-    rm -rf /var/lib/apt/lists/* && \
-    rm -rf /var/cache/oracle-jdk8-installer
+    rm -rf /var/lib/apt/lists/*
 
 ENV JAVA_HOME /usr/lib/jvm/java-8-openjdk-amd64/
 RUN export JAVA_HOME
@@ -51,23 +42,41 @@ RUN wget --quiet https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86
 
 # Main conda env
 ADD ./cdse_covid /cdse-covid/cdse_covid
+ADD ./setup.py /cdse-covid/setup.py
+ADD ./data /cdse-covid/data
 ADD ./wikidata_linker /cdse-covid/wikidata_linker
-ADD ./requirements-lock.txt /cdse-covid/requirements-lock.txt
+ADD ./requirements-docker-lock.txt /cdse-covid/requirements-docker-lock.txt
+ADD ./aida-tools /aida-tools
+ADD ./amr-utils /amr-utils
+ADD ./saga-tools /saga-tools
 RUN /opt/conda/bin/conda create -n cdse-covid python=3.7 && \
-    /opt/conda/envs/cdse-covid/bin/pip install -r /cdse-covid/requirements-lock.txt && \
+    /opt/conda/bin/conda install -c conda-forge jsonnet==0.17.0 && \
+    /opt/conda/envs/cdse-covid/bin/pip install -r /cdse-covid/requirements-docker-lock.txt && \
     /opt/conda/envs/cdse-covid/bin/python -m spacy download en_core_web_md && \
     /opt/conda/envs/cdse-covid/bin/python -m nltk.downloader -d /opt/conda/envs/cdse-covid/nltk_data wordnet && \
     /opt/conda/envs/cdse-covid/bin/python -m nltk.downloader -d /opt/conda/envs/cdse-covid/nltk_data framenet_v17 && \
     /opt/conda/envs/cdse-covid/bin/python -m nltk.downloader -d /opt/conda/envs/cdse-covid/nltk_data stopwords
 
+RUN cd /cdse-covid && /opt/conda/envs/cdse-covid/bin/pip install .
+RUN cd /aida-tools && /opt/conda/envs/cdse-covid/bin/pip install .
+RUN cd /amr-utils && /opt/conda/envs/cdse-covid/bin/pip install .
+RUN cd /saga-tools && /opt/conda/envs/cdse-covid/bin/pip install .
+
+ENV PYTHONPATH /cdse-covid
+
 # Transition AMR Parser conda env
-ADD ./amr-requirements-lock.txt /cdse-covid/amr-requirements-lock.txt
+ADD ./amr-requirements-docker-lock.txt /cdse-covid/amr-requirements-docker-lock.txt
+ADD ./transition-amr-parser /transition-amr-parser
 RUN /opt/conda/bin/conda create -n transition-amr-parser python=3.7 && \
-    /opt/conda/envs/transition-amr-parser/bin/pip install -r /cdse-covid/amr-requirements-lock.txt && \
+    /opt/conda/envs/transition-amr-parser/bin/pip install -r /cdse-covid/amr-requirements-docker-lock.txt && \
     /opt/conda/envs/transition-amr-parser/bin/python -m spacy download en_core_web_md && \
-    /opt/conda/envs/transition-amr-parser/bin/python -m nltk.downloader -d /opt/conda/envs/cdse-covid/nltk_data wordnet && \
-    /opt/conda/envs/transition-amr-parser/bin/python -m nltk.downloader -d /opt/conda/envs/cdse-covid/nltk_data framenet_v17 && \
-    /opt/conda/envs/transition-amr-parser/bin/python -m nltk.downloader -d /opt/conda/envs/cdse-covid/nltk_data stopwords
+    /opt/conda/envs/transition-amr-parser/bin/python -m nltk.downloader -d /opt/conda/envs/transition-amr-parser/nltk_data wordnet && \
+    /opt/conda/envs/transition-amr-parser/bin/python -m nltk.downloader -d /opt/conda/envs/transition-amr-parser/nltk_data framenet_v17 && \
+    /opt/conda/envs/transition-amr-parser/bin/python -m nltk.downloader -d /opt/conda/envs/transition-amr-parser/nltk_data stopwords
+
+RUN cd /amr-utils && /opt/conda/envs/transition-amr-parser/bin/pip install .
+RUN cd /cdse-covid && /opt/conda/envs/transition-amr-parser/bin/pip install .
+RUN cd /saga-tools && /opt/conda/envs/transition-amr-parser/bin/pip install .
 
 # Download sentence model weights
 RUN wget https://public.ukp.informatik.tu-darmstadt.de/reimers/sentence-transformers/v0.2/stsb-roberta-base.zip && \
@@ -76,15 +85,11 @@ RUN wget https://public.ukp.informatik.tu-darmstadt.de/reimers/sentence-transfor
     rm stsb-roberta-base.zip
 
 # Create KGTK cache
-RUN mkdir /cdse-covid/wikidata_linker/kgtk_event_cache
-RUN mkdir /cdse-covid/wikidata_linker/kgtk_refvar_cache
-
-# Download wikidata classifier
-# TBA
+RUN mkdir -p /cdse-covid/wikidata_linker/kgtk_event_cache
+RUN mkdir -p /cdse-covid/wikidata_linker/kgtk_refvar_cache
 
 # Install the transition AMR parser
-RUN git clone https://github.com/IBM/transition-amr-parser.git && \
-    cd /transition-amr-parser && \
+RUN cd /transition-amr-parser && \
     git checkout action-pointer && \
     touch set_environment.sh && \
     /opt/conda/envs/transition-amr-parser/bin/python -m pip install -e . && \
@@ -92,9 +97,8 @@ RUN git clone https://github.com/IBM/transition-amr-parser.git && \
 
 # Install the JAMR aligner
 RUN cd /transition-amr-parser/preprocess && \
-    git clone https://github.com/jflanigan/jamr.git && \
-    mkdir /.sbt && \
-    printf "[repositories]\n\tmaven-central: https://repo1.maven.org/maven2/" > /.sbt/repositories && \
+    mkdir ~/.sbt && \
+    printf "[repositories]\n\tmaven-central: https://repo1.maven.org/maven2/" > ~/.sbt/repositories && \
     cd jamr && \
     git checkout Semeval-2016 && \
     grep -v "import AssemblyKeys._" "build.sbt" > tmpfile && mv tmpfile "build.sbt" && \
@@ -104,21 +108,13 @@ RUN cd /transition-amr-parser/preprocess && \
     sed -i.bak "s/\"sbt-assembly\" % \"[0-9]*\.[0-9]*\.[0-9]*\"/\"sbt-assembly\" % \"0\.14\.6\"/" "project/plugins.sbt" && \
     sed -i.bak "s/\"sbteclipse-plugin\" % \"[0-9]*\.[0-9]*\.[0-9]*\"/\"sbteclipse-plugin\" % \"5\.2\.4\"/" "project/plugins.sbt" && \
     /transition-amr-parser/preprocess/jamr/setup && \
-    /transition-amr-parser/preprocess/jamr scripts/config.sh
+    . scripts/config.sh
 
 # Install the Kevin aligner
-RUN cd /transition-amr-parser/preprocess && \
-    git clone https://github.com/damghani/AMR_Aligner && \
-    mv AMR_Aligner kevin && \
-    cd kevin && \
-    git clone https://github.com/moses-smt/mgiza.git && \
-    cd mgiza && \
-    /opt/conda/envs/transition-amr-parser/bin/cmake . && \
-    /opt/conda/envs/transition-amr-parser/bin/make && \
-    make install \
-    cd /
-
-# Download AMR parser model
-# TBA
+RUN cd /transition-amr-parser/preprocess/kevin/mgiza/mgizapp && \
+    /usr/bin/cmake . && \
+    /usr/bin/make && \
+    /usr/bin/make install && \
+    cd /cdse-covid
 
 CMD ["/bin/bash"]

@@ -574,6 +574,8 @@ def convert_json_file_to_aif(claims_json: Path, aif_dir: Path) -> None:
             if prior_source != "":
                 af.close()  # type: ignore
             aif_file = os.path.join(aif_dir, source + ".ttl")
+            # Make sure the directory exists
+            Path(aif_file).parent.mkdir(exist_ok=True)
             af = open(aif_file, "w", encoding="utf-8")
             log.info("WRITING: %s", aif_file)
             af.write(

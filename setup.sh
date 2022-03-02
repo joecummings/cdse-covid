@@ -137,7 +137,7 @@ if [[ ! -d kevin/ ]]; then
   mv AMR_Aligner kevin
   cd kevin
   git clone https://github.com/moses-smt/mgiza.git
-  cd mgiza
+  cd mgiza/mgizapp
   cmake .
   make
   make install
