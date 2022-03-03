@@ -6,6 +6,8 @@ from pegasus_wrapper import (
     write_workflow_description,
 )
 from pegasus_wrapper.key_value import ZipKeyValueStore
+from pegasus_wrapper.resource_request import SlurmResourceRequest
+from vistautils.memory_amount import MemoryAmount
 from vistautils.parameters import Parameters
 from vistautils.parameters_only_entrypoint import parameters_only_entry_point
 
@@ -56,6 +58,9 @@ def main(params: Parameters) -> None:
         --uiuc-store {uiuc_store.path} \
         --output {output}
         """,
+        resource_request=SlurmResourceRequest(
+            memory=MemoryAmount.parse("128G"), num_gpus=1, job_time_in_minutes=720
+        ),
         depends_on=[uiuc_store, isi_store],
     )
 

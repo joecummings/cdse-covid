@@ -44,7 +44,11 @@ class AMRModel(object):
     ) -> Optional[AMROutput]:
         """Parse sentences in AMR graph and alignments."""
         logging.info(output_alignments)
-        annotations = self.parser.parse_sentences(sentences)
+        try:
+            annotations = self.parser.parse_sentences(sentences)
+        except IndexError as e:
+            logging.warning(e)
+            return None
         metadata, graph_metadata = Metadata_Parser().readlines(annotations[0][0])
         # Make sure there's a graph we can work with
         if not graph_metadata.get("node"):
