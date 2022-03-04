@@ -14,9 +14,31 @@
       In that case, you will be prompted for a password after you see
       `"Downloading model..."`
       If not, it will assume that you are working from a `/nas`-mounted server.
-6. You will also need to download and unzip two files into `data/`:
+6. You will also need to download and unzip this file into `data/`:
    1. UIUC EDL data (param: `edl.edl_output_dir`): https://drive.google.com/file/d/16ANEPjqy4byNY3B2BmYqsu1ZcBlp9tfR/view?usp=sharing
-   2. Qnode-to-freebase mapping (param: `edl.qnode_freebase_file`): https://drive.google.com/file/d/1z3dSK7nCwJ0uH-_tyV8zeTUtwIU252hi/view?usp=sharing
+
+## Docker
+These instructions assume that you are building the image on the SAGA cluster.
+1. Clone repo
+2. `cd` into `cdse-covid` and clone the following repos:
+   1. `git clone https://github.com/isi-vista/aida-tools.git`
+   2. `git clone https://github.com/elizlee/amr-utils.git`
+   3. `git clone https://github.com/isi-vista/saga-tools.git`
+   4. `git clone https://github.com/IBM/transition-amr-parser.git`
+      1. Make sure that your `transition-amr-parser` installation is updated and on the `master` branch.
+      2. `cd` to `transition-amr-parser/preprocess` and do the following:
+         1. `git clone https://github.com/jflanigan/jamr.git`
+         2. `git clone https://github.com/damghani/AMR_Aligner.git`
+         3. `mv AMR_Aligner kevin`
+         4. `cd transition-amr-parser/preprocess/kevin`:
+            1. `git clone https://github.com/moses-smt/mgiza.git`
+   5. Copy the following files from `/scratch/dockermount/cdse_covid_resources`:
+      1. The Wikidata classifier: `wikidata_classifier.state_dict` --> `cdse-covid/wikidata_linker/resources`
+      2. The AMR parser model: `/scratch/dockermount/cdse_covid_resources/AMR2.0` --> `transition-amr-parser/DATA`
+   6. `cd` back into `cdse-covid` and run
+      ```
+      docker build . -t isi-cdse-covid:<tag>
+      ```
 
 ## Usage
 
@@ -121,6 +143,13 @@ We provide a simple way to run the whole pipeline without needing Pegasus WMS.
    python -m cdse_covid.pegasus_pipeline.convert_claims_to_json \
        --input ENTITY_OUT \
        --output OUTPUT_FILE
+   ``` 
+10. Converting the JSON to AIF
+   ```
+   conda activate <cdse-covid-env>
+   python -m cdse_covid.pegasus_pipeline.ingesters.claims_json_to_aif \
+      --claims-json OUTPUT FILE \
+      --aif-dir AIF_OUTPUT_DIR
    ```
 
 ## Contributing
