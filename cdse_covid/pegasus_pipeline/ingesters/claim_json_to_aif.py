@@ -188,12 +188,11 @@ def is_valid_x_variable(x_varaible_data: Optional[Dict[str, Any]]) -> bool:
 
 
 def get_claim_semantics_data(
-    aif_file: TextIO,
     source: str,
     claim_semantics_source_data: Any,
     event_count: int,
     arg_count: int,
-) -> Tuple[List[ClaimSemanticsEventData], List[str], int, int]:
+) -> Tuple[List[ClaimSemanticsEventData], List[str], int, int, str]:
     """Write basic claim semantics data to Claim and gather for later use."""
     claim_semantics_aif_data = []
     event_cluster_list = []
@@ -265,17 +264,17 @@ def get_claim_semantics_data(
             )
         )
 
-    # Write events, then arguments
+    # Save events, then arguments to be written later
     all_clusters = event_cluster_list + arg_cluster_list
-    aif_file.write(f"\taida:claimSemantics {event_cluster_list.pop()}")
+    claim_semantics_string = f"\taida:claimSemantics {event_cluster_list.pop()}"
     for event_cluster in event_cluster_list:
-        aif_file.write(f",\n\t\t{event_cluster}")
+        claim_semantics_string += f",\n\t\t{event_cluster}"
     if arg_cluster_list:
         for arg_cluster in arg_cluster_list:
-            aif_file.write(f",\n\t\t{arg_cluster}")
-    aif_file.write(" ;\n")
+            claim_semantics_string += f",\n\t\t{arg_cluster}"
+    claim_semantics_string += " ;\n"
 
-    return claim_semantics_aif_data, all_clusters, event_count, arg_count
+    return claim_semantics_aif_data, all_clusters, event_count, arg_count, claim_semantics_string
 
 
 def write_claim_component(
@@ -604,7 +603,8 @@ def convert_json_file_to_aif(claims_json: Path, aif_dir: Path) -> None:
                 semantics_kes,
                 event_count,
                 entity_count,
-            ) = get_claim_semantics_data(af, source, claim_semantics, event_count, entity_count)
+                claim_semantics_to_write
+            ) = get_claim_semantics_data(source, claim_semantics, event_count, entity_count)
             associated_kes.extend(semantics_kes)
 
             if not associated_kes:
@@ -669,6 +669,7 @@ def convert_json_file_to_aif(claims_json: Path, aif_dir: Path) -> None:
                 + ">"
             )
 
+            af.write(claim_semantics_to_write)
             af.write("\taida:associatedKEs ")
             len_associated_kes = len(associated_kes)
             for i, ke in enumerate(associated_kes):
