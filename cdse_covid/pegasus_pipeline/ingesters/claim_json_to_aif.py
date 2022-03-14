@@ -597,10 +597,23 @@ def convert_json_file_to_aif(claims_json: Path, aif_dir: Path) -> None:
             if not is_valid_x_variable(data["x_variable_type_qnode"]):
                 continue
 
+            associated_kes = []
+
+            (
+                claim_semantics_data,
+                semantics_kes,
+                event_count,
+                entity_count,
+            ) = get_claim_semantics_data(af, source, claim_semantics, event_count, entity_count)
+            associated_kes.extend(semantics_kes)
+
+            if not associated_kes:
+                continue
+
             # Write the Claim
             claim_id = make_xml_safe(str(data["claim_id"]))
             claim_name = (
-                "<" + make_xml_safe(CDSE_SYSTEM + "/" + source + "/claim_id/" + claim_id) + ">"
+                    "<" + make_xml_safe(CDSE_SYSTEM + "/" + source + "/claim_id/" + claim_id) + ">"
             )
             af.write(claim_name + " a aida:Claim ;\n")
             af.write('\taida:sourceDocument "' + str(data["doc_id"]) + '"^^xsd:string ;\n')
@@ -610,12 +623,16 @@ def convert_json_file_to_aif(claims_json: Path, aif_dir: Path) -> None:
             af.write('\taida:subtopic "' + str(data["subtopic"]) + '"^^xsd:string ;\n')
             af.write('\taida:claimTemplate "' + str(data["claim_template"]) + '"^^xsd:string ;\n')
 
+            af.write(
+                '\taida:naturalLanguageDescription "'
+                + reduce_whitespace(str(data["claim_text"])).replace('"', "")
+                + '"^^xsd:string ;\n'
+            )
+
             has_x_variable = data["x_variable_type_qnode"] is not None
             x_variable_name = "None"
             x_variable_entity_name = "None"
             x_variable_cluster_name = "None"
-
-            associated_kes = []
 
             if has_x_variable:
                 (
@@ -624,20 +641,6 @@ def convert_json_file_to_aif(claims_json: Path, aif_dir: Path) -> None:
                     x_variable_cluster_name,
                     entity_count,
                 ) = get_name_data(af, "x_variable", source, claim_id, entity_count)
-
-            af.write(
-                '\taida:naturalLanguageDescription "'
-                + reduce_whitespace(str(data["claim_text"])).replace('"', "")
-                + '"^^xsd:string ;\n'
-            )
-
-            (
-                claim_semantics_data,
-                semantics_kes,
-                event_count,
-                entity_count,
-            ) = get_claim_semantics_data(af, source, claim_semantics, event_count, entity_count)
-            associated_kes.extend(semantics_kes)
 
             has_claimer = data["claimer_type_qnode"] is not None
             claimer_name, claimer_entity_name, claimer_cluster_name, entity_count = get_name_data(
@@ -666,15 +669,14 @@ def convert_json_file_to_aif(claims_json: Path, aif_dir: Path) -> None:
                 + ">"
             )
 
-            if associated_kes:
-                af.write("\taida:associatedKEs ")
-                len_associated_kes = len(associated_kes)
-                for i, ke in enumerate(associated_kes):
-                    end_punc = " ;\n" if i + 1 == len_associated_kes else ",\n"
-                    if i == 0:
-                        af.write(ke + end_punc)
-                    else:
-                        af.write("\t\t" + ke + end_punc)
+            af.write("\taida:associatedKEs ")
+            len_associated_kes = len(associated_kes)
+            for i, ke in enumerate(associated_kes):
+                end_punc = " ;\n" if i + 1 == len_associated_kes else ",\n"
+                if i == 0:
+                    af.write(ke + end_punc)
+                else:
+                    af.write("\t\t" + ke + end_punc)
 
             af.write("\taida:justifiedBy " + claim_justification_name + " ;\n")
             write_system(af)
