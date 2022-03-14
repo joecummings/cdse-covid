@@ -603,7 +603,7 @@ def convert_json_file_to_aif(claims_json: Path, aif_dir: Path) -> None:
                 semantics_kes,
                 event_count,
                 entity_count,
-                claim_semantics_to_write
+                claim_semantics_to_write,
             ) = get_claim_semantics_data(source, claim_semantics, event_count, entity_count)
             associated_kes.extend(semantics_kes)
 
@@ -613,7 +613,7 @@ def convert_json_file_to_aif(claims_json: Path, aif_dir: Path) -> None:
             # Write the Claim
             claim_id = make_xml_safe(str(data["claim_id"]))
             claim_name = (
-                    "<" + make_xml_safe(CDSE_SYSTEM + "/" + source + "/claim_id/" + claim_id) + ">"
+                "<" + make_xml_safe(CDSE_SYSTEM + "/" + source + "/claim_id/" + claim_id) + ">"
             )
             af.write(claim_name + " a aida:Claim ;\n")
             af.write('\taida:sourceDocument "' + str(data["doc_id"]) + '"^^xsd:string ;\n')
