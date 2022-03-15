@@ -16,7 +16,7 @@ claim_detection:
     patterns: "%project_root%/cdse_covid/claim_detection/topics.json"
 
 edl:
-    edl_output_file: "%project_root%/data/final_entity.cs"
+    edl_output_file: "%project_root%/dry-run/uiuc/final_entity.cs"
     ingester: "%project_root%/cdse_covid/pegasus_pipeline/ingesters/edl_output_ingester.py"
     ent_unification: "%project_root%/cdse_covid/semantic_extraction/run_entity_merging.py"
     include_contains: true
@@ -44,7 +44,7 @@ aif:
     aif_output_dir: "%experiments_root%/aif_output"
 
 uiuc_claims:
-    json_file_of_claims: "%project_root%/data/claim_all.json"
+    json_file_of_claims: "%project_root%/dry-run/uiuc/claim_all.json"
     ingester: "%project_root%/cdse_covid/pegasus_pipeline/ingesters/uiuc_claims_ingester.py"
 
 topic_information:
