@@ -188,12 +188,11 @@ def is_valid_x_variable(x_varaible_data: Optional[Dict[str, Any]]) -> bool:
 
 
 def get_claim_semantics_data(
-    aif_file: TextIO,
     source: str,
     claim_semantics_source_data: Any,
     event_count: int,
     arg_count: int,
-) -> Tuple[List[ClaimSemanticsEventData], List[str], int, int]:
+) -> Tuple[List[ClaimSemanticsEventData], List[str], int, int, str]:
     """Write basic claim semantics data to Claim and gather for later use."""
     claim_semantics_aif_data = []
     event_cluster_list = []
@@ -265,17 +264,17 @@ def get_claim_semantics_data(
             )
         )
 
-    # Write events, then arguments
+    # Save events, then arguments to be written later
     all_clusters = event_cluster_list + arg_cluster_list
-    aif_file.write(f"\taida:claimSemantics {event_cluster_list.pop()}")
+    claim_semantics_string = f"\taida:claimSemantics {event_cluster_list.pop()}"
     for event_cluster in event_cluster_list:
-        aif_file.write(f",\n\t\t{event_cluster}")
+        claim_semantics_string += f",\n\t\t{event_cluster}"
     if arg_cluster_list:
         for arg_cluster in arg_cluster_list:
-            aif_file.write(f",\n\t\t{arg_cluster}")
-    aif_file.write(" ;\n")
+            claim_semantics_string += f",\n\t\t{arg_cluster}"
+    claim_semantics_string += " ;\n"
 
-    return claim_semantics_aif_data, all_clusters, event_count, arg_count
+    return claim_semantics_aif_data, all_clusters, event_count, arg_count, claim_semantics_string
 
 
 def write_claim_component(
@@ -597,6 +596,20 @@ def convert_json_file_to_aif(claims_json: Path, aif_dir: Path) -> None:
             if not is_valid_x_variable(data["x_variable_type_qnode"]):
                 continue
 
+            associated_kes = []
+
+            (
+                claim_semantics_data,
+                semantics_kes,
+                event_count,
+                entity_count,
+                claim_semantics_to_write,
+            ) = get_claim_semantics_data(source, claim_semantics, event_count, entity_count)
+            associated_kes.extend(semantics_kes)
+
+            if not associated_kes:
+                continue
+
             # Write the Claim
             claim_id = make_xml_safe(str(data["claim_id"]))
             claim_name = (
@@ -610,12 +623,16 @@ def convert_json_file_to_aif(claims_json: Path, aif_dir: Path) -> None:
             af.write('\taida:subtopic "' + str(data["subtopic"]) + '"^^xsd:string ;\n')
             af.write('\taida:claimTemplate "' + str(data["claim_template"]) + '"^^xsd:string ;\n')
 
+            af.write(
+                '\taida:naturalLanguageDescription "'
+                + reduce_whitespace(str(data["claim_text"])).replace('"', "")
+                + '"^^xsd:string ;\n'
+            )
+
             has_x_variable = data["x_variable_type_qnode"] is not None
             x_variable_name = "None"
             x_variable_entity_name = "None"
             x_variable_cluster_name = "None"
-
-            associated_kes = []
 
             if has_x_variable:
                 (
@@ -624,20 +641,6 @@ def convert_json_file_to_aif(claims_json: Path, aif_dir: Path) -> None:
                     x_variable_cluster_name,
                     entity_count,
                 ) = get_name_data(af, "x_variable", source, claim_id, entity_count)
-
-            af.write(
-                '\taida:naturalLanguageDescription "'
-                + reduce_whitespace(str(data["claim_text"])).replace('"', "")
-                + '"^^xsd:string ;\n'
-            )
-
-            (
-                claim_semantics_data,
-                semantics_kes,
-                event_count,
-                entity_count,
-            ) = get_claim_semantics_data(af, source, claim_semantics, event_count, entity_count)
-            associated_kes.extend(semantics_kes)
 
             has_claimer = data["claimer_type_qnode"] is not None
             claimer_name, claimer_entity_name, claimer_cluster_name, entity_count = get_name_data(
@@ -666,15 +669,15 @@ def convert_json_file_to_aif(claims_json: Path, aif_dir: Path) -> None:
                 + ">"
             )
 
-            if associated_kes:
-                af.write("\taida:associatedKEs ")
-                len_associated_kes = len(associated_kes)
-                for i, ke in enumerate(associated_kes):
-                    end_punc = " ;\n" if i + 1 == len_associated_kes else ",\n"
-                    if i == 0:
-                        af.write(ke + end_punc)
-                    else:
-                        af.write("\t\t" + ke + end_punc)
+            af.write(claim_semantics_to_write)
+            af.write("\taida:associatedKEs ")
+            len_associated_kes = len(associated_kes)
+            for i, ke in enumerate(associated_kes):
+                end_punc = " ;\n" if i + 1 == len_associated_kes else ",\n"
+                if i == 0:
+                    af.write(ke + end_punc)
+                else:
+                    af.write("\t\t" + ke + end_punc)
 
             af.write("\taida:justifiedBy " + claim_justification_name + " ;\n")
             write_system(af)
