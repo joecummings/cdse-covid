@@ -1,6 +1,6 @@
 _includes:
     - "root.params"
-    - "local.params"
+    - "saga.params"
     - "spacy.params"
 
 workflow_directory: "%experiments_root%"
@@ -23,7 +23,7 @@ edl:
 
 amr:
     python_file: "%project_root%/cdse_covid/semantic_extraction/run_amr_parsing.py"
-    model_path: "%project_root%/transition-amr-parser"
+    model_path: "%project_root%/../transition-amr-parser"
     max_tokens: 50
     domain: "covid"
     device: cuda
