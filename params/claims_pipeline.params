@@ -16,14 +16,14 @@ claim_detection:
     patterns: "%project_root%/cdse_covid/claim_detection/topics.json"
 
 edl:
-    edl_output_file: "%project_root%/dry-run/uiuc/final_entity.cs"
+    edl_output_file: "%project_root%/data/final_entity.cs"
     ingester: "%project_root%/cdse_covid/pegasus_pipeline/ingesters/edl_output_ingester.py"
     ent_unification: "%project_root%/cdse_covid/semantic_extraction/run_entity_merging.py"
     include_contains: true
 
 amr:
     python_file: "%project_root%/cdse_covid/semantic_extraction/run_amr_parsing.py"
-    model_path: /Users/jcummings/Desktop/projects/GAIA/transition-amr-parser
+    model_path: "%project_root%/transition-amr-parser"
     max_tokens: 50
     domain: "covid"
     device: cuda
@@ -33,7 +33,7 @@ srl:
 
 wikidata:
     python_file: "%project_root%/cdse_covid/semantic_extraction/run_wikidata_linking.py"
-    model_path: /Users/jcummings/Desktop/projects/GAIA/cdse-covid/wikidata_linker
+    model_path: "%project_root%/wikidata_linker"
 
 unify:
     output: "%experiments_root%/output.json"
