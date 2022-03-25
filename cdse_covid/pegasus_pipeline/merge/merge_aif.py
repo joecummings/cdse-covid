@@ -2,7 +2,7 @@
 import argparse
 import logging
 from pathlib import Path
-from typing import Iterable, Mapping, MutableMapping, Optional, Set, Tuple
+from typing import Dict, Iterable, Mapping, MutableMapping, Optional, Set, Tuple
 
 from rdflib import Graph, URIRef
 from rdflib.query import ResultRow
@@ -26,6 +26,9 @@ JUSTIFICATIONS = [
 
 SOURCE_DOC = URIRef(
     "https://raw.githubusercontent.com/NextCenturyCorporation/AIDA-Interchange-Format/master/java/src/main/resources/com/ncc/aif/ontologies/InterchangeOntology#sourceDocument"
+)
+PROTOTYPE = URIRef(
+    "https://raw.githubusercontent.com/NextCenturyCorporation/AIDA-Interchange-Format/master/java/src/main/resources/com/ncc/aif/ontologies/InterchangeOntology#prototype"
 )
 
 
@@ -175,25 +178,66 @@ def create_ent(graph: Graph, ent: URIRef, props: Set[Tuple[URIRef, URIRef]]) -> 
     return graph
 
 
+def create_cluster(
+    graph: Graph, ent_as_cluster: URIRef, uiuc_ent: URIRef, props: Set[Tuple[URIRef, URIRef]]
+) -> Graph:
+    """Link the ISI cluster to the existing UIUC entity."""
+    query = """
+    INSERT {
+        ?cluster ?p ?v
+    }
+    WHERE {
+        OPTIONAL { ?cluster ?p ?v }
+    }
+    """
+
+    for prop, value in props:
+        graph.update(query, initBindings={"cluster": ent_as_cluster, "p": prop, "v": value})
+
+    replacement_query = """
+    DELETE {
+        ?cluster aida:prototype ?v
+    }
+    INSERT {
+        ?cluster aida:prototype ?v2
+    }
+    WHERE {
+        OPTIONAL { ?cluster aida:prototype ?v }
+    }
+    """
+
+    graph.update(
+        replacement_query, initBindings={"cluster": ent_as_cluster, "p": PROTOTYPE, "v2": uiuc_ent}
+    )
+
+    return graph
+
+
 def get_existing_ent_by_span(
     all_spans: MutableMapping[Tuple[int, int], URIRef],
     span: Optional[Span] = None,
     cluster_ent: Optional[URIRef] = None,
-) -> Optional[URIRef]:
-    """Get an exiting object in a graph identified by a span."""
+) -> Tuple[Optional[URIRef], Optional[URIRef]]:
+    """Get an existing object in a graph identified by a span."""
     if not span:
         logging.warning(
             "No span for %s. This will be removed when all entities have a valid justification.",
             cluster_ent,
         )
-        return None
+        return None, None
 
     matching_span = fuzzy_match((span.start, span.end), all_spans.keys())
+    matching_ent = None
+    if matching_span:
+        matching_ent = all_spans.get(matching_span)
 
-    if matching_span and all_spans.get(matching_span):
-        return cluster_ent or all_spans.get(matching_span)
+    if matching_span and matching_ent:
+        if (cluster_ent and "entity" in cluster_ent and "entities" in matching_ent) or (
+            cluster_ent and "event" in cluster_ent and "events" in matching_ent
+        ):
+            return cluster_ent, matching_ent
 
-    return None
+    return None, None
 
 
 def get_spans_for_all_ents(graph: Graph) -> MutableMapping[Tuple[int, int], URIRef]:
@@ -201,6 +245,8 @@ def get_spans_for_all_ents(graph: Graph) -> MutableMapping[Tuple[int, int], URIR
     query = """
     SELECT ?ent ?start ?end
     WHERE {
+        VALUES ?t { aida:Entity aida:Event }
+        ?ent a ?t .
         ?ent aida:justifiedBy ?justifiedBy .
 
         ?justifiedBy aida:endOffsetInclusive ?end ;
@@ -247,6 +293,32 @@ def get_all_event_types_and_arguments(graph: Graph) -> Set[ResultRow]:
     return set(graph.query(query))
 
 
+def replace_ents_in_event_types_and_args(
+    graph: Graph, elem: URIRef, entity_dict: Dict[URIRef, URIRef]
+) -> Graph:
+    """Update the entities in the graph for the given element."""
+    entities_to_replace = []
+    selection_query = """
+    SELECT ?v
+    WHERE { ?elem ?p ?v }
+    """
+    element_values = set(graph.query(selection_query, initBindings={"elem": elem}))
+    for value in element_values:
+        replacement_value = entity_dict.get(value[0])
+        if replacement_value:
+            entities_to_replace.append((value[0], replacement_value))
+
+    replacement_query = """
+    DELETE { ?elem ?p ?v }
+    INSERT { ?elem ?p ?v2 }
+    WHERE { ?elem ?p ?v }
+    """
+    for isi_ent, uiuc_ent in entities_to_replace:
+        graph.update(replacement_query, initBindings={"elem": elem, "v": isi_ent, "v2": uiuc_ent})
+
+    return graph
+
+
 def is_in_updated_graph(graph1: Graph, graph2: Graph, elem: URIRef) -> bool:
     """Check if event or argument is in the updated graph."""
     query = """
@@ -270,6 +342,24 @@ def is_in_updated_graph(graph1: Graph, graph2: Graph, elem: URIRef) -> bool:
         return bool(graph2.query(query2, initBindings={"e": s1[0]}))
 
     return False
+
+
+def get_abstract_source_id(graph: Graph) -> Optional[str]:
+    """Get source id from any text justification element."""
+    query = """
+    SELECT ?source
+    WHERE {
+        ?e a aida:TextJustification .
+
+        ?e aida:sourceDocument ?source .
+    }
+    """
+    source_id = set(graph.query(query))
+    if source_id:
+        source_id_pair = tuple(source_id.pop())
+        return str(source_id_pair[0].value) + ".ttl"
+
+    return None
 
 
 def get_source_id(graph: Graph, claim: URIRef) -> ResultRow:
@@ -309,6 +399,8 @@ def main(isi_store: Path, uiuc_store: Path, output: Path) -> None:
 
     for graph_id, uiuc_graph in tqdm(uiuc_graphs.items()):
 
+        source_id_string = get_abstract_source_id(uiuc_graph)
+
         potential_isi_graph = isi_graphs.get(graph_id)
         if potential_isi_graph:
 
@@ -328,6 +420,8 @@ def main(isi_store: Path, uiuc_store: Path, output: Path) -> None:
 
             # get spans for all objects in the graph
             all_entity_spans = get_spans_for_all_ents(uiuc_graph)
+
+            matching_entities = {}
 
             for uiuc_claim_span, uiuc_claim in uiuc_claims_with_spans.items():
                 source_id = get_source_id(uiuc_graph, uiuc_claim[0])
@@ -349,7 +443,7 @@ def main(isi_store: Path, uiuc_store: Path, output: Path) -> None:
                             )
 
                             # check if justified is on entity, but link the cluster instead of entity directly
-                            existing_ent = get_existing_ent_by_span(
+                            cluster_ent, existing_ent = get_existing_ent_by_span(
                                 all_entity_spans,
                                 span=get_span_for_rdf_obj(
                                     potential_isi_graph, specific_ent, provenance="ISI"
@@ -357,9 +451,14 @@ def main(isi_store: Path, uiuc_store: Path, output: Path) -> None:
                                 cluster_ent=ent_as_uri,
                             )
 
-                            if existing_ent:
+                            if specific_ent and cluster_ent and existing_ent:
                                 total_replaced_entities += 1
-                                uiuc_graph = link_ent(uiuc_graph, uiuc_claim[0], existing_ent)
+                                uiuc_graph = link_ent(uiuc_graph, uiuc_claim[0], cluster_ent)
+                                all_props = get_all_properties(potential_isi_graph, cluster_ent)
+                                uiuc_graph = create_cluster(
+                                    uiuc_graph, cluster_ent, existing_ent, all_props
+                                )
+                                matching_entities[specific_ent] = existing_ent
                             else:
                                 uiuc_graph = link_ent(uiuc_graph, uiuc_claim[0], ent_as_uri)
                                 all_props = get_all_properties(potential_isi_graph, ent_as_uri)
@@ -387,15 +486,20 @@ def main(isi_store: Path, uiuc_store: Path, output: Path) -> None:
 
             all_event_types_and_args = get_all_event_types_and_arguments(potential_isi_graph)
             for elem in all_event_types_and_args:
+                if matching_entities:
+                    potential_isi_graph = replace_ents_in_event_types_and_args(
+                        potential_isi_graph, elem[0], matching_entities
+                    )
                 if is_in_updated_graph(potential_isi_graph, uiuc_graph, elem[0]):
                     all_props = get_all_properties(potential_isi_graph, elem[0])
                     if all_props:
                         uiuc_graph = create_ent(uiuc_graph, elem[0], all_props)
 
-        uiuc_graph.serialize(output / graph_id, format="turtle")
+        if source_id_string:
+            uiuc_graph.serialize(output / source_id_string, format="turtle")
 
     logging.warning("Number of entities replaced: %s", total_replaced_entities)
-    logging.info("Serialized merged graphs to %s", args.output)
+    logging.info("Serialized merged graphs to %s", output)
 
 
 if __name__ == "__main__":
