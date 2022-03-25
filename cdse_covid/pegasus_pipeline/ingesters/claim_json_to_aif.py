@@ -723,6 +723,7 @@ def convert_json_file_to_aif(claims_json: Path, aif_dir: Path) -> None:
 
                 for argument in claim_semantics_event.arguments:
                     # Argument SameAsClusters
+                    af.write(argument.cluster_name + " a aida:SameAsCluster ;\n")
                     claim_semantics_arg_name = (
                         "<" + CDSE_SYSTEM + f"/entities/isi/{source}/{argument.semantics_id}" + ">"
                     )
