@@ -68,8 +68,8 @@ ENV PYTHONPATH /cdse-covid
 # Transition AMR Parser conda env
 COPY ./amr-requirements-docker-lock.txt /cdse-covid/amr-requirements-docker-lock.txt
 COPY ./transition-amr-parser /transition-amr-parser
-RUN /opt/conda/bin/conda create -n transition-amr-parser python=3.7 && \
-    /opt/conda/bin/conda install pytorch=1.2.0 cudatoolkit=10.0.130 -c pytorch && \
+COPY ./tap_environment_for_docker.yml ./cdse-covid/tap_environment_for_docker.yml
+RUN /opt/conda/bin/conda env create -n transition-amr-parser -f /cdse-covid/tap_environment_for_docker.yml && \
     /opt/conda/envs/transition-amr-parser/bin/pip install -r /cdse-covid/amr-requirements-docker-lock.txt && \
     /opt/conda/envs/transition-amr-parser/bin/python -m spacy download en_core_web_md && \
     /opt/conda/envs/transition-amr-parser/bin/python -m nltk.downloader -d /opt/conda/envs/transition-amr-parser/nltk_data wordnet && \
