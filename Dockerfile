@@ -3,7 +3,7 @@ FROM ubuntu:latest
 
 LABEL name="ISI Claim Detection and Semantic Extraction COVID-19"
 LABEL version=0
-LABEL maintainer="cummings@isi.edu"
+LABEL maintainer="elee@isi.edu"
 
 ENV PATH /opt/conda/bin:$PATH
 
@@ -39,6 +39,7 @@ RUN wget --quiet https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86
     echo ". /opt/conda/etc/profile.d/conda.sh" >> ~/.bashrc
 
 # Main conda env
+ENV HOME=/home
 COPY ./cdse_covid /cdse-covid/cdse_covid
 COPY ./setup.py /cdse-covid/setup.py
 COPY ./wikidata_linker /cdse-covid/wikidata_linker
@@ -49,10 +50,14 @@ COPY ./saga-tools /saga-tools
 RUN /opt/conda/bin/conda create -n cdse-covid python=3.7 && \
     /opt/conda/bin/conda install -c conda-forge jsonnet==0.17.0 && \
     /opt/conda/envs/cdse-covid/bin/pip install -r /cdse-covid/requirements-docker-lock.txt && \
+    /opt/conda/envs/cdse-covid/bin/python -m spacy download en_core_web_sm && \
     /opt/conda/envs/cdse-covid/bin/python -m spacy download en_core_web_md && \
     /opt/conda/envs/cdse-covid/bin/python -m nltk.downloader -d /opt/conda/envs/cdse-covid/nltk_data wordnet && \
+    /opt/conda/envs/cdse-covid/bin/python -m nltk.downloader -d /opt/conda/envs/cdse-covid/nltk_data wordnet_ic && \
+    /opt/conda/envs/cdse-covid/bin/python -m nltk.downloader -d /opt/conda/envs/cdse-covid/nltk_data sentiwordnet && \
     /opt/conda/envs/cdse-covid/bin/python -m nltk.downloader -d /opt/conda/envs/cdse-covid/nltk_data framenet_v17 && \
     /opt/conda/envs/cdse-covid/bin/python -m nltk.downloader -d /opt/conda/envs/cdse-covid/nltk_data stopwords && \
+    chmod -R a+rw /opt/conda/envs/cdse-covid && \
     /opt/conda/envs/cdse-covid/bin/pip install /cdse-covid && \
     /opt/conda/envs/cdse-covid/bin/pip install /aida-tools && \
     /opt/conda/envs/cdse-covid/bin/pip install /amr-utils && \
@@ -63,12 +68,14 @@ ENV PYTHONPATH /cdse-covid
 # Transition AMR Parser conda env
 COPY ./amr-requirements-docker-lock.txt /cdse-covid/amr-requirements-docker-lock.txt
 COPY ./transition-amr-parser /transition-amr-parser
-RUN /opt/conda/bin/conda create -n transition-amr-parser python=3.7
-    /opt/conda/envs/transition-amr-parser/bin/pip install -r /cdse-covid/amr-requirements-docker-lock.txt # && \
+RUN /opt/conda/bin/conda create -n transition-amr-parser python=3.7 && \
+    /opt/conda/bin/conda install pytorch=1.2.0 cudatoolkit=10.0.130 -c pytorch && \
+    /opt/conda/envs/transition-amr-parser/bin/pip install -r /cdse-covid/amr-requirements-docker-lock.txt && \
     /opt/conda/envs/transition-amr-parser/bin/python -m spacy download en_core_web_md && \
     /opt/conda/envs/transition-amr-parser/bin/python -m nltk.downloader -d /opt/conda/envs/transition-amr-parser/nltk_data wordnet && \
     /opt/conda/envs/transition-amr-parser/bin/python -m nltk.downloader -d /opt/conda/envs/transition-amr-parser/nltk_data framenet_v17 && \
     /opt/conda/envs/transition-amr-parser/bin/python -m nltk.downloader -d /opt/conda/envs/transition-amr-parser/nltk_data stopwords && \
+    chmod -R a+rw /opt/conda/envs/transition-amr-parser && \
     /opt/conda/envs/transition-amr-parser/bin/pip install /amr-utils && \
     /opt/conda/envs/transition-amr-parser/bin/pip install /cdse-covid && \
     /opt/conda/envs/transition-amr-parser/bin/pip install /saga-tools
@@ -78,6 +85,10 @@ RUN wget https://public.ukp.informatik.tu-darmstadt.de/reimers/sentence-transfor
     unzip stsb-roberta-base.zip -d stsb-roberta-base && \
     mv stsb-roberta-base /cdse-covid/wikidata_linker/sent_model/ && \
     rm stsb-roberta-base.zip
+
+# Create torch env
+ENV TORCH_HOME=/cdse-covid/phase3_test/.cache/torch
+WORKDIR $TORCH_HOME
 
 # Create KGTK cache
 WORKDIR /cdse-covid/wikidata_linker/kgtk_event_cache
@@ -109,8 +120,11 @@ RUN printf "[repositories]\n\tmaven-central: https://repo1.maven.org/maven2/" > 
 WORKDIR /transition-amr-parser/preprocess/kevin/mgiza/mgizapp
 RUN /usr/bin/cmake . && \
     /usr/bin/make && \
-    /usr/bin/make install
+    /usr/bin/make install && \
+    chmod -R a+rw /home && \
+    chmod -R a+rw /cdse-covid && \
+    chmod -R a+rw /transition-amr-parser
 
-WORKDIR /cdse-covid
+WORKDIR /
 
 CMD ["/bin/bash"]
