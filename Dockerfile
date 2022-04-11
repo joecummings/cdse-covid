@@ -1,5 +1,5 @@
 # Please see the README about instructions before building
-FROM ubuntu:latest
+FROM nvidia/cuda:10.0-cudnn7-runtime-ubuntu18.04
 
 LABEL name="ISI Claim Detection and Semantic Extraction COVID-19"
 LABEL version=0
@@ -19,6 +19,7 @@ RUN apt-get update --fix-missing && apt-get install -y \
     libboost-all-dev \
     software-properties-common \
     unzip \
+    vim \
     wget
 
 # Install Java 8
