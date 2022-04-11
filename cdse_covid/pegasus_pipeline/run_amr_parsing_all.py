@@ -14,7 +14,7 @@ from spacy.language import Language
 from cdse_covid.semantic_extraction.models.amr import AMRModel
 
 AMR_READER = AMR_Reader()
-STOP_PUNCTUATION = "!?.:;—,"
+STOP_PUNCTUATION = "!?.:;—,-"
 
 
 def tokenize_sentences(
