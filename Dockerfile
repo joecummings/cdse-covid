@@ -81,15 +81,19 @@ RUN /opt/conda/bin/conda env create -n transition-amr-parser -f /cdse-covid/tap_
     /opt/conda/envs/transition-amr-parser/bin/pip install /cdse-covid && \
     /opt/conda/envs/transition-amr-parser/bin/pip install /saga-tools
 
+# Create torch env
+ENV TORCH_HOME=/cdse-covid/.cache/torch
+WORKDIR $TORCH_HOME/hub
+WORKDIR /
+
 # Download sentence model weights
 RUN wget https://public.ukp.informatik.tu-darmstadt.de/reimers/sentence-transformers/v0.2/stsb-roberta-base.zip && \
     unzip stsb-roberta-base.zip -d stsb-roberta-base && \
     mv stsb-roberta-base /cdse-covid/wikidata_linker/sent_model/ && \
-    rm stsb-roberta-base.zip
-
-# Create torch env
-ENV TORCH_HOME=/cdse-covid/phase3_test/.cache/torch
-WORKDIR $TORCH_HOME
+    rm stsb-roberta-base.zip && \
+    wget https://github.com/pytorch/fairseq/archive/master.zip && \
+    unzip master.zip -d $TORCH_HOME/hub && \
+    rm master.zip
 
 # Create KGTK cache
 WORKDIR /cdse-covid/wikidata_linker/kgtk_event_cache
