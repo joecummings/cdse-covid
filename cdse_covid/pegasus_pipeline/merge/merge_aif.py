@@ -394,6 +394,7 @@ def main(isi_store: Path, uiuc_store: Path, output: Path) -> None:
     """Entrypoint to Merge script."""
     isi_graphs = load_from_key_value_store(isi_store)
     uiuc_graphs = load_from_key_value_store(uiuc_store)
+    output.mkdir(exist_ok=True)
 
     total_replaced_entities = 0
 
