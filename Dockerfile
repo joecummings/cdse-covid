@@ -91,9 +91,10 @@ RUN wget https://public.ukp.informatik.tu-darmstadt.de/reimers/sentence-transfor
     unzip stsb-roberta-base.zip -d stsb-roberta-base && \
     mv stsb-roberta-base /cdse-covid/wikidata_linker/sent_model/ && \
     rm stsb-roberta-base.zip && \
-    wget https://github.com/pytorch/fairseq/archive/master.zip && \
-    unzip master.zip -d $TORCH_HOME/hub && \
-    rm master.zip
+    wget https://github.com/pytorch/fairseq/archive/main.zip && \
+    unzip main.zip -d $TORCH_HOME/hub && \
+    mv $TORCH_HOME/hub/fairseq-main $TORCH_HOME/hub/pytorch_fairseq_main && \
+    rm main.zip
 
 # Create KGTK cache
 WORKDIR /cdse-covid/wikidata_linker/kgtk_event_cache

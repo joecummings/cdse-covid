@@ -102,6 +102,7 @@ def main(edl_output: Path, output: Path) -> None:
         )
         mention_store[doc][span] = new_mention
 
+    output.parent.mkdir(parents=True, exist_ok=True)
     with open(output, "wb+") as handle:  # type: ignore
         pickle.dump(mention_store, handle)  # type: ignore
 
