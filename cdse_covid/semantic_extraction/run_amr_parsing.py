@@ -56,6 +56,9 @@ def main(
 
     for claim in claim_ds.claims:
         logging.info("Processing claim %s", claim.claim_id)
+        # Eval hack: filter out image descriptions
+        if "data-image-title" in claim.claim_sentence:
+            continue
         tokenized_sentence = tokenize_sentence(claim.claim_sentence, spacy_tokenizer, max_tokens)
         sentence_amr = amr_parser.amr_parse_sentences([tokenized_sentence])
         if not sentence_amr:
