@@ -20,6 +20,7 @@ def main(input_dir: Path, output: Path) -> None:
     """Entrypoint to merge script."""
     claims = ClaimDataset.load_from_key_value_store(input_dir)
     structured_claims = [structure_claim(claim) for claim in claims]
+    output.parent.mkdir(parents=True, exist_ok=True)
 
     with open(output, "w+", encoding="utf-8") as handle:
         json.dump(structured_claims, handle)
