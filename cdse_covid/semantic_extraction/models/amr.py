@@ -40,12 +40,12 @@ class AMRModel(object):
         return cls(parser)
 
     def amr_parse_sentences_for_document(
-        self, sentence: List[List[str]], output_alignments: bool = False
+        self, sentences: List[List[str]], output_alignments: bool = False
     ) -> Optional[AMROutput]:
         """Parse sentences in AMR graph and alignments."""
         logging.info(output_alignments)
         try:
-            annotations = self.parser.parse_sentences(sentence)
+            annotations = self.parser.parse_sentences(sentences)
         except IndexError as e:
             logging.warning(e)
             return None
