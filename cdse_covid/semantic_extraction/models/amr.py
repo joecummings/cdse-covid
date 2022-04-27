@@ -2,7 +2,7 @@
 import logging
 from os import chdir, getcwd
 from pathlib import Path
-from typing import List, Optional
+from typing import Dict, List, Optional
 import uuid
 
 from amr_utils.amr_readers import AMR_Reader, Metadata_Parser
@@ -39,13 +39,13 @@ class AMRModel(object):
         chdir(cdse_path)
         return cls(parser)
 
-    def amr_parse_sentences(
-        self, sentences: List[List[str]], output_alignments: bool = False
+    def amr_parse_sentences_for_document(
+        self, sentence: List[List[str]], output_alignments: bool = False
     ) -> Optional[AMROutput]:
         """Parse sentences in AMR graph and alignments."""
         logging.info(output_alignments)
         try:
-            annotations = self.parser.parse_sentences(sentences)
+            annotations = self.parser.parse_sentences(sentence)
         except IndexError as e:
             logging.warning(e)
             return None
@@ -55,3 +55,25 @@ class AMRModel(object):
             return None
         amr, alignments = AMR_Reader._parse_amr_from_metadata(metadata["tok"], graph_metadata)
         return AMROutput(int(uuid.uuid1()), amr, alignments, annotations)
+
+    def amr_parse_sentences(
+        self, sentences: List[List[str]], output_alignments: bool = False
+    ) -> Dict[str, AMROutput]:
+        """Parse sentences in AMR graph and alignments.
+
+        Returns a mapping of sentence/claim tokens to their AMR output.
+        """
+        logging.info(output_alignments)
+        amr_data_map = {}
+        annotations = self.parser.parse_sentences(sentences)
+        for annotation in annotations[0]:
+            metadata, graph_metadata = Metadata_Parser().readlines(annotation)
+            sentence_tokens = metadata["tok"]
+            # Make sure there's a graph we can work with
+            if not graph_metadata.get("node"):
+                continue
+            amr, alignments = AMR_Reader._parse_amr_from_metadata(sentence_tokens, graph_metadata)
+            amr_data_map[" ".join(sentence_tokens[:-1])] = AMROutput(
+                int(uuid.uuid1()), amr, alignments, annotation
+            )
+        return amr_data_map
