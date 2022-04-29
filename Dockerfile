@@ -72,6 +72,7 @@ COPY ./transition-amr-parser /transition-amr-parser
 COPY ./tap_environment_for_docker.yml ./cdse-covid/tap_environment_for_docker.yml
 RUN /opt/conda/bin/conda env create -n transition-amr-parser -f /cdse-covid/tap_environment_for_docker.yml && \
     /opt/conda/envs/transition-amr-parser/bin/pip install -r /cdse-covid/amr-requirements-docker-lock.txt && \
+    /opt/conda/envs/transition-amr-parser/bin/python -m spacy download en_core_web_sm && \
     /opt/conda/envs/transition-amr-parser/bin/python -m spacy download en_core_web_md && \
     /opt/conda/envs/transition-amr-parser/bin/python -m nltk.downloader -d /opt/conda/envs/transition-amr-parser/nltk_data wordnet && \
     /opt/conda/envs/transition-amr-parser/bin/python -m nltk.downloader -d /opt/conda/envs/transition-amr-parser/nltk_data framenet_v17 && \
@@ -106,30 +107,6 @@ RUN git checkout action-pointer && \
     touch set_environment.sh && \
     /opt/conda/envs/transition-amr-parser/bin/python -m pip install -e . && \
     sed -i.bak "s/pytorch\/fairseq'/\pytorch\/fairseq\:main'/" transition_amr_parser/parse.py
-
-# Install the JAMR aligner
-WORKDIR /root/.sbt
-WORKDIR /transition-amr-parser/preprocess
-RUN printf "[repositories]\n\tmaven-central: https://repo1.maven.org/maven2/" > /root/.sbt/repositories && \
-    cd jamr && \
-    git checkout Semeval-2016 && \
-    grep -v "import AssemblyKeys._" "build.sbt" > tmpfile && mv tmpfile "build.sbt" && \
-    grep -v "assemblySettings" "build.sbt" > tmpfile && mv tmpfile "build.sbt" && \
-    grep -v "sbt-idea" "project/plugins.sbt" > tmpfile && mv tmpfile "project/plugins.sbt" && \
-    sed -i.bak "s/\"scala-arm\" % \"[0-9]*\.[0-9]*\"/\"scala-arm\" % \"2\.0\"/" "build.sbt" && \
-    sed -i.bak "s/\"sbt-assembly\" % \"[0-9]*\.[0-9]*\.[0-9]*\"/\"sbt-assembly\" % \"0\.14\.6\"/" "project/plugins.sbt" && \
-    sed -i.bak "s/\"sbteclipse-plugin\" % \"[0-9]*\.[0-9]*\.[0-9]*\"/\"sbteclipse-plugin\" % \"5\.2\.4\"/" "project/plugins.sbt" && \
-    /transition-amr-parser/preprocess/jamr/setup && \
-    . scripts/config.sh
-
-# Install the Kevin aligner
-WORKDIR /transition-amr-parser/preprocess/kevin/mgiza/mgizapp
-RUN /usr/bin/cmake . && \
-    /usr/bin/make && \
-    /usr/bin/make install && \
-    chmod -R a+rw /home && \
-    chmod -R a+rw /cdse-covid && \
-    chmod -R a+rw /transition-amr-parser
 
 WORKDIR /
 
