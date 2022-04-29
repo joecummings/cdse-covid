@@ -41,6 +41,7 @@ def main(params: Parameters) -> None:
     base_locator = Locator(("claims",))
     input_corpus_dir = params.existing_directory("corpus")
     from_raw_documents = params.boolean("from_raw_documents", default=True)
+    claim_semantics_only = params.boolean("claim_semantics_only", default=False)
     state_dict = params.existing_file("state_dict")
 
     spacy_params = params.namespace("spacy")
@@ -56,7 +57,10 @@ def main(params: Parameters) -> None:
         )
     else:
         uiuc_claims = ingest_uiuc_claims(params, base_locator)
-        claim_detection_output = add_topic_information(params, base_locator, uiuc_claims)
+        if claim_semantics_only:
+            claim_detection_output = uiuc_claims
+        else:
+            claim_detection_output = add_topic_information(params, base_locator, uiuc_claims)
 
     # Ingest EDL data
     edl_params = params.namespace("edl")
@@ -104,6 +108,7 @@ def main(params: Parameters) -> None:
             --max-tokens {amr_max_tokens} \
             --state-dict {state_dict} \
             --domain {amr_params.string("domain", default="general")} \
+            {'--cs-only' if claim_semantics_only else ''} \
             --device {device}
             """,
             override_conda_config=CondaConfiguration(
@@ -138,9 +143,12 @@ def main(params: Parameters) -> None:
         )
         return ZipKeyValueStore(path=srl_output_dir, depends_on=[srl_job], locator=output_locator)
 
-    srl_output = transform_key_value_store(
-        amr_output, run_srl, output_locator=srl_loc, parallelism=10
-    )
+    if claim_semantics_only:
+        srl_output = amr_output
+    else:
+        srl_output = transform_key_value_store(
+            amr_output, run_srl, output_locator=srl_loc, parallelism=10
+        )
 
     wikidata_loc = base_locator / "wikidata"
 
@@ -169,9 +177,12 @@ def main(params: Parameters) -> None:
             path=wikidata_output_dir, depends_on=[wikidata_job], locator=output_locator
         )
 
-    wikidata_output = transform_key_value_store(
-        srl_output, run_wikidata, output_locator=wikidata_loc, parallelism=10
-    )
+    if claim_semantics_only:
+        wikidata_output = srl_output
+    else:
+        wikidata_output = transform_key_value_store(
+            srl_output, run_wikidata, output_locator=wikidata_loc, parallelism=10
+        )
 
     # # Entity unification
     entity_loc = edl_locator / "edl_unified"
