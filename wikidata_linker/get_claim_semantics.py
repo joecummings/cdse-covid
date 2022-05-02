@@ -594,7 +594,6 @@ def get_best_qnode_by_semantic_similarity(
     This computes semantic similarity between two strings by
     comparing their word vectors from the spaCy model.
     """
-    logging.info("Getting similarity scores between %s and its qnodes...", pb)
     best_score = 0.0
     # Load qnode names
     qnames_to_dicts = {qdict["name"]: qdict for qdict in qnode_dicts}
