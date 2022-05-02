@@ -55,7 +55,7 @@ class WikidataLinkingClassifier(torch.nn.Module):
         paired_text = [(text, qnode_text) for qnode_text in qnode_texts]
         encoded_input = self.tokenizer.batch_encode_plus(
             paired_text,
-            pad_to_max_length=True,
+            padding="max_length",
             truncation=True,
             max_length=256,
             add_special_tokens=True,

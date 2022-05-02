@@ -117,7 +117,8 @@ def get_best_qnode_for_mention_text(
     linking_model: WikidataLinkingClassifier,
     wn_lemmatizer: WordNetLemmatizer,
     qnode_tables: QnodeTables,
-    device: str,
+    max_batch_size: int = 8,
+    device: str = CPU,
 ) -> Optional[WikidataQnode]:
     """Return the best WikidataQnode for a string within the claim sentence.
 
@@ -170,6 +171,8 @@ def get_best_qnode_for_mention_text(
             spacy_model,
             linking_model,
             claim.claim_text,
+            max_batch_size,
+            device,
             check_mappings_only=True,
         )
         if best_qnodes:
@@ -197,10 +200,20 @@ def get_best_qnode_for_mention_text(
     # Finally, try KGTK
     for query in query_list:
         claim_variable_links = disambiguate_refvar_kgtk(
-            query, linking_model, claim.claim_sentence, k=1, device=device
+            query,
+            linking_model,
+            claim.claim_sentence,
+            k=1,
+            max_batch_size=max_batch_size,
+            device=device,
         )
         claim_event_links = disambiguate_verb_kgtk(
-            query, linking_model, claim.claim_text, k=1, device=device
+            query,
+            linking_model,
+            claim.claim_text,
+            k=1,
+            max_batch_size=max_batch_size,
+            device=device,
         )
         # Combine the results
         all_claim_links = claim_variable_links
@@ -222,6 +235,7 @@ def get_wikidata_for_labeled_args(
     linking_model: WikidataLinkingClassifier,
     wn_lemmatizer: WordNetLemmatizer,
     qnode_tables: QnodeTables,
+    max_batch_size: int = 8,
     device: str = CPU,
 ) -> MutableMapping[str, Any]:
     """Get WikiData for labeled arguments."""
@@ -236,6 +250,7 @@ def get_wikidata_for_labeled_args(
             linking_model,
             wn_lemmatizer,
             qnode_tables,
+            max_batch_size,
             device,
         )
         if qnode_selection:
@@ -259,6 +274,7 @@ def get_claim_semantics(
     linking_model: WikidataLinkingClassifier,
     wordnet_lemmatizer: WordNetLemmatizer,
     qnode_mappings: QnodeTables,
+    max_batch_size: int = 8,
     device: str = CPU,
 ) -> List[ClaimSemantics]:
     """Disambiguate AMR sentence according to DWD overlay.
@@ -280,6 +296,7 @@ def get_claim_semantics(
         spacy_model,
         linking_model,
         claim.claim_sentence,
+        max_batch_size,
         device,
     )
 
@@ -314,6 +331,7 @@ def get_claim_semantics(
                 linking_model,
                 wordnet_lemmatizer,
                 qnode_mappings,
+                max_batch_size,
                 device,
             )
 
@@ -357,6 +375,7 @@ def determine_best_qnodes(
     spacy_model: Language,
     linking_model: WikidataLinkingClassifier,
     sentence_text: str,
+    max_batch_size: int = 8,
     device: str = CPU,
     check_mappings_only: bool = False,
 ) -> List[Dict[str, Any]]:
@@ -385,7 +404,9 @@ def determine_best_qnodes(
 
         if not check_mappings_only:
             # Finally, run a KGTK lookup
-            best_kgtk_qnode = get_kgtk_result_for_event(pb, linking_model, sentence_text, device)
+            best_kgtk_qnode = get_kgtk_result_for_event(
+                pb, linking_model, sentence_text, max_batch_size, device
+            )
             if best_kgtk_qnode:
                 arguments_from_table = get_arg_roles_for_kgkt_event(
                     best_kgtk_qnode["qnode"], qnode_tables.original_overlay
@@ -556,11 +577,14 @@ def get_kgtk_result_for_event(
     propbank_label: str,
     linking_model: WikidataLinkingClassifier,
     claim_text: str,
+    max_batch_size: int = 8,
     device: str = CPU,
 ) -> Dict[str, Any]:
     """Get the KGTK result for an event in the claim sentence."""
     formatted_pb = propbank_label.rsplit("-", 1)[0]
-    qnode_info = disambiguate_verb_kgtk(formatted_pb, linking_model, claim_text, k=1, device=device)
+    qnode_info = disambiguate_verb_kgtk(
+        formatted_pb, linking_model, claim_text, k=1, max_batch_size=max_batch_size, device=device
+    )
     if qnode_info["options"]:
         selected_qnode = qnode_info["options"][0]
     elif qnode_info["other_options"]:

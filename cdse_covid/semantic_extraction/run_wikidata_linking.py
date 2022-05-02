@@ -16,7 +16,12 @@ from wikidata_linker.wikidata_linking import CPU
 
 
 def main(
-    claim_input: Path, state_dict: Path, output: Path, spacy_model: Language, device: str = CPU
+    claim_input: Path,
+    state_dict: Path,
+    output: Path,
+    spacy_model: Language,
+    max_batch_size: int = 8,
+    device: str = CPU,
 ) -> None:
     """Entry point to linking script."""
     logging.basicConfig()
@@ -48,6 +53,7 @@ def main(
                     linking_model,
                     lemmatizer,
                     qnode_tables,
+                    max_batch_size,
                     device,
                 )
                 if best_qnode:
@@ -67,10 +73,13 @@ if __name__ == "__main__":
     parser.add_argument("--claim-input", type=Path)
     parser.add_argument("--state-dict", type=Path, help="Path to `wikidata_classifier.state_dict`")
     parser.add_argument("--output", type=Path)
+    parser.add_argument(
+        "--max-batch-size", help="Max batch size; 8 is recommended", type=int, default="8"
+    )
     parser.add_argument("--device", type=str, default="cpu")
 
     args = parser.parse_args()
 
     model = spacy.load("en_core_web_md")
 
-    main(args.claim_input, args.state_dict, args.output, model, args.device)
+    main(args.claim_input, args.state_dict, args.output, model, args.max_batch_size, args.device)
