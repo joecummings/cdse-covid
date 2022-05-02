@@ -54,26 +54,50 @@ def main(
 
     claim_ds = ClaimDataset.load_from_key_value_store(input_dir)
 
+    # First, collect the sentences and claim text
+    tokenized_sentences = []
+    claims_to_sentences = {}
+    tokenized_claims = []
+    claims_to_claim_text = {}
     for claim in claim_ds.claims:
-        logging.info("Processing claim %s", claim.claim_id)
         # Eval hack: filter out image descriptions
         if "data-image-title" in claim.claim_sentence:
             continue
         tokenized_sentence = tokenize_sentence(claim.claim_sentence, spacy_tokenizer, max_tokens)
-        sentence_amr = amr_parser.amr_parse_sentences([tokenized_sentence])
-        if not sentence_amr:
-            logging.warning(
-                "Cannot create valid AMR for sentence `%s`; skipping", claim.claim_sentence
-            )
+        if len(tokenized_sentence) <= 1:
             continue
         tokenized_claim = tokenize_sentence(claim.claim_text, spacy_tokenizer, max_tokens)
-        claim_amr = amr_parser.amr_parse_sentences([tokenized_claim])
-        if not claim_amr:
-            logging.warning("Cannot create valid AMR for claim `%s`; skipping", claim.claim_text)
+        if len(tokenized_claim) <= 1:
+            continue
+        tokenized_sentences.append(tokenized_sentence)
+        claims_to_sentences[claim.claim_id] = " ".join(tokenized_sentence)
+        tokenized_claims.append(tokenized_claim)
+        claims_to_claim_text[claim.claim_id] = " ".join(tokenized_claim)
+
+    # Parse the sentences/claims
+    all_sentence_amr_data = amr_parser.amr_parse_sentences(tokenized_sentences)
+    all_claim_amr_data = amr_parser.amr_parse_sentences(tokenized_claims)
+
+    for claim in claim_ds.claims:
+        # Find the AMR data for each claim
+        tokenized_claim_string = claims_to_claim_text.get(claim.claim_id)
+        if not tokenized_claim_string:
+            continue
+        sentence_amr_data = all_sentence_amr_data.get(claims_to_sentences[claim.claim_id])
+        if not sentence_amr_data:
+            continue
+        claim_amr_data = all_claim_amr_data.get(tokenized_claim_string)
+        if not claim_amr_data:
             continue
 
+        # Extract the claim semantics from the AMR data
+        logging.info("Processing claim %s", claim.claim_id)
         possible_claimer = identify_claimer(
-            claim, tokenized_claim, sentence_amr.graph, sentence_amr.alignments, spacy_model
+            claim,
+            tokenized_claim_string.split(" "),
+            sentence_amr_data.graph,
+            sentence_amr_data.alignments,
+            spacy_model,
         )
         if possible_claimer:
             # Add claimer data to Claim
@@ -81,8 +105,8 @@ def main(
             best_qnode = get_best_qnode_for_mention_text(
                 possible_claimer,
                 claim,
-                sentence_amr.graph,
-                sentence_amr.alignments,
+                sentence_amr_data.graph,
+                sentence_amr_data.alignments,
                 spacy_model,
                 linking_model,
                 wordnet_lemmatizer,
@@ -94,21 +118,26 @@ def main(
 
         if domain == COVID_DOMAIN:
             possible_x_variable = identify_x_variable_covid(
-                claim_amr.graph, claim_amr.alignments, claim, spacy_tokenizer
+                claim_amr_data.graph, claim_amr_data.alignments, claim, spacy_tokenizer
             )
         else:
             claim_ents = {ent.text: ent.label_ for ent in spacy_model(claim.claim_text).ents}
             claim_pos = {token.text: token.pos_ for token in spacy_model(claim.claim_text).doc}
             possible_x_variable = identify_x_variable(
-                claim_amr.graph, claim_amr.alignments, claim, claim_ents, claim_pos, spacy_tokenizer
+                claim_amr_data.graph,
+                claim_amr_data.alignments,
+                claim,
+                claim_ents,
+                claim_pos,
+                spacy_tokenizer,
             )
         if possible_x_variable:
             claim.x_variable = possible_x_variable
 
         # Get claim semantics from AMR data
         semantics = get_claim_semantics(
-            sentence_amr.graph,
-            sentence_amr.alignments,
+            sentence_amr_data.graph,
+            sentence_amr_data.alignments,
             claim,
             spacy_model,
             linking_model,
@@ -118,8 +147,8 @@ def main(
         )
         claim.claim_semantics = semantics
 
-        claim.add_theory("amr", sentence_amr.graph)
-        claim.add_theory("alignments", sentence_amr.alignments)
+        claim.add_theory("amr", sentence_amr_data.graph)
+        claim.add_theory("alignments", sentence_amr_data.alignments)
 
     claim_ds.save_to_key_value_store(output)
 

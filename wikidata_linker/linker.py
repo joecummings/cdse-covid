@@ -57,7 +57,7 @@ class WikidataLinkingClassifier(torch.nn.Module):
             paired_text,
             pad_to_max_length=True,
             truncation=True,
-            max_length=528,
+            max_length=256,
             add_special_tokens=True,
             return_tensors="pt",
         ).to(self.model.device)

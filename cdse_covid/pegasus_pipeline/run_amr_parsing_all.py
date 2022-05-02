@@ -92,7 +92,7 @@ def main(
         # Attempting to AMR-parse an empty list yields an error
         if not tokenized_sentences:
             continue
-        amr_parse = amr_parser.amr_parse_sentences(tokenized_sentences)
+        amr_parse = amr_parser.amr_parse_sentences_for_document(tokenized_sentences)
 
         output_file = f"{output_dir}/{input_file.stem}.amr"
         with open(output_file, "w+", encoding="utf-8") as outfile:
