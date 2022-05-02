@@ -10,8 +10,6 @@ from tqdm import tqdm
 from vistautils.key_value import byte_key_value_sink_from_params
 from vistautils.parameters import Parameters
 
-logger = logging.getLogger()
-
 
 def get_abstract_doc_id(graph: Graph) -> Optional[str]:
     """Get doc id from any text justification element."""
@@ -52,6 +50,10 @@ def save_to_key_value_store(aif_dir: Path, kvs_path: Path) -> ZipKeyValueStore:
 
 def main(aif_dir: Path, aif_as_zip: Path) -> None:
     """Entrypoint to AIF ingest script."""
+    logging.basicConfig()
+    logger = logging.getLogger()
+    logger.setLevel(logging.INFO)
+
     save_to_key_value_store(aif_dir, aif_as_zip)
     logger.info("Serialized all TTL files to: %s", aif_as_zip)
 

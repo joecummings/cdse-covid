@@ -63,7 +63,7 @@ class AMRModel(object):
 
         Returns a mapping of sentence/claim tokens to their AMR output.
         """
-        logging.info(output_alignments)
+        logging.debug("output_alignments=%s", output_alignments)
         amr_data_map = {}
         annotations = self.parser.parse_sentences(sentences)
         for annotation in annotations[0]:

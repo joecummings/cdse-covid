@@ -18,6 +18,10 @@ def structure_claim(
 
 def main(input_dir: Path, output: Path) -> None:
     """Entrypoint to merge script."""
+    logging.basicConfig()
+    logger = logging.getLogger()
+    logger.setLevel(logging.INFO)
+
     claims = ClaimDataset.load_from_key_value_store(input_dir)
     structured_claims = [structure_claim(claim) for claim in claims]
     output.parent.mkdir(parents=True, exist_ok=True)

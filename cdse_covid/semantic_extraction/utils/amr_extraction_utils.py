@@ -227,7 +227,6 @@ def create_x_variable(text: Optional[str], claim: Claim, tokenizer: Any) -> Opti
         # Remove trailing stop words
         final_text = remove_preceding_trailing_stop_words(text)
         if final_text:
-            print("We're about to create the x-variable...")
             return XVariable(
                 mention_id=create_id(),
                 text=final_text,
