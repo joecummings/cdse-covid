@@ -12,6 +12,10 @@ from vistautils.parameters import Parameters
 
 from cdse_covid.pegasus_pipeline.merge.aif_models import Span
 
+logging.basicConfig()
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
+
 JUSTIFICATIONS = [
     URIRef(
         "https://raw.githubusercontent.com/NextCenturyCorporation/AIDA-Interchange-Format/master/java/src/main/resources/com/ncc/aif/ontologies/InterchangeOntology#informativeJustification"
@@ -57,7 +61,7 @@ def get_span_for_rdf_obj(
 ) -> Optional[Span]:
     """Get span for given RDF object."""
     if not rdf_obj:
-        logging.warning("No rdf object to look up.")
+        logger.warning("No rdf object to look up.")
         return None
 
     span_info = set(
@@ -91,7 +95,7 @@ def get_span_for_rdf_obj(
             provenance=provenance,
         )
     except KeyError:
-        logging.warning("No 'justifiedBy' element found for obj: %s", rdf_obj)
+        logger.warning("No 'justifiedBy' element found for obj: %s", rdf_obj)
         return None
 
 
@@ -220,7 +224,7 @@ def get_existing_ent_by_span(
 ) -> Tuple[Optional[URIRef], Optional[URIRef]]:
     """Get an existing object in a graph identified by a span."""
     if not span:
-        logging.warning(
+        logger.warning(
             "No span for %s. This will be removed when all entities have a valid justification.",
             cluster_ent,
         )
@@ -499,8 +503,8 @@ def main(isi_store: Path, uiuc_store: Path, output: Path) -> None:
         if source_id_string:
             uiuc_graph.serialize(output / source_id_string, format="turtle")
 
-    logging.warning("Number of entities replaced: %s", total_replaced_entities)
-    logging.info("Serialized merged graphs to %s", output)
+    logger.warning("Number of entities replaced: %s", total_replaced_entities)
+    logger.info("Serialized merged graphs to %s", output)
 
 
 if __name__ == "__main__":

@@ -14,6 +14,10 @@ from cdse_covid.claim_detection.run_claim_detection import ClaimDataset
 
 def main(claims_file: Path, output: Path, spacy_model: Language) -> None:
     """Entrypoint to UIUC claims ingestion."""
+    logging.basicConfig()
+    logger = logging.getLogger()
+    logger.setLevel(logging.INFO)
+
     with open(claims_file, "r", encoding="utf-8") as handle:
         all_claims = json.load(handle)
 
@@ -62,7 +66,7 @@ def main(claims_file: Path, output: Path, spacy_model: Language) -> None:
             valid_claims += 1
 
     isi_claim_dataset.save_to_key_value_store(output)
-    logging.info(
+    logger.info(
         "Done ingesting claims from UIUC output - %s per valid claims",
         valid_claims / (valid_claims + invalid_claims),
     )

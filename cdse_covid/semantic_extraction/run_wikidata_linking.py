@@ -19,6 +19,10 @@ def main(
     claim_input: Path, state_dict: Path, output: Path, spacy_model: Language, device: str = CPU
 ) -> None:
     """Entry point to linking script."""
+    logging.basicConfig()
+    logger = logging.getLogger()
+    logger.setLevel(logging.INFO)
+
     claim_dataset = ClaimDataset.load_from_key_value_store(claim_input)
 
     linking_model = WikidataLinkingClassifier()
@@ -49,13 +53,13 @@ def main(
                 if best_qnode:
                     claim.x_variable_type_qnode = best_qnode
         else:
-            logging.warning(
+            logger.warning(
                 "Could not load AMR or alignments for claim sentence '%s'", claim.claim_sentence
             )
 
     claim_dataset.save_to_key_value_store(output)
 
-    logging.info("Saved claims with Wikidata to %s", output)
+    logger.info("Saved claims with Wikidata to %s", output)
 
 
 if __name__ == "__main__":

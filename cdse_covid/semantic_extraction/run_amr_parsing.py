@@ -40,6 +40,10 @@ def main(
     device: str = CPU,
 ) -> None:
     """Entrypoint to AMR parsing script."""
+    logging.basicConfig()
+    logger = logging.getLogger()
+    logger.setLevel(logging.INFO)
+
     amr_parser = AMRModel.from_folder(parser_path)
 
     linking_model = WikidataLinkingClassifier()
@@ -75,8 +79,10 @@ def main(
         claims_to_claim_text[claim.claim_id] = " ".join(tokenized_claim)
 
     # Parse the sentences/claims
+    logger.info("Beginning AMR parsing...")
     all_sentence_amr_data = amr_parser.amr_parse_sentences(tokenized_sentences)
     all_claim_amr_data = amr_parser.amr_parse_sentences(tokenized_claims)
+    logger.info("AMR parsing complete.")
 
     for claim in claim_ds.claims:
         # Find the AMR data for each claim
@@ -91,7 +97,7 @@ def main(
             continue
 
         # Extract the claim semantics from the AMR data
-        logging.info("Processing claim %s", claim.claim_id)
+        logger.info("Processing claim %s", claim.claim_id)
         possible_claimer = identify_claimer(
             claim,
             tokenized_claim_string.split(" "),
@@ -152,7 +158,7 @@ def main(
 
     claim_ds.save_to_key_value_store(output)
 
-    logging.info("AMR output saved to %s", output)
+    logger.info("AMR output saved to %s", output)
 
 
 if __name__ == "__main__":

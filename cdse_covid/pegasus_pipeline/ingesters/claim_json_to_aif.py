@@ -10,7 +10,9 @@ from typing import Any, Dict, List, MutableMapping, Optional, TextIO, Tuple, Uni
 
 from aida_tools.utils import make_xml_safe, reduce_whitespace
 
+logging.basicConfig()
 log = logging.getLogger(__name__)  # pylint:disable=invalid-name
+log.setLevel(logging.INFO)
 
 CDSE_SYSTEM = "http://www.isi.edu/cdse"
 text_to_nil_ids: Dict[str, str] = {}
