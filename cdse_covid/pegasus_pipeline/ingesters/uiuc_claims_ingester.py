@@ -49,7 +49,7 @@ def main(claims_file: Path, output: Path, spacy_model: Language) -> None:
                     )  # Should account for whitespace
 
             new_claim = Claim(
-                claim_id=create_id(),
+                claim_id=claim["claim_id"],
                 doc_id=doc_id,
                 claim_text=claim["claim_span_text"],
                 claim_span=(

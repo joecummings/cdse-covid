@@ -24,6 +24,7 @@ def main(input_dir: Path, output: Path) -> None:
 
     claims = ClaimDataset.load_from_key_value_store(input_dir)
     structured_claims = [structure_claim(claim) for claim in claims]
+    structured_claims.sort(key=lambda x: (x["doc_id"], x["claim_id"]))
     output.parent.mkdir(parents=True, exist_ok=True)
 
     with open(output, "w+", encoding="utf-8") as handle:
