@@ -87,12 +87,12 @@ ENV TORCH_HOME=/cdse-covid/.cache/torch
 WORKDIR $TORCH_HOME/hub
 WORKDIR /
 
-# Download sentence model weights
+# Download sentence model weights and fairseq model
 RUN wget https://public.ukp.informatik.tu-darmstadt.de/reimers/sentence-transformers/v0.2/stsb-roberta-base.zip && \
     unzip stsb-roberta-base.zip -d stsb-roberta-base && \
     mv stsb-roberta-base /cdse-covid/wikidata_linker/sent_model/ && \
     rm stsb-roberta-base.zip && \
-    wget https://github.com/pytorch/fairseq/archive/main.zip && \  # download the fairseq model
+    wget https://github.com/pytorch/fairseq/archive/main.zip && \
     unzip main.zip -d $TORCH_HOME/hub && \
     mv $TORCH_HOME/hub/fairseq-main $TORCH_HOME/hub/pytorch_fairseq_main && \
     rm main.zip
