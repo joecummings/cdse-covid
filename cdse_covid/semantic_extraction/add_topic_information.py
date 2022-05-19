@@ -29,7 +29,7 @@ class TemplateIdentifier(object):
         """Encode and compare claim text to encoded templates to find most similar one."""
         encoded_text = self.similarity_model.encode(claim_text, convert_to_tensor=True)
         cos_matrix = util.pytorch_cos_sim(encoded_text, self.encoded_templates)
-        sim_row = cos_matrix[0]
+        sim_row = cos_matrix[0].cpu()
         # Currently taking the highest value but we might want to have a None if all of them suck
         return self.templates[int(np.argmax(sim_row))], float(torch.max(sim_row))
 
