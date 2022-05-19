@@ -12,7 +12,7 @@ ENV TZ=America/New_York
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
 # Install base packages
-RUN apt-get update --fix-missing && apt-get install -y \
+RUN rm /etc/apt/sources.list.d/cuda.list && apt-get update --fix-missing && apt-get install -y \
     cmake \
     g++ \
     git \
