@@ -37,6 +37,7 @@ def main(
     parser_path: Path,
     state_dict: Path,
     domain: str,
+    max_batch_size: int = 8,
     device: str = CPU,
 ) -> None:
     """Entrypoint to AMR parsing script."""
@@ -117,6 +118,7 @@ def main(
                 linking_model,
                 wordnet_lemmatizer,
                 qnode_mappings,
+                max_batch_size,
                 device,
             )
             if best_qnode:
@@ -149,6 +151,7 @@ def main(
             linking_model,
             wordnet_lemmatizer,
             qnode_mappings,
+            max_batch_size,
             device,
         )
         claim.claim_semantics = semantics
@@ -171,6 +174,9 @@ if __name__ == "__main__":
         "--max-tokens", help="Max tokens allowed in a sentence to be parsed", type=int, default=50
     )
     parser.add_argument("--domain", help="`covid` or `general`", type=str, default="general")
+    parser.add_argument(
+        "--max-batch-size", help="Max batch size; 8 is recommended", type=int, default="8"
+    )
     parser.add_argument("--device", help="cpu or cuda", type=str, default=CPU)
 
     args = parser.parse_args()
@@ -185,5 +191,6 @@ if __name__ == "__main__":
         parser_path=args.amr_parser_model,
         state_dict=args.state_dict,
         domain=args.domain,
+        max_batch_size=args.max_batch_size,
         device=args.device,
     )

@@ -21,7 +21,6 @@ nlp = spacy.load("en_core_web_md")
 
 
 BASE = Path(__file__).parent
-MAX_BATCH_SIZE = 8  # I use 8 using GPU, to avoid OOM events. Could probably handle more. Not sure there will be a huge boost if you use CPU.
 SOFTMAX = torch.nn.Softmax(dim=1)
 
 
@@ -51,6 +50,7 @@ def get_linker_scores(
     use_title: bool,
     candidates: List[MutableMapping[str, Any]],
     linking_model: WikidataLinkingClassifier,
+    max_batch_size: int = 8,  # I use 8 using GPU, to avoid OOM events. Could probably handle more. Not sure there will be a huge boost if you use CPU.
     device: str = CPU,
 ) -> Any:
     """Gets predictions from Wikidata linking classification model, given a string and candidate JSONs.
@@ -67,8 +67,8 @@ def get_linker_scores(
         if use_title:
             description = f"{label} - {description}"
         candidate_descriptions.append(description)
-    while i * MAX_BATCH_SIZE < len(candidates):
-        candidate_batch = candidate_descriptions[i * MAX_BATCH_SIZE : (i + 1) * MAX_BATCH_SIZE]
+    while i * max_batch_size < len(candidates):
+        candidate_batch = candidate_descriptions[i * max_batch_size : (i + 1) * max_batch_size]
         with torch.no_grad():
             logits = (
                 linking_model.infer(event_description, candidate_batch)[0].detach()
@@ -336,6 +336,7 @@ def disambiguate_verb_kgtk(
     context: str = "",
     no_expansion: bool = False,
     k: int = 3,
+    max_batch_size: int = 8,
     device: str = CPU,
 ) -> Any:
     """Disambiguates verbs from event description and return candidate qnodes.
@@ -370,7 +371,7 @@ def disambiguate_verb_kgtk(
     if context:
         cleaned_description = context
     candidate_scores = get_linker_scores(
-        cleaned_description, False, unique_candidates, linking_model, device
+        cleaned_description, False, unique_candidates, linking_model, max_batch_size, device
     )["scores"]
     top3 = filter_candidates_with_scores(candidate_scores, unique_candidates, k=k)
     for candidate in top3:
@@ -388,7 +389,7 @@ def disambiguate_verb_kgtk(
     if device == CUDA:
         # Take advantage of the GPU and check the event qnode list
         other_candidate_scores = get_linker_scores(
-            cleaned_description, False, EVENT_QNODES, linking_model, device
+            cleaned_description, False, EVENT_QNODES, linking_model, max_batch_size, device
         )["scores"]
         top3_other_qnodes = filter_candidates_with_scores(other_candidate_scores, EVENT_QNODES, k=k)
         for candidate in top3_other_qnodes:
@@ -416,6 +417,7 @@ def disambiguate_refvar_kgtk(
     context: str = "",
     no_expansion: bool = False,
     k: int = 3,
+    max_batch_size: int = 8,
     device: str = CPU,
 ) -> Any:
     """Disambiguates refvar with KGTK webserver API.
@@ -447,7 +449,7 @@ def disambiguate_refvar_kgtk(
     if context:
         cleaned_refvar = context
     candidate_scores = get_linker_scores(
-        cleaned_refvar, False, unique_candidates, linking_model, device
+        cleaned_refvar, False, unique_candidates, linking_model, max_batch_size, device
     )["scores"]
     top3 = filter_candidates_with_scores(candidate_scores, unique_candidates, k=k)
     for candidate in top3:
@@ -464,7 +466,7 @@ def disambiguate_refvar_kgtk(
     if device == CUDA:
         # Take advantage of the GPU and check the argument qnode list
         other_candidate_scores = get_linker_scores(
-            cleaned_refvar, False, ARGUMENT_QNODES, linking_model, device
+            cleaned_refvar, False, ARGUMENT_QNODES, linking_model, max_batch_size, device
         )["scores"]
         top3_other_qnodes = filter_candidates_with_scores(
             other_candidate_scores, ARGUMENT_QNODES, k=k
@@ -507,14 +509,15 @@ if __name__ == "__main__":
         help="If specified, no query expansion will be performed (expansion is querying all terms that share stem with query term)",
     )
     parser.add_argument("--k", type=int, default=3, help="Number of options to be returned")
+    parser.add_argument("--max-batch-size", type=int, default=8)
     parser.add_argument("--device", type=str, default="cpu", help="cpu or cuda")
     args = parser.parse_args()
     if args.query_type == VERB:
         print(
             json.dumps(
-                disambiguate_verb_kgtk(args.query, args.no_expansion, args.k, args.device)[
-                    "options"
-                ],
+                disambiguate_verb_kgtk(
+                    args.query, args.no_expansion, args.k, args.max_batch_size, args.device
+                )["options"],
                 indent=4,
             )
         )
@@ -522,7 +525,12 @@ if __name__ == "__main__":
         print(
             json.dumps(
                 disambiguate_refvar_kgtk(
-                    args.query, args.context, args.no_expansion, args.k, args.device
+                    args.query,
+                    args.context,
+                    args.no_expansion,
+                    args.k,
+                    args.max_batch_size,
+                    args.device,
                 )["options"],
                 indent=4,
             )
