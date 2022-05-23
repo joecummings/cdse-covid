@@ -107,7 +107,7 @@ def main(
                 tokenized_claim_string.split(" "),
                 sentence_amr_data.graph,
                 sentence_amr_data.alignments,
-                spacy_model
+                spacy_model,
             )
             if possible_claimer:
                 # Add claimer data to Claim
@@ -135,7 +135,12 @@ def main(
                 claim_ents = {ent.text: ent.label_ for ent in spacy_model(claim.claim_text).ents}
                 claim_pos = {token.text: token.pos_ for token in spacy_model(claim.claim_text).doc}
                 possible_x_variable = identify_x_variable(
-                    claim_amr_data.graph, claim_amr_data.alignments, claim, claim_ents, claim_pos, spacy_tokenizer
+                    claim_amr_data.graph,
+                    claim_amr_data.alignments,
+                    claim,
+                    claim_ents,
+                    claim_pos,
+                    spacy_tokenizer,
                 )
             if possible_x_variable:
                 claim.x_variable = possible_x_variable
@@ -173,7 +178,9 @@ if __name__ == "__main__":
     )
     parser.add_argument("--domain", help="`covid` or `general`", type=str, default="general")
     parser.add_argument(
-        "--cs-only", help="If added, will skip finding the x-variables and claimers", action="store_true"
+        "--cs-only",
+        help="If added, will skip finding the x-variables and claimers",
+        action="store_true",
     )
     parser.add_argument(
         "--max-batch-size", help="Max batch size; 8 is recommended", type=int, default="8"
