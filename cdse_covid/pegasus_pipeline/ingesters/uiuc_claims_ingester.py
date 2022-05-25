@@ -8,7 +8,7 @@ from pathlib import Path
 import spacy
 from spacy import Language
 
-from cdse_covid.claim_detection.claim import TOKEN_OFFSET_THEORY, Claim, create_id
+from cdse_covid.claim_detection.claim import TOKEN_OFFSET_THEORY, Claim
 from cdse_covid.claim_detection.run_claim_detection import ClaimDataset
 
 

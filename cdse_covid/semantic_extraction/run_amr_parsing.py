@@ -37,6 +37,7 @@ def main(
     parser_path: Path,
     state_dict: Path,
     domain: str,
+    claim_semantics_only: bool,
     max_batch_size: int = 8,
     device: str = CPU,
 ) -> None:
@@ -99,48 +100,50 @@ def main(
 
         # Extract the claim semantics from the AMR data
         logger.info("Processing claim %s", claim.claim_id)
-        possible_claimer = identify_claimer(
-            claim,
-            tokenized_claim_string.split(" "),
-            sentence_amr_data.graph,
-            sentence_amr_data.alignments,
-            spacy_model,
-        )
-        if possible_claimer:
-            # Add claimer data to Claim
-            claim.claimer = possible_claimer
-            best_qnode = get_best_qnode_for_mention_text(
-                possible_claimer,
+
+        if not claim_semantics_only:
+            possible_claimer = identify_claimer(
                 claim,
+                tokenized_claim_string.split(" "),
                 sentence_amr_data.graph,
                 sentence_amr_data.alignments,
                 spacy_model,
-                linking_model,
-                wordnet_lemmatizer,
-                qnode_mappings,
-                max_batch_size,
-                device,
             )
-            if best_qnode:
-                claim.claimer_type_qnode = best_qnode
+            if possible_claimer:
+                # Add claimer data to Claim
+                claim.claimer = possible_claimer
+                best_qnode = get_best_qnode_for_mention_text(
+                    possible_claimer,
+                    claim,
+                    sentence_amr_data.graph,
+                    sentence_amr_data.alignments,
+                    spacy_model,
+                    linking_model,
+                    wordnet_lemmatizer,
+                    qnode_mappings,
+                    max_batch_size,
+                    device,
+                )
+                if best_qnode:
+                    claim.claimer_type_qnode = best_qnode
 
-        if domain == COVID_DOMAIN:
-            possible_x_variable = identify_x_variable_covid(
-                claim_amr_data.graph, claim_amr_data.alignments, claim, spacy_tokenizer
-            )
-        else:
-            claim_ents = {ent.text: ent.label_ for ent in spacy_model(claim.claim_text).ents}
-            claim_pos = {token.text: token.pos_ for token in spacy_model(claim.claim_text).doc}
-            possible_x_variable = identify_x_variable(
-                claim_amr_data.graph,
-                claim_amr_data.alignments,
-                claim,
-                claim_ents,
-                claim_pos,
-                spacy_tokenizer,
-            )
-        if possible_x_variable:
-            claim.x_variable = possible_x_variable
+            if domain == COVID_DOMAIN:
+                possible_x_variable = identify_x_variable_covid(
+                    claim_amr_data.graph, claim_amr_data.alignments, claim, spacy_tokenizer
+                )
+            else:
+                claim_ents = {ent.text: ent.label_ for ent in spacy_model(claim.claim_text).ents}
+                claim_pos = {token.text: token.pos_ for token in spacy_model(claim.claim_text).doc}
+                possible_x_variable = identify_x_variable(
+                    claim_amr_data.graph,
+                    claim_amr_data.alignments,
+                    claim,
+                    claim_ents,
+                    claim_pos,
+                    spacy_tokenizer,
+                )
+            if possible_x_variable:
+                claim.x_variable = possible_x_variable
 
         # Get claim semantics from AMR data
         semantics = get_claim_semantics(
@@ -175,6 +178,11 @@ if __name__ == "__main__":
     )
     parser.add_argument("--domain", help="`covid` or `general`", type=str, default="general")
     parser.add_argument(
+        "--cs-only",
+        help="If added, will skip finding the x-variables and claimers",
+        action="store_true",
+    )
+    parser.add_argument(
         "--max-batch-size", help="Max batch size; 8 is recommended", type=int, default="8"
     )
     parser.add_argument("--device", help="cpu or cuda", type=str, default=CPU)
@@ -191,6 +199,7 @@ if __name__ == "__main__":
         parser_path=args.amr_parser_model,
         state_dict=args.state_dict,
         domain=args.domain,
+        claim_semantics_only=args.cs_only,
         max_batch_size=args.max_batch_size,
         device=args.device,
     )
