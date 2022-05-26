@@ -16,21 +16,10 @@ RUN rm /etc/apt/sources.list.d/cuda.list && apt-get update --fix-missing && apt-
     cmake \
     g++ \
     git \
-    libboost-all-dev \
     software-properties-common \
     unzip \
     vim \
     wget
-
-# Install Java 8
-RUN add-apt-repository -y \
-    ppa:openjdk-r/ppa
-
-RUN apt-get update && \
-    apt-get install -y openjdk-8-jdk && \
-    rm -rf /var/lib/apt/lists/*
-
-ENV JAVA_HOME /usr/lib/jvm/java-8-openjdk-amd64/
 
 # Install miniconda
 RUN wget --quiet https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O ~/miniconda.sh && \
