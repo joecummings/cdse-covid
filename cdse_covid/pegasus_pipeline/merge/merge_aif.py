@@ -410,30 +410,25 @@ def main(isi_store: Path, uiuc_store: Path, output: Path) -> None:
         if potential_isi_graph:
 
             isi_claims = get_claims(potential_isi_graph)
-            isi_claims_with_spans = {}
+            isi_claim_ids: Dict[str, ResultRow] = {}
             for claim in isi_claims:
-                span = get_span_for_rdf_obj(potential_isi_graph, claim[0], provenance="ISI")
-                if span:
-                    isi_claims_with_spans[(span.start, span.end)] = claim
+                isi_uri = claim[0]
+                isi_claim_ids[str(isi_uri).split("/")[-1]] = claim
 
             uiuc_claims = get_claims(uiuc_graph)
-            uiuc_claims_with_spans = {}
-            for claim in uiuc_claims:
-                span = get_span_for_rdf_obj(uiuc_graph, claim[0], provenance="UIUC")
-                if span:
-                    uiuc_claims_with_spans[(span.start, span.end)] = claim
 
             # get spans for all objects in the graph
             all_entity_spans = get_spans_for_all_ents(uiuc_graph)
 
             matching_entities = {}
 
-            for uiuc_claim_span, uiuc_claim in uiuc_claims_with_spans.items():
+            for uiuc_claim in uiuc_claims:
                 source_id = get_source_id(uiuc_graph, uiuc_claim[0])
 
-                match = fuzzy_match(uiuc_claim_span, isi_claims_with_spans.keys())
-                if match:
-                    isi_claim = isi_claims_with_spans[match]
+                uiuc_claim_id = uiuc_claim[0].split("#")[-1]
+                if uiuc_claim_id in isi_claim_ids:
+
+                    isi_claim = isi_claim_ids[uiuc_claim_id]
                     # get all claim semantics URIs (events & arguments)
                     claim_semantics = get_claim_semantics_for_claim(
                         potential_isi_graph, isi_claim[0]
