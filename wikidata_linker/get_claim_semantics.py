@@ -24,7 +24,7 @@ from cdse_covid.semantic_extraction.utils.amr_extraction_utils import (
     remove_preceding_trailing_stop_words,
 )
 from wikidata_linker.linker import WikidataLinkingClassifier
-from wikidata_linker.qnode_mapping_utils import QnodeTables, create_arg_dict
+from wikidata_linker.qnode_mapping_utils import UNINFORMATIVE_PB_FRAMES, QnodeTables, create_arg_dict
 from wikidata_linker.wikidata_linking import CPU, disambiguate_refvar_kgtk, disambiguate_verb_kgtk
 
 MASTER = "master"
@@ -285,7 +285,10 @@ def get_claim_semantics(
 
     # Gather propbank nodes from resulting graph
     label_list_all = amr_sentence.get_ordered_node_labels()
-    pb_label_list = [label for label in label_list_all if re.match(PROPBANK_PATTERN, label)]
+    pb_label_list = [
+        label for label in label_list_all
+        if re.match(PROPBANK_PATTERN, label) and label not in UNINFORMATIVE_PB_FRAMES
+    ]
     if not pb_label_list:
         logging.warning("No PropBank labels in the graph!")
         return []
