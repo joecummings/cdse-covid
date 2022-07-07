@@ -8,6 +8,38 @@ from typing import Any, Dict, Set
 
 PARENT_DIR = Path(__file__).parent
 
+# Set of PropBank frames to ignore when extracting events from AMRs
+# This isn't an exhaustive set, but this seems to cover the most common ones
+# observed in the output.
+UNINFORMATIVE_PB_FRAMES = {
+    "be-02",
+    "close-13",
+    "general-02",
+    "have-03",
+    "have-concession-91",
+    "have-manner-91",
+    "have-mod-91",
+    "have-mode-91",
+    "have-name-91",
+    "have-ord-91",
+    "have-org-role-91",
+    "have-part-91",
+    "have-polarity-91",
+    "have-rel-role-91",
+    "have-subevent-91",
+    "have-value-91",
+    "look-01",
+    "look-02",
+    "look-04",
+    "look-09",
+    "same-01",
+    "say-01",
+    "see-01",
+    "see-02",
+    "see-03",
+    "see-04",
+    "see-05"
+}
 
 @dataclass
 class QnodeTables:
