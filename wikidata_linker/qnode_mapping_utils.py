@@ -97,7 +97,9 @@ def generate_master_dict(og_master: Dict[Any, Any], pb_master: Path) -> None:
                 "text_role": "-".join(arg_parts[1:]),
             }
 
-        qnode_summary = {"qnode": qnode, "name": qname, "definition": qdescr, "args": final_args}
+        qnode_summary = {
+            "qnode": qnode, "name": qname.replace("_", " "), "definition": qdescr, "args": final_args
+        }
 
         pb = str(qnode_dict["pb"]).replace(".", "-")
         pbs_to_qnodes[pb].append(qnode_summary)
@@ -146,7 +148,7 @@ def generate_xpo_event_dict(og_xpo: Dict[str, Any], pb_xpo: Path) -> None:
         if not qdescr:
             continue
         qnode = data.get("wd_qnode")
-        qname = data.get("name")
+        qname = data.get("name").replace("_", " ")
         pb_roleset = data.get("pb_roleset")
 
         final_args = create_arg_dict(data)

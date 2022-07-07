@@ -77,7 +77,7 @@ def get_framenet_arg_role(pb_arg_role_label: str) -> str:
 
 
 def get_all_labeled_args(
-    amr: AMR, alignments: List[AMR_Alignment], node: str, qnode_args: MutableMapping[str, Any]
+    amr: AMR, alignments: List[AMR_Alignment], node: str, qnode_args: Optional[MutableMapping[str, Any]]
 ) -> MutableMapping[str, Any]:
     """Get all labeled args from AMR node."""
     potential_args = amr.get_edges_for_node(node)
@@ -89,7 +89,12 @@ def get_all_labeled_args(
             arg_node = determine_argument_from_edge(node, arg)
             if arg_node:
                 framenet_arg = get_framenet_arg_role(arg[1])
-                if qnode_args.get(framenet_arg):
+                # If qnode_args is provided, use it to determine if the arg should be added
+                get_arg = True
+                if qnode_args:
+                    if not qnode_args.get(framenet_arg):
+                        get_arg = False
+                if get_arg:
                     node_label = amr.nodes[arg_node]
                     trimmed_node_label = remove_preceding_trailing_stop_words(node_label)
                     tokens_of_node = remove_preceding_trailing_stop_words(
@@ -318,9 +323,9 @@ def get_claim_semantics(
             logging.warning("No propbank label assigned to event qnode data: %s", event_qnode)
 
         wd: MutableMapping[str, Any] = {}
-        if pb_amr_node and event_qnode.get("args"):
+        if pb_amr_node:
             labeled_args = get_all_labeled_args(
-                amr_sentence, amr_alignments, pb_amr_node, event_qnode["args"]
+                amr_sentence, amr_alignments, pb_amr_node, event_qnode.get("args")
             )
             wd = get_wikidata_for_labeled_args(
                 amr_sentence,
