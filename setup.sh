@@ -35,9 +35,9 @@ python -m nltk.downloader -d "$CONDA_PREFIX"/nltk_data stopwords
 # Download wikidata classifier
 STATE_DICT="/nas/gaia/lestat/shared/wikidata_classifier.state_dict"
 
-if [[ ! -e wikidata_linker/wikidata_classifier.state_dict ]]; then
+if [[ ! -e wikidata_linker/resources/wikidata_classifier.state_dict ]]; then
   echo "Downloading wikidata classifier..."
-  cd wikidata_linker || { echo "Could not navigate to $(pwd)/wikidata_linker"; exit 1; }
+  cd wikidata_linker/resources || { echo "Could not navigate to $(pwd)/wikidata_linker/resources"; exit 1; }
   if [[ $ISI_USERNAME == "" ]]; then
     echo "Warning: ISI username not provided! Will attempt to copy locally."
     cp -r $STATE_DICT . || { echo "Failed to copy model over"; exit 1; }
