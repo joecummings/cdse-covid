@@ -77,9 +77,6 @@ def find_knowledge_entity(
     if target_span is None:
         return None
 
-    # UIUC uses exclusive char offsets so we have to subtract 1
-    target_span = (target_span[0], target_span[1] - 1)
-
     possible_ke = store.get(target_span)
     if possible_ke:
         return possible_ke

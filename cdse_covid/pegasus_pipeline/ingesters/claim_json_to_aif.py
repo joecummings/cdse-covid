@@ -101,7 +101,8 @@ def write_entity_data(
     var_type: str,
     entity_name: str,
     entity_data: Any,
-    var_count: Union[int, str],
+    has_identity: bool,
+    entity_id: str,
 ) -> None:
     """Write the entity data."""
     justification_name = None
@@ -116,8 +117,8 @@ def write_entity_data(
                 CDSE_SYSTEM
                 + "/"
                 + source
-                + f"/{var_type}/justification"
-                + str(var_count)
+                + f"/{var_type}/entityjustification/"
+                + entity_id
                 + "/"
                 + str(start_offset)
                 + "/"
@@ -127,9 +128,21 @@ def write_entity_data(
         )
 
     # Entity
+    confidence_val = (
+        entity_data["confidence"]
+        if entity_data.get("confidence") and entity_data["confidence"] is not None
+        else 1.0
+    )
     aif_file.write(entity_name + " a aida:Entity ;\n")
     if justification_name:
         aif_file.write("\taida:justifiedBy " + str(justification_name) + " ;\n")
+    if entity_data["qnode_id"] is not None and has_identity:
+        aif_file.write("\taida:link [ a aida:LinkAssertion ;\n")
+        aif_file.write("\t\taida:confidence [ a aida:Confidence ;\n")
+        aif_file.write("\t\t\taida:confidenceValue " + f"{confidence_val:.2E}" + " ;\n")
+        aif_file.write("\t\t\taida:system <" + CDSE_SYSTEM + "> ] ;\n")
+        aif_file.write(f'\t\taida:linkTarget "{entity_data["qnode_id"]}"^^xsd:string ;\n')
+        aif_file.write("\t\taida:system <" + CDSE_SYSTEM + "> ] ;\n")
     if entity_data["entity"] is not None:
         write_private_data(aif_file, entity_data["entity"])
     write_system(aif_file)
@@ -137,11 +150,6 @@ def write_entity_data(
     # TextJustification
     if justification_name:
         aif_file.write(justification_name + " a aida:TextJustification ;\n")
-        confidence_val = (
-            entity_data["confidence"]
-            if entity_data.get("confidence") and entity_data["confidence"] is not None
-            else 1.0
-        )
         aif_file.write("\taida:confidence [ a aida:Confidence ;\n")
         aif_file.write("\t\taida:confidenceValue " + f"{confidence_val:.2E}" + " ;\n")
         aif_file.write("\t\taida:system <" + CDSE_SYSTEM + "> ] ;\n")
@@ -400,14 +408,18 @@ def write_claim_semantics_argument(
     defining_arg_qnode = ""
     defining_arg_data = {}
     # Writing entity fields
+    has_identity = False
     if arg_type_data:
         defining_arg_data = arg_type_data
         defining_arg_qnode = str(arg_type_data["qnode_id"])
     if arg_identity_data and arg_identity_data["qnode_id"] is not None:
         defining_arg_qnode = arg_identity_data["qnode_id"]
         defining_arg_data = arg_identity_data
+        has_identity = True
 
-    write_entity_data(aif_file, source, argument.role, argument.name, defining_arg_data, arg_count)
+    write_entity_data(
+        aif_file, source, argument.role, argument.name, defining_arg_data, has_identity, argument.semantics_id
+    )
 
     aif_file.write(
         "<"
@@ -425,6 +437,25 @@ def write_claim_semantics_argument(
     aif_file.write(f"\trdf:object {argument.name} ;\n")
     aif_file.write(f'\trdf:predicate "{argument.role}"^^xsd:string ;\n')
     aif_file.write(f"\trdf:subject {event.name} ;\n")
+    write_system(aif_file)
+
+    # Write the entity type assertion
+    type_qnode = arg_type_data['qnode_id']
+    aif_file.write(
+        "<"
+        + CDSE_SYSTEM
+        + "/assertions/isi/entitytype/"
+        + source
+        + "/"
+        + argument.semantics_id
+        + "/"
+        + f"{arg_type_data['text'].replace(' ', '_')}/{type_qnode}"
+        + "> a rdf:Statement,\n"
+    )
+    aif_file.write("\t\taida:TypeStatement ;\n")
+    aif_file.write(f'\trdf:object "{type_qnode}"^^xsd:string ;\n')
+    aif_file.write(f'\trdf:predicate rdf:type ;\n')
+    aif_file.write(f"\trdf:subject {argument.name} ;\n")
     write_system(aif_file)
 
 
@@ -512,12 +543,14 @@ def convert_json_file_to_aif(claims_json: Path, aif_dir: Path) -> None:
         var_count: int,
     ) -> None:
         """Write the component, entity, and justifications for the variable."""
+        has_identity = False
         if (
             data[f"{var_type}_identity_qnode"] is not None
             and data[f"{var_type}_identity_qnode"]["qnode_id"] is not None
         ):
             variable_entity_data = data[f"{var_type}_identity_qnode"]
             variable_entity_qnode = variable_entity_data["qnode_id"]
+            has_identity = True
         else:
             variable_entity_data = data[f"{var_type}_type_qnode"]
             variable_entity_qnode = get_nil_id_for_entity(variable_entity_data["text"])
@@ -553,7 +586,8 @@ def convert_json_file_to_aif(claims_json: Path, aif_dir: Path) -> None:
             var_type,
             variable_entity_name,
             variable_entity_data,
-            var_count,
+            has_identity,
+            str(var_count),
         )
 
     event_count = 0
@@ -739,9 +773,6 @@ def convert_json_file_to_aif(claims_json: Path, aif_dir: Path) -> None:
                     write_claim_semantics_argument(
                         af, source, argument, claim_semantics_event, arg_number
                     )
-
-        if af:
-            af.write(f"<{CDSE_SYSTEM}> a aida:System .")
 
     if af:
         af.close()
