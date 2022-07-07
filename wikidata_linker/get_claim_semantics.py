@@ -303,6 +303,7 @@ def get_claim_semantics(
         device,
     )
 
+    event_spans: Set[Tuple[int, int]] = set()
     for event_qnode in best_event_qnodes:
         # Reverse search for the pb's source text
         # in order to get the associated char offsets
@@ -316,6 +317,11 @@ def get_claim_semantics(
             if not event_text:
                 continue
             event_span = claim.get_offsets_for_text(event_text, spacy_model.tokenizer)
+            if event_span:
+                if event_span in event_spans:
+                    # We don't want to add two events with the same span
+                    continue
+                event_spans.add(event_span)
         else:
             pb_amr_node = ""
             logging.warning("No propbank label assigned to event qnode data: %s", event_qnode)
