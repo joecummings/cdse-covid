@@ -1,6 +1,7 @@
 """Merge AIF documents."""
 import argparse
 import logging
+from collections import defaultdict
 from pathlib import Path
 from typing import Dict, Iterable, Mapping, MutableMapping, Optional, Set, Tuple
 
@@ -165,8 +166,12 @@ def link_ent(graph: Graph, uiuc_claim: URIRef, ent: URIRef) -> Graph:
     return graph
 
 
-def create_ent(graph: Graph, ent: URIRef, props: Set[Tuple[URIRef, URIRef]]) -> Graph:
+def create_ent(
+        graph: Graph, ent: URIRef, props: Set[Tuple[URIRef, URIRef]], existing_events_to_arg_roles=None
+) -> Graph:
     """Create entity for graph."""
+    if existing_events_to_arg_roles is None:
+        existing_events_to_arg_roles = {}
     query = """
     INSERT {
         ?ent ?p ?v
@@ -175,7 +180,19 @@ def create_ent(graph: Graph, ent: URIRef, props: Set[Tuple[URIRef, URIRef]]) -> 
         OPTIONAL { ?ent ?p ?v }
     }
     """
-
+    if "/eventarg/" in ent:
+        predicate = None
+        event = None
+        for prop, value in props:
+            if prop.split("#")[-1] == "predicate":
+                predicate = value
+            elif prop.split("#")[-1] == "subject":
+                event = value
+        existing_arg_roles = existing_events_to_arg_roles.get(event)
+        if existing_arg_roles and str(predicate) in existing_arg_roles:
+            # Don't create an arg assertion if
+            # UIUC already has a value for that argument role
+            return graph
     for prop, value in props:
         graph.update(query, initBindings={"ent": ent, "p": prop, "v": value})
 
@@ -295,6 +312,29 @@ def get_all_event_types_and_arguments(graph: Graph) -> Set[ResultRow]:
     WHERE { ?et a rdf:Statement }
     """
     return set(graph.query(query))
+
+
+def get_all_arg_roles(graph: Graph) -> Dict[URIRef, Set[str]]:
+    """Get all argument assertions in a graph."""
+    query = """
+    SELECT DISTINCT ?et
+    WHERE { ?et a aida:ArgumentStatement }
+    """
+    pred_query = """
+    SELECT DISTINCT ?pred ?event
+    WHERE {
+        ?elem rdf:predicate ?pred .
+        ?elem rdf:subject ?event .
+    }
+    """
+    arg_statements = set(graph.query(query))
+    predicate_dict = defaultdict(set)
+    for arg_statement in arg_statements:
+        predicate_info = list(graph.query(pred_query, initBindings={"elem": arg_statement[0]}))[0]
+        predicate, event = predicate_info
+        basic_role = predicate.split("_")[0]
+        predicate_dict[event].add(basic_role)
+    return predicate_dict
 
 
 def replace_ents_in_event_types_and_args(
@@ -485,6 +525,7 @@ def main(isi_store: Path, uiuc_store: Path, output: Path) -> None:
                                         stack.extend(all_props_of_curr)
 
             all_event_types_and_args = get_all_event_types_and_arguments(potential_isi_graph)
+            all_uiuc_arg_roles: Dict[URIRef, Set[str]] = get_all_arg_roles(uiuc_graph)
             for elem in all_event_types_and_args:
                 if matching_entities:
                     potential_isi_graph = replace_ents_in_event_types_and_args(
@@ -493,7 +534,7 @@ def main(isi_store: Path, uiuc_store: Path, output: Path) -> None:
                 if is_in_updated_graph(potential_isi_graph, uiuc_graph, elem[0]):
                     all_props = get_all_properties(potential_isi_graph, elem[0])
                     if all_props:
-                        uiuc_graph = create_ent(uiuc_graph, elem[0], all_props)
+                        uiuc_graph = create_ent(uiuc_graph, elem[0], all_props, all_uiuc_arg_roles)
 
         if source_id_string:
             uiuc_graph.serialize(output / source_id_string, format="turtle")
