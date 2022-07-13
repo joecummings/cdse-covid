@@ -1,7 +1,7 @@
 """Merge AIF documents."""
 import argparse
-import logging
 from collections import defaultdict
+import logging
 from pathlib import Path
 from typing import Dict, Iterable, Mapping, MutableMapping, Optional, Set, Tuple
 
@@ -167,7 +167,10 @@ def link_ent(graph: Graph, uiuc_claim: URIRef, ent: URIRef) -> Graph:
 
 
 def create_ent(
-        graph: Graph, ent: URIRef, props: Set[Tuple[URIRef, URIRef]], existing_events_to_arg_roles=None
+    graph: Graph,
+    ent: URIRef,
+    props: Set[Tuple[URIRef, URIRef]],
+    existing_events_to_arg_roles: Optional[Dict[URIRef, Set[str]]] = None,
 ) -> Graph:
     """Create entity for graph."""
     if existing_events_to_arg_roles is None:
@@ -188,7 +191,7 @@ def create_ent(
                 predicate = value
             elif prop.split("#")[-1] == "subject":
                 event = value
-        existing_arg_roles = existing_events_to_arg_roles.get(event)
+        existing_arg_roles = existing_events_to_arg_roles.get(event) if event else None
         if existing_arg_roles and str(predicate) in existing_arg_roles:
             # Don't create an arg assertion if
             # UIUC already has a value for that argument role
@@ -453,7 +456,7 @@ def main(isi_store: Path, uiuc_store: Path, output: Path) -> None:
             isi_claim_ids: Dict[str, ResultRow] = {}
             for claim in isi_claims:
                 isi_uri = claim[0]
-                isi_claim_ids[str(isi_uri).split("/")[-1]] = claim
+                isi_claim_ids[str(isi_uri).rsplit("/", maxsplit=1)[-1]] = claim
 
             uiuc_claims = get_claims(uiuc_graph)
 
