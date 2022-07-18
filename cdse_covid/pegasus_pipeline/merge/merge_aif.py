@@ -183,6 +183,13 @@ def create_ent(
         OPTIONAL { ?ent ?p ?v }
     }
     """
+    type_query = """
+    SELECT DISTINCT ?ent
+    WHERE {
+        ?ent a aida:TypeStatement .
+        ?ent rdf:subject ?subj
+    }
+    """
     if "/eventarg/" in ent:
         predicate = None
         event = None
@@ -196,6 +203,17 @@ def create_ent(
             # Don't create an arg assertion if
             # UIUC already has a value for that argument role
             return graph
+    if "/entitytype/" in ent:
+        entity = None
+        for prop, value in props:
+            if prop.split("#")[-1] == "subject":
+                entity = value
+                break
+        if entity:
+            if graph.query(type_query, initBindings={"subj": entity}):
+                # Don't add the entity TypeStatement if the
+                # subject entity already has a type statement.
+                return graph
     for prop, value in props:
         graph.update(query, initBindings={"ent": ent, "p": prop, "v": value})
 
@@ -382,7 +400,8 @@ def is_in_updated_graph(graph1: Graph, graph2: Graph, elem: URIRef) -> bool:
         query2 = """
         SELECT DISTINCT ?e
         WHERE {
-            ?e a aida:Event .
+            VALUES ?t { aida:Event aida:Entity }
+            ?e a ?t .
         }
         """
 
