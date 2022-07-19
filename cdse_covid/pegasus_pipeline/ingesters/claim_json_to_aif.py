@@ -6,7 +6,7 @@ import logging
 import os
 from pathlib import Path
 from random import randint
-from typing import Any, Dict, List, MutableMapping, Optional, TextIO, Tuple, Union
+from typing import Any, Dict, List, MutableMapping, Optional, TextIO, Tuple
 
 from aida_tools.utils import make_xml_safe, reduce_whitespace
 
@@ -393,7 +393,6 @@ def write_claim_semantics_argument(
     source: str,
     argument: ClaimSemanticsArgData,
     event: ClaimSemanticsEventData,
-    arg_count: Union[int, str],
 ) -> None:
     """Add an event argument and link it to its event."""
     # Check if there's type/identity data
@@ -418,7 +417,13 @@ def write_claim_semantics_argument(
         has_identity = True
 
     write_entity_data(
-        aif_file, source, argument.role, argument.name, defining_arg_data, has_identity, argument.semantics_id
+        aif_file,
+        source,
+        argument.role,
+        argument.name,
+        defining_arg_data,
+        has_identity,
+        argument.semantics_id,
     )
 
     aif_file.write(
@@ -440,7 +445,7 @@ def write_claim_semantics_argument(
     write_system(aif_file)
 
     # Write the entity type assertion
-    type_qnode = arg_type_data['qnode_id']
+    type_qnode = arg_type_data["qnode_id"]
     aif_file.write(
         "<"
         + CDSE_SYSTEM
@@ -454,7 +459,7 @@ def write_claim_semantics_argument(
     )
     aif_file.write("\t\taida:TypeStatement ;\n")
     aif_file.write(f'\trdf:object "{type_qnode}"^^xsd:string ;\n')
-    aif_file.write(f'\trdf:predicate rdf:type ;\n')
+    aif_file.write("\trdf:predicate rdf:type ;\n")
     aif_file.write(f"\trdf:subject {argument.name} ;\n")
     write_system(aif_file)
 
@@ -767,12 +772,7 @@ def convert_json_file_to_aif(claims_json: Path, aif_dir: Path) -> None:
                     argument.name = claim_semantics_arg_name
                     write_system(af)
 
-                    # Arguments
-                    arg_number = claim_semantics_arg_name.split("_")[-1].strip(">")
-
-                    write_claim_semantics_argument(
-                        af, source, argument, claim_semantics_event, arg_number
-                    )
+                    write_claim_semantics_argument(af, source, argument, claim_semantics_event)
 
     if af:
         af.close()
