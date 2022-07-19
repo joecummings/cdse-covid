@@ -203,7 +203,7 @@ def create_ent(
             # Don't create an arg assertion if
             # UIUC already has a value for that argument role
             return graph
-    if "/entitytype/" in ent:
+    if "/entitytype/" in ent or "/eventtype/" in ent:
         entity = None
         for prop, value in props:
             if prop.split("#")[-1] == "subject":
@@ -211,7 +211,7 @@ def create_ent(
                 break
         if entity:
             if graph.query(type_query, initBindings={"subj": entity}):
-                # Don't add the entity TypeStatement if the
+                # Don't add the entity/event TypeStatement if the
                 # subject entity already has a type statement.
                 return graph
     for prop, value in props:
